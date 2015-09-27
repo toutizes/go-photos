@@ -2,7 +2,6 @@ package model
 
 import (
   "bufio"
-  "errors"
   "log"
   "os"
   "os/exec"
@@ -12,7 +11,6 @@ import (
 
 import (
   "github.com/rwcarlsen/goexif/exif"
-  "github.com/rwcarlsen/goexif/tiff"
 )
 
 import "toutizes.com/store"
@@ -23,11 +21,11 @@ func tagTime(ex *exif.Exif, ts exif.FieldName) (t time.Time, err error) {
   if err != nil {
     return
   }
-  if tg.TypeCategory() != tiff.StringVal {
-    err = errors.New("Tag not a string")
+  str_val, err := tg.StringVal()
+  if err != nil {
     return
   }
-  t, err = time.Parse("2006:01:02 15:04:05", tg.StringVal())
+  t, err = time.Parse("2006:01:02 15:04:05", str_val)
   return
 }
 

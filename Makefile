@@ -43,6 +43,7 @@ install_sync:
 STORE=src/toutizes.com/store
 
 generate:
+	mkdir -p go/$(STORE)
 	(cd proto; PATH=$$PATH:../go/bin protoc --go_out=../go/$(STORE) db.proto)
 
 clean:
