@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bootstrap</title>
+
+    <!-- Bootstrap -->
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="http://code.jquery.com/jquery-migrate-1.0.0.js"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/1.4.14/jquery.scrollTo.min.js"></script>
+
+    <link rel="stylesheet" href="picbs.css">
+    <script src="tt_db5.js"></script>
+
+  </head>
+  <body>
+    <script>TT_DB5.init();</script>
+
+    <nav class="navbar navbar-fixed-top navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" onclick="TT_DB5.req_album_mode();">Toutizes</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <form class="navbar-form navbar-left" id="search-form" method="GET">
+            <div class="form-group">
+              <input id="q" type="text" placeholder="chercher" class="form-control">
+            </div>
+            <button onclick="TT_DB5.search()" class="btn btn-success"><img src="glyphicons-28-search.png"/></button>
+          </form>
+	  <ul class="nav navbar-nav navbar-left">
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">T&eacute;l&eacute;charger<span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+		<li><a id="nav-download" href="">Image originale</a></li>
+		<li class="divider"></li>
+		<li><a id="nav-download-all-small" href="">Petites images</a></li>
+		<li><a id="nav-download-all" href="">Originales</a></li>
+              </ul>
+            </li>
+	  </ul>
+        </div><!--/.navbar-collapse -->
+      </div>
+    </nav>
+    
+    <div id="all-container">
+      <div id="album-container" class="hidden">
+	<div id="album-contents"></div>
+      </div>
+      <div id="image-container" class="hidden">
+	<div id="mini-container">
+	  <div id="mini-contents"></div>
+	</div>
+	<div id="images-midi-container">
+          <div id="images-midi"></div>
+          <div id="prev" class="prevnext prev"><img src="prev2.png"/></div>
+          <div id="next" class="prevnext next"><img src="next2.png"/></div>
+	</div>
+	<div id="keywords-container">
+          <div id="keywords-show-hide" class="keywords-toggle keywords-hide"></div>
+          <div id="keywords-album"></div>
+          <div id="keywords"></div>
+	</div>
+      </div>
+    </div>
+
+    <!-- Models -->
+    <div id="models" class="model">
+      <div id="album-model" class="album">
+        <div class="album-desc">
+          <div class="album-desc-padding"></div>
+          <h4 class="album-title"></h4>
+          <p class="album-num-photos"></p>
+          <p class="album-keywords"></p>
+        </div>
+      </div>
+      <div id="mini-model" class="mini"></div>
+      <span id="keyword-model" class="keyword"></span>
+      <div id="midi-model" class="midi"></div>
+    </div>
+
+  </body>
+</html>

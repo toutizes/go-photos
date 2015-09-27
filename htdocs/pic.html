@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0">
+    <title>Images 5</title>
+    <link rel="stylesheet" type="text/css" href="pic5.css">
+    <link href="myCSB.css" rel="stylesheet" type="text/css" />
+    <script src="http://code.jquery.com/jquery-1.9.0.js"></script>
+    <script src="http://code.jquery.com/jquery-migrate-1.0.0.js"></script>
+    <script src="tt_db5.js"></script>
+  </head>
+  <body>
+    <script>TT_DB5.init();</script>
+
+    <div id="header">
+      <form id="search-form" method="GET">
+        <input type="text" size="30" id="q" maxlength="1024" value="">
+        <nav>
+          <ul>
+            <li>
+              <a onclick="TT_DB5.search()" class="clean-gray">Chercher</a>
+            </li>
+            <li>
+              <a onclick="TT_DB5.req_album_mode();" class="clean-gray">Albums</a>
+            </li>
+            <li id="download-area">
+              <a class="clean-gray">T&eacute;l&eacute;charger</a>
+              <ul>
+	        <li><a id="nav-download" href="">Image</a></li>
+	        <li><a id="nav-download-all-small" href="">Petites</a></li>
+	        <li><a id="nav-download-all" href="">Originales</a></li>
+              </ul>
+            </li>
+          </ul>
+        </nav>
+	<span id="controls3d" class="hidden">
+	  <img src="active.png" onclick="TT_DB5.st_mode('active')"/>
+	  <img src="parallel.png" onclick="TT_DB5.st_mode('parallel')"/>
+	  <img src="crosseye.png" onclick="TT_DB5.st_mode('crosseye')"/>
+	</span>
+      </form>
+    </div>
+
+    <div id="album-container" class="hidden"></div>
+
+    <div id="images" class="hidden">
+      <div id="mini-container">
+        <div id="mini-model" class="mini"></div>
+      </div>
+      <div id="images-midi-container">
+        <div id="images-midi"></div>
+        <div id="prev" class="prevnext prev"><img src="prev2.png"/></div>
+        <div id="next" class="prevnext next"><img src="next2.png"/></div>
+      </div>
+      <div id="keywords-container">
+        <div id="keywords-show-hide" class="keywords-toggle keywords-hide"></div>
+        <div id="keywords-album"></div>
+        <div id="keywords"></div>
+      </div>
+    </div>
+
+    <div id="images-maxi-container" class="hidden">
+      <div id="prev-full" class="prevnext prev"><img src="prev2.png"/></div>
+      <div id="next-full" class="prevnext next"><img src="next2.png"/></div>
+    </div>
+
+    <!-- Models -->
+    <div id="models" class="model">
+      <div id="album-model" class="album">
+        <div class="album-desc">
+          <div class="album-desc-padding"></div>
+          <h4 class="album-title"></h4>
+          <p class="album-num-photos"></p>
+          <p class="album-keywords"></p>
+        </div>
+      </div>
+      <div id="mini-model" class="mini"></div>
+      <span id="keyword-model" class="keyword"></span>
+      <div id="midi-model" class="midi"></div>
+    </div>
+  </body>
+</html>

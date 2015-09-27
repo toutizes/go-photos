@@ -1,0 +1,99 @@
+body {
+}
+.model {
+    display: none;
+}
+/* Container for all non-nav stuff. */
+#all-container {
+  position: absolute;
+  top: 55px;
+  bottom: 0px;
+  width: 100%;
+  background: white;
+  overflow: hidden;
+}
+/* Album list. */
+#album-container {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  background: white;
+  overflow: scroll;
+}
+#album-contents {
+  margin-top: 4px;
+}
+/* Individual albums. */
+.album {
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  display: inline-block;
+  position: relative;
+  height: 150px;
+  width: 150px;
+  overflow: hidden;
+  margin: 6px;
+  border-radius: 3px;
+}
+.album-desc {
+    position: absolute;
+    top: 0px; left: 0px;
+    padding: 5px;
+    height: 150%; width: 150px;
+    color: white;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    transition: all 0.25s ease-in;
+    -webkit-transition: all 0.25s ease-in;
+}
+.album-desc-padding {
+    height: 35%;
+}
+.album-desc:hover {
+    top: -70%;
+    background: rgba(0, 0, 0, 0.5);
+}
+/* Images */
+#image-container {
+  height: 100%;
+  width: 100%;
+  background: white;
+  overflow: hidden;
+}
+/* Container for the minis. */
+#mini-container {
+  left: 0px;
+  top: 0px;
+  overflow: scroll;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  padding: 4px;
+}
+@media screen and (orientation:landscape) {
+  #mini-container {
+    width: 214px; /* 3 * .minis + scrollbar */
+    height: 100%;
+    border-right: 3px solid gray;
+  }
+}
+@media screen and (orientation:portrait) {
+  #mini-container {
+    white-space: nowrap;
+    height: 84px; /* 1 * .minis + scrollbar */
+    width: 100%;
+    border-bottom: 3px solid gray;
+  }
+}
+/* Individual minis. */
+.mini {
+  display: inline-block;
+  height: 64px; width: 64px;
+  margin: 1px;
+  padding: 0px;
+  border: 1px solid white;
+}
+.mini:hover {
+  border: 1px solid gray;
+}
+.mini-current {
+  border: 3px solid red;
+}

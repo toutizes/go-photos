@@ -1,0 +1,334 @@
+html, body {
+    font-family: sans-serif;
+    height: 100%; width: 100%; padding: 0px; margin: 0px;
+    background: #222;
+    /* background: pink; */
+    color: white;
+}
+body {
+    position: relative;
+}
+a {
+    color: black;
+    cursor: pointer;
+    text-decoration: none;
+}
+#header {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    width: 100%;
+    padding: 4px;
+    height: 40px;
+}
+nav {
+    display: inline-block;
+}
+nav ul ul {
+    display: none;
+    z-index: 100;
+}
+nav ul li:hover > ul {
+    display: block;
+}
+nav ul {
+    padding-left: 3px;
+    padding-top: 0px;
+    margin: 0px;
+    list-style: none;
+    position: relative;
+    display: inline-table;
+}
+nav ul li {
+    display: inline-block;
+}
+nav ul li a {
+    display: block;
+}
+nav ul ul {
+    position: absolute;
+    top: 100%;
+    background-color: #bbbbbb;
+}
+nav ul ul li {
+    float: none; 
+    position: relative;
+    text-decoration: none;
+    font: bold 12px/1 "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
+    margin-left: 0px;
+    padding: 4px 0;
+    text-align: left;
+    text-shadow: 0 1px 0 #eee;
+    width: 100px;
+}
+nav ul ul li:hover {
+    text-decoration: none;
+    background-color: #dddddd;
+}
+#controls3d {
+    position: relative;
+    top: 0px;
+    height: 20px;
+    background-color: #ddd;
+    border: 1px solid white;
+}
+#controls3d img {
+    position: relative;
+    top: 4px;
+}
+#images {
+    position: absolute;
+    width: 100%;
+    top: 0;
+    bottom: 0;
+    margin-top: 48px;           /* just below #header */
+}
+.mini {
+    display: inline-block;
+    height: 64px; width: 64px;
+    margin: 1px;
+    padding: 0px;
+    border: 1px solid #222;
+}
+.mini:hover {
+    border: 1px solid gray;
+}
+.mini-current {
+    border: 1px solid white;
+}
+#mini-container {
+    overflow: hidden;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    padding: 4px;
+}
+#images-midi-container {
+    overflow: hidden;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    padding: 4px;
+}
+@media screen and (orientation:landscape) {
+    #mini-container {
+        position: absolute;
+        left: 0;
+        width: 234px; /* 3 * .minis + mCSB */
+        height: 100%;
+    }
+    #images-midi-container {
+        position: absolute;
+        left: 230px; /* #images-mini.width + 2 * padding */
+        right: 0;
+        height: 100%;
+        min-height: 400px;
+        min-width: 600px;
+    }
+}
+@media screen and (orientation:portrait) {
+    #mini-container {
+        height: 90px; /* 1 * .minis + mCSB */
+        width: 100%;
+    }
+    #images-midi-container {
+        width: 100%;
+        min-width: 300px;
+        min-height: 200px;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        margin-top: 90px;           /* just below #images-mini */
+    }
+}
+#q {
+    font: bold 13px/1 "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
+}
+.clean-gray {
+    background-color: #eeeeee;
+    background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #eeeeee), color-stop(100%, #cccccc));
+    background-image: -webkit-linear-gradient(top, #eeeeee, #cccccc);
+    background-image: -moz-linear-gradient(top, #eeeeee, #cccccc);
+    background-image: -ms-linear-gradient(top, #eeeeee, #cccccc);
+    background-image: -o-linear-gradient(top, #eeeeee, #cccccc);
+    background-image: linear-gradient(top, #eeeeee, #cccccc);
+    border: 1px solid #ccc;
+    border-bottom: 1px solid #bbb;
+    border-radius: 3px;
+    color: #333;
+    font: bold 12px/1 "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
+    padding: 4px 0;
+    text-align: center;
+    text-shadow: 0 1px 0 #eee;
+    width: 6em;
+}
+.clean-gray:hover {
+    background-color: #dddddd;
+    background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #dddddd), color-stop(100%, #bbbbbb));
+    background-image: -webkit-linear-gradient(top, #dddddd, #bbbbbb);
+    background-image: -moz-linear-gradient(top, #dddddd, #bbbbbb);
+    background-image: -ms-linear-gradient(top, #dddddd, #bbbbbb);
+    background-image: -o-linear-gradient(top, #dddddd, #bbbbbb);
+    background-image: linear-gradient(top, #dddddd, #bbbbbb);
+    border: 1px solid #bbb;
+    border-bottom: 1px solid #999;
+    cursor: pointer;
+    text-shadow: 0 1px 0 #ddd;
+}
+.clean-gray:active {
+    border: 1px solid #aaa;
+    border-bottom: 1px solid #888;
+    -webkit-box-shadow: inset 0 0 5px 2px #aaaaaa, 0 1px 0 0 #eeeeee;
+    box-shadow: inset 0 0 5px 2px #aaaaaa, 0 1px 0 0 #eeeeee;
+}
+.model {
+    display: none;
+}
+.hidden {
+    display: none;
+}
+.muted {
+    opacity: 0.1;
+}
+.separator {
+    width: 2em;
+}
+#keywords-container {
+    min-width: 12em;
+    max-width: 30em;
+    border-top: 2px solid #444;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    background-color: #555;
+    box-shadow: 0 4px 10px #fff;
+    -moz-box-shadow: 0 4px 10px #fff;
+    -webkit-box-shadow: 0 4px 10px #fff;
+    transition: max-height 0.15s ease-in, max-width 0.15s ease-in;
+    -webkit-transition: max-height 0.15s ease-in, max-width 0.15s ease-in;
+}
+.keywords-toggle {
+    border: 1px solid #444;
+    margin: 2px;
+    width: 16px; height: 20px;
+    background-image:url(mCSB_buttons.png);
+    background-repeat:no-repeat;
+}
+#keywords-album {
+    height: 26px;
+    min-width: 10em;
+    max-width: 30em;
+    overflow: hidden;
+}
+.keywords-toggle:hover {
+    border: 1px solid #ccc;
+}
+.keywords-hide {
+    float: left;
+    background-position: 0px -20px;
+}
+.keywords-show {
+    float: left;
+    background-position: 0px 0px;
+}
+#keywords {
+    padding: 5px 10px 5px 5px;
+}
+.keyword {
+    color: white;
+    margin: 3px;
+    text-decoration:underline;
+    cursor: pointer;
+}
+.keyword:hover {
+    background: #222;
+}
+#album-container {
+    position: absolute;
+    width: 100%;
+    top: 0;
+    bottom: 0;
+    margin-top: 48px;           /* just below #header */
+    overflow: hidden;
+}
+/* Album styles. */
+.album {
+    display: inline-block;
+    position: relative;
+    height: 150px; width: 150px;
+    overflow: hidden;
+    margin: 6px;
+    border-radius: 3px;
+}
+.album-desc {
+    position: absolute;
+    top: 0px; left: 0px;
+    padding: 5px;
+    height: 150%; width: 150px;
+    color: white;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    transition: all 0.25s ease-in;
+    -webkit-transition: all 0.25s ease-in;
+}
+.album-desc-padding {
+    height: 35%;
+}
+.album-desc:hover {
+    top: -70%;
+    background: rgba(0, 0, 0, 0.5);
+}
+/* Class to add animation to the slider. */
+.slider {
+    transition: left 0.1s ease-in;
+    /* -moz-transition: left 0.5s ease-in; */
+    /* -webkit-transition: left 0.5s ease-in; */
+}
+#images-midi {
+    position: absolute;
+    left: 0px; top: 0px;
+}
+#images-maxi-container {
+    box-sizing: border-box;
+    padding: 4px;
+    position: absolute;
+    left: 0px; top: 0px;
+    width: 100%; height: 100%;
+}
+.midi {
+    position: absolute;
+    padding: 0px;
+    width: 100%; height: 100%;
+}
+.midiimg {
+    /* Width and height must be set in javascript. */
+    position: absolute;
+    border: 5px solid white;
+    top: 8px;
+    left: 0px; right: 0px; margin: auto;
+    padding: 0px;
+}
+.midi3d {
+    /* Width and height must be set in javascript. */
+    overflow: hidden;
+    position: absolute;
+    border: 5px solid white;
+    top: 8px;
+    left: 0px; right: 0px; margin: auto;
+    padding: 0px;
+}
+.prevnext {
+    position: absolute;
+    height: 104px;
+    top: 0px;
+    bottom: 0px;
+    margin: auto;
+    opacity: 0.2;
+    z-index: 10;
+}
+.prevnext:hover {
+    opacity: 1;
+    z-index: 10;
+}
+.prev {
+    left: 4px;
+}
+.next {
+    right: 4px;
+}
