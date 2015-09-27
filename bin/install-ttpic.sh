@@ -41,5 +41,5 @@ cp $INSTALL_FILES $ROOT/htdocs/db
 
 # mkdir $ROOT/mini
 # mkdir $ROOT/midi
-ln -s $PHOTOS $ROOT/maxi
-ln -s $PHOTOS $ROOT/originals
+# ln -s $PHOTOS $ROOT/maxi
+# ln -s $PHOTOS $ROOT/originals
