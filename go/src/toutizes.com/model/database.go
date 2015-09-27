@@ -1,7 +1,6 @@
 package model
 
 import (
-  "code.google.com/p/goprotobuf/proto"
   "errors"
   "io/ioutil"
   "log"
@@ -11,6 +10,7 @@ import (
   "time"
 )
 
+import "github.com/golang/protobuf/proto"
 import "toutizes.com/store"
 
 type Database struct {

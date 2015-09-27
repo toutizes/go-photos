@@ -1,12 +1,12 @@
 package model
 
 import (
-  "code.google.com/p/goprotobuf/proto"
   "strconv"
   "strings"
   "time"
 )
 
+import "github.com/golang/protobuf/proto"
 import "toutizes.com/store"
 
 type Stereo struct {
