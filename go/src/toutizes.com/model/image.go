@@ -34,6 +34,8 @@ func (img *Image) ItemTime() time.Time { return img.item_time }
 func (img *Image) RotateDegrees() int32 { return img.rotate_degrees }
 func (img *Image) Stereo() *Stereo { return img.stereo }
 
+func (img *Image) FixItemTime(tim time.Time) { img.item_time = tim }
+
 func (img *Image) Intern(indexer *Indexer) {
   img.name = indexer.Intern(img.name)
   for i, kwd := range img.keywords {

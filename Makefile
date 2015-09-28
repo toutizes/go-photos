@@ -7,13 +7,16 @@
 #  $ make get-go-dependencies
 
 
-# Server and html files.
+# Local testing.
+#
+# Images to load are symlinked from /tmp/db/originals.
 serve: generate 
 	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --port=9090  --db_root=/tmp/db --static_root=/tmp/db/htdocs
 
 install_html:
 	bin/install-ttpic.sh
 
+# Push to server
 push_serve: generate
 	cd go; GOPATH=$$(pwd) GOOS=linux GOARCH=amd64 go build -o bin_linux/aserve src/toutizes.com/test/aserve.go
 	rsync "go/bin_linux/aserve" ec2:/mnt/photos/bin/

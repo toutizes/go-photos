@@ -1,6 +1,8 @@
 package model
 
 import (
+  "errors"
+  "log"
   "strconv"
   "strings"
   "time"
@@ -30,12 +32,66 @@ func (dir *Directory) Intern(indexer *Indexer) {
   }
 }
 
+func tryGuess(s string, p string) (tim time.Time, err error) {
+  if len(s) < len(p) {
+    err = errors.New("")
+    return
+  }
+  tim, err = time.ParseInLocation(p, s[0:len(p)], time.FixedZone("PST", -8 * 3600))
+  return
+}
+
+func (dir *Directory) guessTimeFromName() (tim time.Time, err error) {
+  splits := strings.Split(dir.rel_pat, "/")
+  for i := len(splits) - 1; i >=0; i-- {
+    tim, err = tryGuess(splits[i], "2006-01-02")
+    if err == nil {
+      return
+    }
+    tim, err = tryGuess(splits[i], "2006-01")
+    if err == nil {
+      return
+    }
+    tim, err = tryGuess(splits[i], "2006")
+    if err == nil {
+      return
+    }
+    tim, err = tryGuess(splits[i], "Jan _2, 2006")
+    if err == nil {
+      return
+    }
+    // Special case for days 1:9
+    if len(splits[i]) >= 11 {
+      tim, err = time.Parse("Jan _2, 2006 MST", splits[i][0:11] + " PST")
+      if err == nil {
+        return
+      }
+    }
+  }
+  err = errors.New("No guess.")
+  return
+}
+
 // Finalize the directory after loading or creating.
 func (dir *Directory) Finalize() {
   dir.last_modified = time.Unix(0, 0)
   for _, img := range dir.images {
     if img.FileTime().After(dir.last_modified) {
       dir.last_modified = img.FileTime()
+    }
+  }
+  guessed, err := dir.guessTimeFromName()
+  if err == nil {
+    // TODO cleverly sort images before assigining time.  Use seq number in names
+    // such as "Picture 1.jpg", "Image04.jpg".  Move all non-seq ones at the end?
+    max_time := guessed.Add(365 * 24 * time.Hour)
+    for i, img := range dir.images {
+      if img.ItemTime().After(max_time) {
+        fixed_time := guessed.Add(time.Duration(i) * time.Hour)
+        log.Printf("%s/%s: Fix time to '%s' (was '%s')\n", dir.rel_pat(),
+                   img.Name(), fixed_time.String(), img.ItemTime().String())
+        img.FixItemTime(fixed_time)
+      }
     }
   }
 }
