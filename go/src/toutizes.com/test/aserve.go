@@ -15,6 +15,7 @@ var static_root = flag.String("static_root", "", "path to the static files")
 var port = flag.String("port", "80", "listen port")
 var db_root = flag.String("db_root", "", "path to the database root")
 var url_prefix = flag.String("url_prefix", "/db", "prefix for the usls.")
+var num_cpu = flag.Int("num_cpu", 0, "Number of CPUs to use.  0 means MAXPROC.")
 
 
 func Log(n string, r *http.Request) {
@@ -30,8 +31,10 @@ func LogHandler(n string, handler http.Handler) http.Handler {
 
 func main() {
   flag.Parse()
-  cpu := runtime.NumCPU()
-  runtime.GOMAXPROCS(cpu)
+  if *num_cpu == 0 {
+    *num_cpu = runtime.NumCPU()
+  }
+  log.Printf("Cpus: %d\n", runtime.GOMAXPROCS(*num_cpu))
 
   if *static_root == "" {
     log.Fatal("Must pass --static_root")

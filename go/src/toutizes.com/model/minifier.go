@@ -3,14 +3,18 @@
 package model
 
 import (
-  "os/exec"
+  "flag"
   "fmt"
   "io/ioutil"
   "log"
   "os"
+  "os/exec"
   "path"
   "time"
 )
+
+var minifier_threads = flag.Int("minifier_threads", 4, "Number of threads for minifying.")
+
 
 func indexTimes(dir string) (m map[string]time.Time) {
   fis, err :=  ioutil.ReadDir(dir)
@@ -98,7 +102,7 @@ func minifyWorker(db *Database, dir_ch <- chan *Directory, res_ch chan <- int) {
 
 
 func MinifyDatabase(db *Database) int {
-  N := 4
+  N := *minifier_threads;
   dir_ch := make(chan *Directory, N)
   res_ch := make(chan int, N)
   for i := 0; i < N; i++ {
