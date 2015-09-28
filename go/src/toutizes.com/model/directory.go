@@ -3,6 +3,7 @@ package model
 import (
   "errors"
   "log"
+  "sort"
   "strconv"
   "strings"
   "time"
@@ -72,6 +73,13 @@ func (dir *Directory) guessTimeFromName() (tim time.Time, err error) {
   return
 }
 
+// Sort images by name
+type ByName[] *Image
+func (a ByName) Len() int           { return len(a) }
+func (a ByName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByName) Less(i, j int) bool { return a[i].Name() < a[j].Name() }
+
+
 // Finalize the directory after loading or creating.
 func (dir *Directory) Finalize() {
   dir.last_modified = time.Unix(0, 0)
@@ -84,6 +92,7 @@ func (dir *Directory) Finalize() {
   if err == nil {
     // TODO cleverly sort images before assigining time.  Use seq number in names
     // such as "Picture 1.jpg", "Image04.jpg".  Move all non-seq ones at the end?
+    sort.Sort(ByName(dir.images))
     max_time := guessed.Add(365 * 24 * time.Hour)
     for i, img := range dir.images {
       if img.ItemTime().After(max_time) {
