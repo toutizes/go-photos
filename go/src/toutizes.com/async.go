@@ -6,7 +6,7 @@ var lr_roots = []string{
   "/Users/matthieu/Pictures/Lightroom/Photos",
   "/Volumes/overflow/matthieu/Lightroom/Photos",
 }
-var tt_root = "/mnt/photos/originals"
+var tt_root = "/mnt/photos/gdrive/Photos"
 
 type RsyncPair struct {
   lr_from string
