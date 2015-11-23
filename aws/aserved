@@ -1,0 +1,28 @@
+#!/bin/bash
+# chkconfig: 2345 55 25
+
+. /etc/rc.d/init.d/functions
+
+aserve="/mnt/photos/bin/aserve.sh"
+pidfile="/var/run/${aserve##*/}.pid"
+
+function start() {
+    if pidofproc "$aserve"; then
+    	echo "Already running."
+    	return 1
+    fi
+    if pid=$(runuser ec2-user $aserve); then
+	echo "$pid" > "$pidfile"
+    fi
+}
+
+function stop() {
+    killproc $aserve
+}
+
+case "$1" in
+    start) start;;
+    stop) stop;;
+    restart) stop; start;;
+    *) echo "Usage: $0 {start|stop|restart}"; exit 1;;
+esac

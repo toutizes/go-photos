@@ -31,6 +31,7 @@ func LogHandler(n string, handler http.Handler) http.Handler {
 
 func main() {
   flag.Parse()
+
   if *num_cpu == 0 {
     *num_cpu = runtime.NumCPU()
   }
@@ -44,7 +45,7 @@ func main() {
   }
   db := model.NewDatabase(*db_root)
   db.Load(true, true)
-  println("Serving...")
+  log.Printf("Serving...")
 
   http.HandleFunc(*url_prefix + "/q",
     func (w http.ResponseWriter, r *http.Request) {

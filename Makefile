@@ -11,7 +11,7 @@
 #
 # Images to load are symlinked from /tmp/db/originals.
 serve: generate 
-	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --port=9090  --db_root=/tmp/db --static_root=/tmp/db/htdocs
+	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --port=9090  --db_root=/tmp/db --static_root=/tmp/db/htdocs --log_file /tmp/x.log
 
 install_html:
 	bin/install-ttpic.sh
