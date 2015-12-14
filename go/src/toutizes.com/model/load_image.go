@@ -2,14 +2,18 @@ package model
 
 import (
   "bufio"
+  "errors"
+  "fmt"
   "log"
   "os"
   "os/exec"
+  "strconv"
   "strings"
   "time"
 )
 
 import (
+  "github.com/golang/protobuf/proto"
   "github.com/rwcarlsen/goexif/exif"
 )
 
@@ -29,17 +33,46 @@ func tagTime(ex *exif.Exif, ts exif.FieldName) (t time.Time, err error) {
   return
 }
 
-func getKeywords(file string) (keywords []string, err error) {
+func tagInt(ex *exif.Exif, ts exif.FieldName) (val int32, err error) {
+  val = -1
+  tg, err := ex.Get(ts)
+  if err != nil {
+    return
+  }
+  if tg.Count != 1 {
+    err = errors.New(fmt.Sprintf("Tag count not 1: %s", ts))
+    return
+  }
+  int_val, err := tg.Int(0)
+  if err == nil {
+    val = int32(int_val)
+  }
+  return
+}
+
+func getImageInfo(file string) (height int, width int, keywords []string, err error) {
   cmd := exec.Command(
-    *BinRoot + "convert", file, "-format", "%[IPTC:2:25]", "info:")
+    *BinRoot + "convert", file, "-format", "%h %w %[IPTC:2:25]", "info:")
   out, err := cmd.Output()
   if err != nil {
     log.Printf("%s: %s\n", file, err.Error())
   } else {
-    keywords = strings.Split(string(out), ";")
+    splits := strings.SplitN(string(out), " ", 3)
+    height, err = strconv.Atoi(splits[0])
+    if err != nil {
+      log.Printf("%s: %s\n", file, err.Error())
+      return
+    }
+    width, err = strconv.Atoi(splits[1])
+    if err != nil {
+      log.Printf("%s: %s\n", file, err.Error())
+      return
+    }
+    keywords = strings.Split(splits[2], ";")
   }
   return
 }
+
 
 func LoadImageFile(file string, image *store.Item) error {
   fi, err := os.Open(file)
@@ -47,19 +80,19 @@ func LoadImageFile(file string, image *store.Item) error {
     return err
   }
   defer fi.Close()
-  exif, err := exif.Decode(bufio.NewReader(fi))
+  ex, err := exif.Decode(bufio.NewReader(fi))
   if err != nil {
     return err
   }
   var image_time time.Time
   found_time := false
-  dto, err := tagTime(exif, "DateTimeOriginal")
+  dto, err := tagTime(ex, exif.DateTimeOriginal)
   if err == nil {
     image_time = dto
     found_time = true
   }
   if !found_time {
-    dtd, err := tagTime(exif, "DateTimeDigitized")
+    dtd, err := tagTime(ex, exif.DateTimeDigitized)
     if err == nil {
       log.Printf("Using DateTimeDigitized for: %s (%s)\n", file, dtd)
       image_time = dtd
@@ -67,7 +100,7 @@ func LoadImageFile(file string, image *store.Item) error {
     }
   }
   if !found_time {
-    dt, err := tagTime(exif, "DateTime")
+    dt, err := tagTime(ex, exif.DateTime)
     if err == nil {
       log.Printf("Using DateTime for: %s (%s)\n", file, dt)
       image_time = dt
@@ -80,9 +113,14 @@ func LoadImageFile(file string, image *store.Item) error {
   }
   its := TimeToProto(image_time)
   image.ItemTimestamp = &its
-  kwds, err := getKeywords(file)
+  height, width, kwds, err := getImageInfo(file)
   if err == nil {
     image.Keywords = kwds
+    image.Image = new(store.Image)
+    image.Image.Height = proto.Int32(int32(height))
+    image.Image.Width = proto.Int32(int32(width))
+  } else {
+    log.Printf("%s: %s", file, err.Error())
   }
   return nil
 }

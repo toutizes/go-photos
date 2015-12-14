@@ -7,11 +7,11 @@
 #  $ make get-go-dependencies
 
 
-# Local testing.
+# Running locall (See locserve: below for testing locally.)
 #
-# Images to load are symlinked from /tmp/db/originals.
+# serve needs to have run install_html.
 serve: generate 
-	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --port=9090  --db_root=/tmp/db --static_root=/tmp/db/htdocs
+	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --port=9090  --orig_root "~/Google Drive/Photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
 
 install_html:
 	bin/install-ttpic.sh
@@ -54,8 +54,11 @@ clean:
 
 # Tests.
 DIR=2005
-exif: generate
-	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/run.go /Users/matthieu/projects/ttphotos/index/$(DIR) /Users/matthieu/projects/ttphotos/originals/$(DIR) /tmp/mini /tmp/midi
+run: generate
+	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/run.go --orig_root ~/projects/test-photos/2002
+
+locserve: generate
+	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --orig_root ~/projects/test-photos --root /tmp/db-loc  --static_root=/tmp/db/htdocs --port 8080 --num_cpu 2
 
 test: generate
 	cd src/toutizes.com/model; go test

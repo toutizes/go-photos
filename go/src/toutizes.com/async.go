@@ -61,21 +61,31 @@ func quoteShell(s string) string {
   return s
 }
 
-func sync(pair RsyncPair) {
+func sync(pair RsyncPair) error {
   args := []string{
     "--recursive", "--relative", "--update", "--delete",
-    "--perms", "--omit-dir-times", "--times", "--timeout", "600",
+    "--perms", "--omit-dir-times", "--times", "--timeout=600",
+    "--bwlimit=500",
     pair.lr_from,
     "ec2:" + quoteShell(pair.tt_to)}
-  fmt.Printf("rsync %v\n", strings.Join(args, "' '"))
+  fmt.Printf("rsync '%v'\n", strings.Join(args, "' '"))
   start_time := time.Now()
   if true {
-    exec.Command("rsync", args...).Run()
-    fmt.Printf("rsync... %vs\n", time.Since(start_time).Seconds())
+    out, err := exec.Command("rsync", args...).CombinedOutput()
+    if err != nil {
+      fmt.Printf("rsync failed poo: %s\n", err.Error())
+      fmt.Printf("out: %v\n", string(out))
+      return err
+    } else {
+      fmt.Printf("rsync... %vs\n", time.Since(start_time).Seconds())
+      return nil
+    }
   }
+  return nil
 }
 
 func main() {
+  os.Remove("/tmp/lrlog")
   logFile, _ := os.OpenFile("/tmp/lrlog", os.O_WRONLY | os.O_CREATE | os.O_SYNC, 0644)
   syscall.Dup2(int(logFile.Fd()), 1)
   syscall.Dup2(int(logFile.Fd()), 2)

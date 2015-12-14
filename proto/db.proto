@@ -13,6 +13,8 @@ message Stereo {
 message Image {
   optional int32 rotate_degrees = 2 [default = 0];
   optional Stereo stereo = 3;
+  optional int32 height = 4;
+  optional int32 width = 5;
 }
 
 message Video {

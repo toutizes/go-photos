@@ -49,25 +49,25 @@ func DatabaseToReload(odb* Database) *Database {
   return db
 }
 
-func NewDatabase2(index_root, orig_root string) *Database {
+func NewDatabase2(orig_root, root string) *Database {
   db := new(Database)
-  db.indx_root = index_root
   db.orig_root = orig_root
-  db.midi_root = orig_root
-  db.mini_root = orig_root
-  db.mont_root = "/tmp/montages"
+  db.indx_root = path.Join(root, "index")
+  db.midi_root = path.Join(root, "midi")
+  db.mini_root = path.Join(root, "mini")
+  db.mont_root = path.Join(root, "montage")
   db.indexer = NewIndexer()
   db.file_times = NewFileTimes()
   return db
 }
 
-func NewDatabase4(index_root,  orig_root, mini_root, midi_root string) *Database {
+func NewDatabase5(index_root,  orig_root, mini_root, midi_root, mont_root string) *Database {
   db := new(Database)
   db.indx_root = index_root
   db.orig_root = orig_root
   db.midi_root = mini_root
   db.mini_root = midi_root
-  db.mont_root = "/tmp/montages"
+  db.mont_root = mont_root
   db.indexer = NewIndexer()
   db.file_times = NewFileTimes()
   return db

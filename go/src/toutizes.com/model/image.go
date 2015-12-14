@@ -1,6 +1,7 @@
 package model
 
 import (
+  "fmt"
   "strconv"
   "strings"
   "time"
@@ -20,6 +21,8 @@ type Image struct {
   sub_keywords []string
   file_time time.Time
   item_time time.Time
+  height int32
+  width int32
   rotate_degrees int32
   stereo *Stereo
   Id int
@@ -92,6 +95,12 @@ func ProtoToImage(dir *Directory, sitem *store.Item) *Image {
     addSubKeywords(img)
   }
   if simg := sitem.Image; simg != nil {
+    if simg.Height != nil {
+      img.height = *simg.Height
+    }
+    if simg.Width != nil {
+      img.width = *simg.Width
+    }
     if simg.RotateDegrees != nil {
       img.rotate_degrees = *simg.RotateDegrees
     }
@@ -118,6 +127,8 @@ func (img *Image) ToProto() *store.Item {
   }
   sitem.Keywords = img.keywords
   sitem.Image = new(store.Image)
+  sitem.Image.Height = proto.Int32(img.height)
+  sitem.Image.Width = proto.Int32(img.width)
   if img.rotate_degrees != 0 {
     sitem.Image.RotateDegrees = proto.Int32(img.rotate_degrees)
   }
@@ -137,6 +148,8 @@ type JsonImage struct {
   In string                     // Image filename in the album dir
   Its int64                     // Image taken timestamp
   Fts int64                     // Image file timestamp
+  H int32                       // Height
+  W int32                       // Width
   Kwd []string                  // Keywords
   Stereo *Stereo                // Stereo info
 }
@@ -147,6 +160,8 @@ func (img *Image) Json(jimg *JsonImage) {
   jimg.In = img.name
   jimg.Its = img.item_time.Unix()
   jimg.Fts = img.file_time.Unix()
+  jimg.H = img.height
+  jimg.W = img.width
   jimg.Kwd = img.keywords
   jimg.Stereo = img.stereo
 }
@@ -157,6 +172,8 @@ func (img *Image) String() string {
   parts = append(parts, "file_time: ", img.file_time.String(), ", ")
   parts = append(parts, "item_time: ", img.item_time.String(), ", ")
   parts = append(parts, "rotate: ", strconv.Itoa(int(img.rotate_degrees)), ", ")
+  parts = append(parts, fmt.Sprintf("height: %d, ", img.height))
+  parts = append(parts, fmt.Sprintf("width: %d, ", img.width))
   parts = append(parts, "keywords: [", strings.Join(img.keywords, ", "), "], ")
   parts = append(parts, "sub_keywords: [", strings.Join(img.sub_keywords, ", "), "]")
   parts = append(parts, "}")

@@ -1,14 +1,25 @@
 package main
 
 import (
-  "encoding/json"
-  "os"
+  "flag"
+  "fmt"
+  "log"
   "runtime"
 )
 
 import (
   "toutizes.com/model"
 )
+
+var orig_root = flag.String("orig_root", "", "path to the orig files")
+var root = flag.String("root", "/tmp/db", "root or the index, mini, etc.")
+
+func database() *model.Database {
+  if *orig_root == "" {
+    log.Fatal("Must pass --orig_root")
+  }
+  return model.NewDatabase2(*orig_root, *root)
+}
 
 func collectQ(q model.Query) []int {
   ids := make([]int, 0)
@@ -19,42 +30,17 @@ func collectQ(q model.Query) []int {
   return ids
 }
 
-func main0() {
-  cpu := runtime.NumCPU()
-  runtime.GOMAXPROCS(cpu)
-  var db *model.Database
-  if len(os.Args) == 5 {
-    db = model.NewDatabase4(os.Args[1], os.Args[2],
-      os.Args[3], os.Args[4])
-  } else if len(os.Args) == 3 {
-    db = model.NewDatabase2(os.Args[1], os.Args[2])
-  } else {
-    db = model.NewDatabase(os.Args[1])
-  }
-  err := db.Load(false, false)
-  if err != nil {
-    println(err.Error())
-  }
-  ids := collectQ(model.ParseQuery("albums:", db))
-  print(len(ids))
-}
-
 func main() {
+  flag.Parse()
+
   cpu := runtime.NumCPU()
   runtime.GOMAXPROCS(cpu)
 
-  db_root := os.Args[1]
-//  web_root := os.Args[2]
-
-  db := model.NewDatabase(db_root)
+  db := database()
   db.Load(false, false)
-
-  enc := json.NewEncoder(os.Stdout)
-
-  q := model.ParseQuery("matthieu Paris", db)
+  q := model.ParseQuery("2008", db)
+  fmt.Printf("images: %d\n", len(q))
   for img := range q {
-    jimg := model.JsonImage{}
-    img.Json(&jimg)
-    enc.Encode(&jimg)
+   fmt.Printf("%v\n", img.String())
   }
 }
