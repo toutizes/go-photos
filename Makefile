@@ -11,7 +11,7 @@
 #
 # serve needs to have run install_html.
 serve: generate 
-	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --port=9090  --orig_root "~/Google Drive/Photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
+	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --port=9090  --orig_root "/Users/matthieu/Google Drive/Photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
 
 install_html:
 	bin/install-ttpic.sh

@@ -80,6 +80,9 @@ func (db *Database) MontagePath() string { return db.mont_root }
 func (db *Database) IndexPath(rel_pat string) string {
   return path.Join(db.indx_root, rel_pat, "index.pbin")
 }
+func (db *Database) IndexTextPath(rel_pat string) string {
+  return path.Join(db.indx_root, rel_pat, "index.pbtxt")
+}
 func (db *Database) FullMiniPath(rel_pat string) string {
   return path.Join(db.mini_root, rel_pat)
 }
@@ -116,8 +119,10 @@ func (db *Database) Swap(ndb *Database) {
   db.directories = ndb.directories
 }
 
-func (db *Database) SaveDirectory(dir *Directory) error {
-  return writeIndex(db.IndexPath(dir.RelPat()), dir.ToProto())
+func (db *Database) SaveDirectory(dir *Directory) (err error) {
+  return writeIndex(db.IndexPath(dir.RelPat()),
+                    db.IndexTextPath(dir.RelPat()),
+                    dir.ToProto())
 }
 
 // Database Loader
@@ -144,17 +149,23 @@ func readIndex(idx string, sdir *store.Directory) error {
   return err
 }
 
-func writeIndex(idx string, sdir *store.Directory) (err error) {
-  log.Printf("write %s\n", idx)
-  err = os.MkdirAll(path.Dir(idx), 0777)
+func writeIndex(bin_path string, txt_path string, sdir *store.Directory) (err error) {
+  log.Printf("write %s, %s\n", bin_path, txt_path)
+  err = os.MkdirAll(path.Dir(bin_path), 0777)
   if err != nil {
     return
   }
-  data, err := proto.Marshal(sdir)
+  bin_data, err := proto.Marshal(sdir)
   if err != nil {
     return
   }
-  return ioutil.WriteFile(idx, data, 0777)
+  err = ioutil.WriteFile(bin_path, bin_data, 0777)
+  if err != nil {
+    return
+  }
+  txt_data := []byte(proto.MarshalTextString(sdir))
+  err = ioutil.WriteFile(txt_path, txt_data, 0777)
+  return
 }
 
 func (db *Database) handleLoad(update_disk bool, lod *loaderLoad) (*loaderResult, error) {
@@ -177,7 +188,7 @@ func (db *Database) handleLoad(update_disk bool, lod *loaderLoad) (*loaderResult
       orgd_ts := TimeToProto(lod.orgd_mtime)
       sdir.DirectoryTimestamp = &orgd_ts
       if update_disk {
-        err = writeIndex(index_path, &sdir)
+        err = writeIndex(index_path, db.IndexTextPath(lod.rel_pat), &sdir)
         if err != nil {
           log.Printf("%s: %s\n", index_path, err.Error())
           err = nil
