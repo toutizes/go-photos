@@ -5,13 +5,24 @@
 #
 # Get go dependencies:
 #  $ make get-go-dependencies
-
+#
+# The following dependencies must have been git cloned as siblings
+# of thie directory.
+#  $ cd ..
+#  $ git clone git://github.com/imakewebthings/waypoints
+#  $ git clone git://github.com/malihu/malihu-custom-scrollbar-plugin
+#  $ git clone git://github.com/cowboy/jquery-hashchange
+#  $ git clone git://github.com/CarlosBonetti/jquery-loading
+#  $ git clone https://gist.github.com/1130507.git
 
 # Running locall (See locserve: below for testing locally.)
 #
 # serve needs to have run install_html.
-serve: generate 
-	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --port=9090  --orig_root "/Users/matthieu/Google Drive/Photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
+serve_full: generate 
+	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --update_db=true --port=8080  --orig_root="/Users/matthieu/Google Drive/Photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
+
+serve_small: generate 
+	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --update_db=true --port=8080  --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
 
 install_html:
 	bin/install-ttpic.sh
@@ -64,8 +75,8 @@ test: generate
 	cd src/toutizes.com/model; go test
 
 
-# Get dependencies for the Go code.
+# Get dependencies for the Go and Js code.
 # Ignore error from github.com/rwcarlsen/goexif which is because it has no files to build.
-get-go-dependencies:
+get-dependencies:
 	-cd go; GOPATH=$$(pwd) go get -d github.com/rwcarlsen/goexif
 	cd go; GOPATH=$$(pwd) go get -u github.com/golang/protobuf/{proto,protoc-gen-go}
