@@ -2,7 +2,7 @@ package model
 
 import (
   "errors"
-  "log"
+//   "log"
   "sort"
   "strconv"
   "strings"
@@ -97,8 +97,8 @@ func (dir *Directory) Finalize() {
     for i, img := range dir.images {
       if img.ItemTime().After(max_time) {
         fixed_time := guessed.Add(time.Duration(i) * time.Hour)
-        log.Printf("%s/%s: Fix time to '%s' (was '%s')\n", dir.rel_pat,
-                   img.Name(), fixed_time.String(), img.ItemTime().String())
+//         log.Printf("%s/%s: Fix time to '%s' (was '%s')\n", dir.rel_pat,
+//                    img.Name(), fixed_time.String(), img.ItemTime().String())
         img.FixItemTime(fixed_time)
       }
     }

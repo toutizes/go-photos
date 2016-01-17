@@ -1,4 +1,4 @@
-/*global $, console, TT_Album5, TT_Image5, TT_Hash, TT_DisplayMode2, TT_ThreeD2, TT_Slider5*/
+/*global $, console, TT_Album5, TT_Image5, TT_Hash, TT_DisplayMode2, TT_ThreeD2, TT_Slider5, TT_IFlow*/
 /*jslint browser:true, nomen: true*/
 var TT_DB5 = (function () {
   "use strict";
@@ -8,10 +8,12 @@ var TT_DB5 = (function () {
     header_,
     q_,
     IMAGE_MODE,
+    IFLOW_MODE,
     ALBUM_MODE,
     NEWS_MODE;
 
   IMAGE_MODE = "I";
+  IFLOW_MODE = "F";
   ALBUM_MODE = "A";
   NEWS_MODE = "N";
 
@@ -83,7 +85,18 @@ var TT_DB5 = (function () {
     if (content_ !== TT_Image5) {
       TT_Image5.show();
       TT_Album5.hide();
+      TT_IFlow.hide();
       content_ = TT_Image5;
+    }
+  }
+
+  function display_iflow(h) {
+    TT_IFlow.display(h);
+    if (content_ !== TT_IFlow) {
+      TT_IFlow.show();
+      TT_Album5.hide();
+      TT_Image5.hide();
+      content_ = TT_IFlow;
     }
   }
 
@@ -93,6 +106,7 @@ var TT_DB5 = (function () {
     if (content_ !== TT_Album5) {
       TT_Album5.show();
       TT_Image5.hide();
+      TT_IFlow.hide();
       content_ = TT_Album5;
     }
   }
@@ -113,6 +127,8 @@ var TT_DB5 = (function () {
     // db/s.  Change db/s to use mode "I"!
     if (h.mode === IMAGE_MODE || h.mode === "p2") {
       display_images(h);
+    } else if (h.mode === IFLOW_MODE) {
+      display_iflow(h);
     } else if (h.mode === ALBUM_MODE || h.mode === NEWS_MODE) {
       display_albums(h);
     }
@@ -131,6 +147,10 @@ var TT_DB5 = (function () {
   // Requests for hash change.
   function req_image_mode() {
     set_hash({mode: IMAGE_MODE});
+  }
+
+  function req_iflow_mode() {
+    set_hash({mode: IFLOW_MODE});
   }
 
   function req_image_index(i) {
@@ -184,6 +204,10 @@ var TT_DB5 = (function () {
 
   function search() {
     set_hash({mode: IMAGE_MODE, q: q_.val(), c: 0, k: null, stereo: false});
+  }
+
+  function iflow() {
+    set_hash({mode: IFLOW_MODE, q: q_.val(), c: 0, k: null, stereo: false});
   }
 
   function rel_next(n) {
@@ -278,10 +302,11 @@ var TT_DB5 = (function () {
   function initialize() {
     resized();
     bind_events();
-    $.loading({onAjax: true, delay: 300, text: "Chargement..."});
+//     $.loading({onAjax: true, delay: 300, text: "Chargement..."});
     TT_ThreeD2.initialize();
     TT_Slider5.initialize(TT_ThreeD2);
     TT_Image5.initialize(TT_Slider5);
+    TT_IFlow.initialize();
     TT_Album5.initialize();
     header_ = $("#header");
     q_ = $("#q");
@@ -296,10 +321,12 @@ var TT_DB5 = (function () {
   return {
     init: init,
     req_image_mode: req_image_mode,
+    req_iflow_mode: req_iflow_mode,
     req_album_mode: req_album_mode,
     req_image_index: req_image_index,
     req_string: req_string,
     st_mode: st_mode,
-    search: search
+    search: search,
+    iflow: iflow
   };
 }());

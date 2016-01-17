@@ -83,7 +83,9 @@ var TT_Fetcher2 = (function () {
       filename: jphoto.In,
       timestamp: jphoto.Its,
       updated: jphoto.Fts,
-      keywords: makeKeywords(jphoto.Kwd)
+      keywords: makeKeywords(jphoto.Kwd),
+      w: jphoto.W,
+      h: jphoto.H
     };
     if (jphoto.Stereo) {
       photo.stereo_dx = jphoto.Stereo.Dx;
@@ -103,7 +105,15 @@ var TT_Fetcher2 = (function () {
     };
   }
 
-  function gotPhotoFeed(jphotos, cb) {
+  function by_timestamp_decreasing(a, b) {
+    return b.timestamp - a.timestamp;
+  }
+
+  function by_timestamp_increasing(a, b) {
+    return a.timestamp - b.timestamp;
+  }
+
+  function gotPhotoFeed(query, jphotos, cb) {
     // console.log("Got photo feed: ", jphotos);
     var photos = [], i;
     if (jphotos.length === 0) {
@@ -114,13 +124,18 @@ var TT_Fetcher2 = (function () {
       }
     }
     // console.log("Got photos: ", photos);
+    if (query.match(/^album:/)) {
+      photos = photos.sort(by_timestamp_increasing);
+    } else {
+      photos = photos.sort(by_timestamp_decreasing);
+    }
     cb(photos);
   }
 
   function queryPhotos(query, cb) {
     ajax("q",
          {"q": query, "kind": "photo"},
-         function (feed) { gotPhotoFeed(feed, cb); });
+         function (feed) { gotPhotoFeed(query, feed, cb); });
   }
 
   function setStereo(id, dx, dy) {

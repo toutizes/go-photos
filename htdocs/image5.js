@@ -248,23 +248,10 @@ var TT_Image5 = (function () {
     }
   }
 
-  function by_timestamp_decreasing(a, b) {
-    return b.timestamp - a.timestamp;
-  }
-
-  function by_timestamp_increasing(a, b) {
-    return a.timestamp - b.timestamp;
-  }
-
   function images_ready(h, images) {
     var names,
       rebuild_minis = false,
       mini_container = get_mini_container();
-    if (h.q.match(/^album:/)) {
-      images = images.sort(by_timestamp_increasing);
-    } else {
-      images = images.sort(by_timestamp_decreasing);
-    }
     names = $.map(images, function (i) { return i.id; });
     montage_ = TT_Montage.create(MONTAGE, Math.floor(mini_size_), names);
     if (h.k !== null) {

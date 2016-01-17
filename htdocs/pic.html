@@ -5,7 +5,7 @@
     <meta name="viewport" content="initial-scale=1.0">
     <title>Images 5</title>
     <link rel="stylesheet" type="text/css" href="pic5.css">
-    <link href="myCSB.css" rel="stylesheet" type="text/css" />
+    <link href="jquery.mCustomScrollbar.min.css" rel="stylesheet" type="text/css" />
     <script src="http://code.jquery.com/jquery-1.9.0.js"></script>
     <script src="http://code.jquery.com/jquery-migrate-1.0.0.js"></script>
     <script src="tt_db5.js"></script>
@@ -20,6 +20,9 @@
           <ul>
             <li>
               <a onclick="TT_DB5.search()" class="clean-gray">Chercher</a>
+            </li>
+            <li>
+              <a onclick="TT_DB5.iflow()" class="clean-gray">Flow</a>
             </li>
             <li>
               <a onclick="TT_DB5.req_album_mode();" class="clean-gray">Albums</a>
@@ -42,7 +45,9 @@
       </form>
     </div>
 
-    <div id="album-container" class="hidden"></div>
+    <div id="album-container" class="hidden">      
+      <div id="album-contents"></div>
+    </div>
 
     <div id="images" class="hidden">
       <div id="mini-container">
@@ -58,6 +63,9 @@
         <div id="keywords-album"></div>
         <div id="keywords"></div>
       </div>
+    </div>
+
+    <div id="iflow" class="hidden">
     </div>
 
     <div id="images-maxi-container" class="hidden">

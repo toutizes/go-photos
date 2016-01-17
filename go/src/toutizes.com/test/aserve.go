@@ -17,6 +17,7 @@ var orig_root = flag.String("orig_root", "", "path to the original images")
 var root = flag.String("root", "", "path to the database index, mini, etc")
 var url_prefix = flag.String("url_prefix", "/db", "prefix for the urls.")
 var num_cpu = flag.Int("num_cpu", 0, "Number of CPUs to use.  0 means MAXPROC.")
+var update_db = flag.Bool("update_db", true, "If true update the database files.")
 
 
 func Log(n string, r *http.Request) {
@@ -48,7 +49,7 @@ func main() {
     log.Fatal("Must pass --root")
   }
   db := model.NewDatabase2(*orig_root, *root)
-  db.Load(true, true)
+  db.Load(*update_db, *update_db)
   log.Printf("Serving...")
 
   http.HandleFunc(*url_prefix + "/q",
@@ -66,6 +67,11 @@ func main() {
       Log("/viewer", r)
       model.HandleCommands(w, r, db)
     })
+  http.Handle(
+    *url_prefix + "/mini/",
+    LogHandler(
+      "/mini",
+      http.StripPrefix(*url_prefix, http.FileServer(http.Dir(*root)))))
   http.Handle(
     *url_prefix + "/midi/",
     LogHandler(

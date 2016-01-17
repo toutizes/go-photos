@@ -246,7 +246,7 @@ nav ul ul li:hover {
     top: 0;
     bottom: 0;
     margin-top: 48px;           /* just below #header */
-    overflow: hidden;
+    overflow: scroll;
 }
 /* Album styles. */
 .album {
@@ -331,4 +331,10 @@ nav ul ul li:hover {
 }
 .next {
     right: 4px;
+}
+/* flow elements */
+.flow_img {
+    padding: 5px 5px 5px 5px;
+}
+.flow_row {
 }

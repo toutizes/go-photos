@@ -2,18 +2,21 @@
 # Installs a test image db in /tmp/db
 
 JS_FILES="
-htdocs/custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js
-htdocs/jquery.ba-hashchange.js
-htdocs/jquery.loading.1.6.4.js
+../waypoints/lib/jquery.waypoints.min.js
+../malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js
+../jquery-hashchange/jquery.ba-hashchange.min.js
+../jquery-loading/dist/jquery.loading.min.js
+../1130507/base64.js
 htdocs/3d2.js
 htdocs/preloader.js
 htdocs/fetcher2.js
 htdocs/hash.js
 htdocs/album5.js
 htdocs/image5.js
+htdocs/iflow.js
+htdocs/infinite.js
 htdocs/slider5.js
 htdocs/db5.js
-htdocs/base64.js
 htdocs/montage.js
 htdocs/util.js
 "
@@ -27,8 +30,9 @@ htdocs/icons/next2.png
 htdocs/icons/active.png
 htdocs/icons/parallel.png
 htdocs/icons/crosseye.png
-htdocs/custom-scrollbar-plugin/myCSB.css
-htdocs/custom-scrollbar-plugin/mCSB_buttons.png
+../malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css
+../malihu-custom-scrollbar-plugin/mCSB_buttons.png
+../jquery-loading/dist/jquery.loading.min.css
 /tmp/tt_db5.js
 "
 
