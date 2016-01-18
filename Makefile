@@ -10,7 +10,6 @@
 # of thie directory.
 #  $ cd ..
 #  $ git clone git://github.com/imakewebthings/waypoints
-#  $ git clone git://github.com/malihu/malihu-custom-scrollbar-plugin
 #  $ git clone git://github.com/cowboy/jquery-hashchange
 #  $ git clone git://github.com/CarlosBonetti/jquery-loading
 #  $ git clone https://gist.github.com/1130507.git

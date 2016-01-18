@@ -96,7 +96,7 @@ nav ul ul li:hover {
     border: 1px solid white;
 }
 #mini-container {
-    overflow: hidden;
+    overflow: scroll;
     box-sizing: border-box;
     -moz-box-sizing: border-box;
     padding: 4px;
@@ -114,6 +114,10 @@ nav ul ul li:hover {
         width: 234px; /* 3 * .minis + mCSB */
         height: 100%;
     }
+    #mini-contents {
+        height: 100%;
+        width: 234px;
+    }
     #images-midi-container {
         position: absolute;
         left: 230px; /* #images-mini.width + 2 * padding */
@@ -127,6 +131,11 @@ nav ul ul li:hover {
     #mini-container {
         height: 90px; /* 1 * .minis + mCSB */
         width: 100%;
+    }
+    #mini-contents {
+        height: 90px; /* 1 * .minis + mCSB */
+        width: 100%;
+	white-space: nowrap
     }
     #images-midi-container {
         width: 100%;

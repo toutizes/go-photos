@@ -46,31 +46,6 @@ var TT_DB5 = (function () {
     var portrait = $(window).height() > $(window).width(),
       m = $("#mini-container"),
       sb;
-    // Update scrollbars on the mini container.
-    if (portrait_ !== portrait) {
-      if (portrait_ !== null) {
-        // Remove previous scrollbars on minis.
-        m.mCustomScrollbar("destroy");
-      }
-      if (portrait) {
-        sb = {scrollInertia: 0,
-              horizontalScroll: true,
-              scrollButtons: {enable: true},
-              advanced: {autoExpandHorizontalScroll: true},
-              callbacks: {onTotalScroll: TT_Image5.append_more_minis,
-                          onTotalScrollOffset: 3 * 64,
-                          onTotalScrollBack: TT_Image5.prepend_more_minis,
-                          onTotalScrollBackOffset: 3 * 64}};
-      } else {
-        sb = {scrollInertia: 0,
-              scrollButtons: {enable: true},
-              callbacks: {onTotalScroll: TT_Image5.append_more_minis,
-                          onTotalScrollOffset: 3 * 64,
-                          onTotalScrollBack: TT_Image5.prepend_more_minis,
-                          onTotalScrollBackOffset: 3 * 64 }};
-      }
-      m.mCustomScrollbar(sb);
-    }
     // Tell contents about the size change.
     if (content_ !== null) {
       content_.resized();
@@ -302,7 +277,6 @@ var TT_DB5 = (function () {
   function initialize() {
     resized();
     bind_events();
-//     $.loading({onAjax: true, delay: 300, text: "Chargement..."});
     TT_ThreeD2.initialize();
     TT_Slider5.initialize(TT_ThreeD2);
     TT_Image5.initialize(TT_Slider5);

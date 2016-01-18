@@ -1,33 +1,28 @@
-/*global $, console, TT_Fetcher2, TT_Montage, TT_DB5, TT_Preloader*/
+/*global $, console, TT_Fetcher2, TT_Montage, TT_DB5, TT_Preloader, tt_Infinite*/
 /*jslint browser:true, nomen: true, unparam: true*/
 var TT_Image5 = (function () {
   "use strict";
 
-  var images_, keywords_, mini_model_, mini_size_, keyword_model_, montage_,
-    slider_ = null, prev_ = null, next_ = null, h_ = null, h_images_ = null,
-    h_mini_from_ = null, h_mini_to_ = null, cur_mini_ = null,
-    preloader_, MONTAGE = 8;
+  // Display elements.
+  var images_ = null;		// Container for IMAGE_MODE.
+  var keyword_model_ = null;	// Model for keywords.
+  var keywords_ = null;		// Container for keywords.
+  var mini_model_ = null;	// Model for minis.
+  var mini_size_ = 0;		// Size of the mini model.
+  var container_ = null;	// Container for minis.
+  var prev_ = null; 		// Previous image button.
+  var next_ = null; 		// Next image button.
 
-  function elt_visible(elt, cont) {
-    var cont_top = cont.offset().top,
-      cont_bot = cont_top + cont.height(),
-      cont_left = cont.offset().left,
-      cont_right = cont_left + cont.width(),
-      elt_offest = elt.offset(),
-      elt_top,
-      elt_bot,
-      elt_left,
-      elt_right;
-    if (elt_offest === null) {
-      return false;
-    }
-    elt_top = elt.offset().top;
-    elt_bot = elt_top + elt.outerHeight();
-    elt_left = elt.offset().left;
-    elt_right = elt_left + elt.outerWidth();
-    return (elt_top >= cont_top && elt_bot <= cont_bot &&
-            elt_left >= cont_left && elt_right <= cont_right);
-  }
+  // Utility objects.
+  var slider_ = null;		// TT_Slider for images.
+  var preloader_ = null;	// TT_Preloader for iamges.
+  var infinite_ = null;		// Infinite scroller object for minis.
+  var montage_ = null;		// TT_Montage for mini images.
+
+  // Data.
+  var h_ = null;		// Hash currently displayed.
+  var h_images_ = null;		// Images queried from the hash.
+  var cur_mini_ = null;		// Element for current mini.
 
   function image_album_dir(image) {
     var album_dir = image.albumId;
@@ -63,99 +58,22 @@ var TT_Image5 = (function () {
     }
   }
 
-  function get_mini_container() {
-    return $("#mini-container");
-  }
-
-  function get_mini_contents() {
-    return $("#mini-container .mCSB_container");
-  }
-
-  function num_minis_in_viewport() {
-    var container = get_mini_container();
-    return Math.ceil((container.width() / mini_size_) *
-                     (container.height() / mini_size_));
-  }
-
-  function make_mini(abs_index) {
+  function make_mini_div(index) {
+    if (index < 0 || index >= h_images_.length) {
+      return null;
+    }
     var mini = mini_model_.clone();
-    mini.attr("id", "m-" + abs_index);
-    mini.data({index: abs_index});
-    mini.css(montage_.bg_style(abs_index));
+    mini.attr("id", "m-" + index);
+    mini.data({index: index});
+    mini.css(montage_.bg_style(index));
     mini.click(req_mini);
     return mini;
   }
 
-  function add_minis(images, mini_from, mini_to) {
-    var mini_contents = get_mini_contents(),
-      prepend = (h_mini_from_ === null || mini_from <= h_mini_from_),
-      cur_mini_pos,
-      delta,
-      i;
-    mini_from = Math.max(0, mini_from);
-    mini_to = Math.min(images.length, mini_to);
-    if (mini_to === mini_from) {
-      return;
-    }
-//    console.log("add_minis ");
-//    console.log(cur_mini_);
-//    if (cur_mini_) {
-//      console.log("add_minis_pos ");
-//      console.log(cur_mini_.position());
-//    }
-    if (prepend) {
-      if (cur_mini_) {
-        cur_mini_pos = cur_mini_.position();
-      }
-      for (i = mini_to - 1; i >= mini_from; i--) {
-        mini_contents.prepend(make_mini(i));
-      }
-    } else {
-      for (i = mini_from; i < mini_to; i++) {
-        mini_contents.append(make_mini(i));
-      }
-    }
-    if (h_mini_from_ === null) {
-      h_mini_from_ = mini_from;
-      h_mini_to_ = mini_to;
-    } else {
-      h_mini_from_ = Math.min(h_mini_from_, mini_from);
-      h_mini_to_ = Math.max(h_mini_to_, mini_to);
-    }
-    get_mini_container().mCustomScrollbar("update");
-    if (prepend && cur_mini_ && cur_mini_.position()) {
-      if (get_mini_container().height() > get_mini_container().width()) {
-        delta = cur_mini_.position().top - cur_mini_pos.top;
-        get_mini_container().mCustomScrollbar("scrollTo",
-                                              mini_contents.position().top + delta,
-                                              {scrollInertia: 0});
-      } else {
-        delta = cur_mini_.position().left - cur_mini_pos.left;
-        get_mini_container().mCustomScrollbar("scrollTo",
-                                              mini_contents.position().left + delta,
-                                              {scrollInertia: 0});
-      }
-    }
-  }
-
-  function prepend_more_minis() {
-    if (h_images_ !== null && h_mini_from_ !== null) {
-      add_minis(h_images_, h_mini_from_ - num_minis_in_viewport(), h_mini_from_);
-    }
-  }
-
-  function append_more_minis() {
-    if (h_images_ !== null && h_mini_from_ !== null) {
-      add_minis(h_images_, h_mini_to_, h_mini_to_ + num_minis_in_viewport());
-    }
-  }
-
-  function show_minis(h, images) {
-    var N = num_minis_in_viewport(), P = N * Math.floor(h.c / N);
-    get_mini_contents().empty();
-    h_mini_from_ = null;
-    h_mini_to_ = null;
-    add_minis(images, P - N, P + N);
+  function minis_per_page() {
+    var n = Math.ceil((container_.width() / mini_size_) *
+                      (container_.height() / mini_size_));
+    return n;
   }
 
   function stereo_if_needed(h, photo) {
@@ -249,11 +167,8 @@ var TT_Image5 = (function () {
   }
 
   function images_ready(h, images) {
-    var names,
-      rebuild_minis = false,
-      mini_container = get_mini_container();
-    names = $.map(images, function (i) { return i.id; });
-    montage_ = TT_Montage.create(MONTAGE, Math.floor(mini_size_), names);
+    var ids = $.map(images, function (i) { return i.id; });
+    montage_ = TT_Montage.create(8, Math.floor(mini_size_), ids);
     if (h.k !== null) {
       // Set h.c to the first images with id h.k.  If no image is
       // found h.c is set to 0.
@@ -286,30 +201,26 @@ var TT_Image5 = (function () {
     } else {
       show_midi(h, images);
     }
-    rebuild_minis = (h_images_ === null || images !== h_images_);
+    var rebuild_minis = (h_images_ === null || images !== h_images_);
+    h_ = h;
+    h_images_ = images;
+    if (infinite_ === null) {
+      infinite_ = make_infinite();
+    }
     if (rebuild_minis) {
-      show_minis(h, images);
+      infinite_.display(h_.c);
     }
     // highlight current mini, and make it visible
     if (cur_mini_) {
-      // console.log("Old cur_mini_");
-      // console.log(cur_mini_);
       cur_mini_.removeClass("mini-current");
     }
-    cur_mini_ = $("#m-" + h.c).eq(0);
-    // console.log("New cur_mini_");
-    // console.log(cur_mini_);
+    cur_mini_ = $("#m-" + h_.c).eq(0);
     if (cur_mini_) {
       cur_mini_.addClass("mini-current");
-      if (!elt_visible(cur_mini_, mini_container)) {
-        mini_container.mCustomScrollbar("scrollTo", "#" + cur_mini_.attr("id"),
-                                        {scrollInertia: rebuild_minis ? 0 : 250});
-      }
+      infinite_.scroll_into_view(h_.c);
     }
-    show_keywords(h, images);
-    show_download_links(h, images);
-    h_ = h;
-    h_images_ = images;
+    show_keywords(h_, h_images_);
+    show_download_links(h_, h_images_);
   }
 
   function display(h) {
@@ -329,33 +240,57 @@ var TT_Image5 = (function () {
     images_.removeClass("hidden");
   }
 
+  function horizontal() {
+    console.log("w " + container_.width() + ", h " + container_.height());
+    console.log(container_);
+    return container_.width() > container_.height();
+  }
+
+  function make_infinite() {
+    return tt_Infinite(container_, $("#mini-contents"), horizontal(),
+    		       { items_per_page: minis_per_page,
+    			 make_item_div: make_mini_div
+    		       });
+  }
+
   function resized() {
-    var mini_container = get_mini_container();
     if (slider_ !== null) {
       slider_.resized();
     }
-    if (cur_mini_ && !elt_visible(cur_mini_, mini_container)) {
-      mini_container.mCustomScrollbar("scrollTo", "#" + cur_mini_.attr("id"));
+    if (infinite_ !== null) {
+      if (infinite_.horizontal() !== horizontal()) {
+	infinite_.destroy();
+	infinite_ = make_infinite();
+	if (h_ !== null) {
+	  infinite_.display(h_.c);
+	  cur_mini_ = $("#m-" + h_.c).eq(0);
+	  if (cur_mini_ !== null) {
+	    cur_mini_.addClass("mini-current");
+	  }
+	}
+      } else if (h_ !== null) {
+	infinite_.scroll_into_view(h_.c);
+      }
     }
   }
 
   function initialize(slider) {
     images_ = $("#images");
-    keywords_ = $("#keywords");
     keyword_model_ = $("#keyword-model");
+    keywords_ = $("#keywords");
     mini_model_ = $("#mini-model");
     mini_size_ = mini_model_.width();
-    slider_ = slider;
+    container_ = $("#mini-container");
     prev_ = $(".prev");
     next_ = $(".next");
+
+    slider_ = slider;
     preloader_ = TT_Preloader.create(10);
   }
 
   return {
     h: function () { return h_; },
     resized: resized,
-    append_more_minis: append_more_minis,
-    prepend_more_minis: prepend_more_minis,
     display: display,
     hide: hide,
     show: show,

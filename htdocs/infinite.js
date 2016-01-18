@@ -1,6 +1,6 @@
 /*global $, console, */
 /*jslint browser:true, nomen: true*/
-function tt_Infinite(container, contents, source) {
+function tt_Infinite(container, contents, horizontal, source) {
   /* Uses jquery extensions: waypoints. */
   "use strict";
   
@@ -16,35 +16,63 @@ function tt_Infinite(container, contents, source) {
   //   It should return null if the requested index is out of bounds.
   var source_ = source;
 
+  // True if horizontal, false if vertical;
+  var horizontal_ = horizontal;
+  
   var first_item_index_ = -1; // Index - 1 of the first item present in the container.
   var last_item_index_ = 0; // Index + 1 of the last item present in the container.
   var first_waypoint_ = null;	// Waypoint of first item.
   var last_waypoint_ = null;	// Waypoint of last item.
 
+  // Make sure 'div' is visible, vertical case.
+  function scroll_into_view_vert(div) {
+    var div_top = Math.floor(div.offset().top);
+    var div_bot = div_top + div.outerHeight();
+    var cont_top = Math.floor(container_.offset().top);
+    var cont_bot = cont_top + container_.height();
+    console.log("div_top " + div_top + ", cont_top " + cont_top);
+    if (div_top < cont_top) {
+      container_.scrollTop(container_.scrollTop() - (cont_top - div_top));
+    } else if (div_bot > cont_bot) {
+      container_.scrollTop(container_.scrollTop() + (div_bot - cont_bot));
+    }
+  }
+
+  // Make sure 'div' is visible, horizontal case.
+  function scroll_into_view_hori(div) {
+    var div_left = Math.floor(div.offset().left);
+    var div_right = div_left + div.outerWidth();
+    var cont_left = Math.floor(container_.offset().left);
+    var cont_right = cont_left + container_.width();
+    if (div_left < cont_left) {
+      container_.scrollLeft(container_.scrollLeft() - (cont_left - div_left));
+    } else if (div_right > cont_right) {
+      container_.scrollLeft(container_.scrollLeft() + (div_right - cont_right));
+    }
+  }
+
   // Make sure the content for 'index' is visible.
   function scroll_into_view(index) {
     if (index < first_item_index_) {
-      // add and continue?
+      // add more and continue?
       return;
     } 
     if (index >= last_item_index_) {
-      // add and continue?
+      // add more and continue?
       return;
     }
     var children = contents_.children();
     var rel_index = index - first_item_index_ - 1;
     if (rel_index < 0 || rel_index >= children.length) {
-      return;			// Be safe.
+      // Nothing to do.
+      return;
     }
     var div = children.eq(rel_index);
-    var div_top = Math.floor(div.offset().top);
-    var div_bot = div_top + div.outerHeight();
-    var cont_top = Math.floor(container_.offset().top);
-    var cont_bot = cont_top + container_.height();
-    if (div_top < cont_top) {
-      container_.scrollTop(container_.scrollTop() - (cont_top - div_top));
-    } else if (div_bot > cont_bot) {
-      container_.scrollTop(container_.scrollTop() + (div_bot - cont_bot));
+    console.log("Hori: " + horizontal_);
+    if (horizontal_) {
+      scroll_into_view_hori(div);
+    } else {
+      scroll_into_view_vert(div);
     }
   }
 
@@ -55,41 +83,49 @@ function tt_Infinite(container, contents, source) {
 
   // Prepend an element while keeping the current scroll.
   function prepend(element) {
-    var before = contents_.outerHeight();
-    contents_.prepend(element);
-    var change = contents_.outerHeight() - before;
-    container_.scrollTop(container_.scrollTop() + change);
+    var before, change;
+    if (horizontal_) {
+      before = contents_.outerWidth();
+      contents_.prepend(element);
+      change = contents_.outerWidth() - before;
+      container_.scrollLeft(container_.scrollLeft() + element.outerWidth());
+    } else {
+      before = contents_.outerHeight();
+      contents_.prepend(element);
+      change = contents_.outerHeight() - before;
+      container_.scrollTop(container_.scrollTop() + change);
+    }
   }
 
-  // Callback for waypoints at the bottom.
-  function wp_bot(d) {
-    if (d === "down") {
+  // Callback for waypoints at the end of the displayed items.
+  function wp_after(d) {
+    if (d === "down" || d === "right") {
       this.disable();		// 'this' is the waypoint.
       add_next_page_of_items();
     }
   }
 
-  // Callback for waypoints at the top.
-  function wp_top(d) {
-    if (d === "up") {
+  // Callback for waypoints at the beginning of the displayed items.
+  function wp_before(d) {
+    if (d === "up" || d === "left") {
       this.disable();		// 'this' is the waypoint.
       add_prev_page_of_items();
     }
   }
 
   // Add a waypoint callback for "div".
-  function add_waypoint(div, bot) {
+  function add_waypoint(div, after) {
     var waypoint_options = {
       context: container_,
-      horizontal: false
+      horizontal: horizontal_
     };
     var callback;
-    if (bot) {
-      waypoint_options.offset = "bottom-in-view";
-      callback = wp_bot;
+    if (after) {
+      waypoint_options.offset = horizontal_ ? "right-in-view" : "bottom-in-view";
+      callback = wp_after;
     } else {
-      waypoint_options.offset = -div.outerHeight();
-      callback = wp_top;
+      waypoint_options.offset = horizontal_ ? -div.outerWidth() : -div.outerHeight();
+      callback = wp_before;
     }
     return div.waypoint(callback , waypoint_options)[0];
   }
@@ -118,7 +154,7 @@ function tt_Infinite(container, contents, source) {
       append(item_div);
       last_item_index_ += 1;
     }
-    last_waypoint_ = add_waypoint(item_div, true /*bottom*/);
+    last_waypoint_ = add_waypoint(item_div, true /* after */);
   }
 
   // Same as add_next_page_of_items() but adds the previous page.
@@ -137,7 +173,7 @@ function tt_Infinite(container, contents, source) {
       prepend(item_div);
       first_item_index_ -= 1;
     }
-    first_waypoint_ = add_waypoint(item_div, false /* bottom */);
+    first_waypoint_ = add_waypoint(item_div, false /* after */);
   }
 
   // Same as add_next_page_of_items() but add a page centered
@@ -181,16 +217,26 @@ function tt_Infinite(container, contents, source) {
     if (last_div) {
       last_waypoint_ = add_waypoint(last_div, true /* bottom */);
     }
+  }
+
+  // Rebuild the contents from scratch around 'index'.
+  function display(index) {
+    contents_.empty();
+    add_center_page_of_items(index);
     scroll_into_view(index);
   }
 
-  function display(index) {
-    // Either add elements or scroll into view.
-    add_center_page_of_items(index);
+  // Clear the elements, destroy the waypoints.
+  function destroy() {
+    contents_.empty();
+    first_waypoint_ = destroy_waypoint(first_waypoint_);
+    last_waypoint_ = destroy_waypoint(last_waypoint_);
   }
 
   return {
     display: display,
-    scroll_into_view: scroll_into_view
+    scroll_into_view: scroll_into_view,
+    horizontal: function() { return horizontal_; },
+    destroy: destroy
   };
 }

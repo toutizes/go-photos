@@ -35,7 +35,6 @@ var TT_Album5 = (function () {
   }
 
   function albums_per_page() {
-    return 4;
     var h_albums = album_container_.width() / 150;
     var p_albums = h_albums * (album_container_.height() / 150);
     var n = Math.min(p_albums, albums_.length);
@@ -69,6 +68,7 @@ var TT_Album5 = (function () {
     album_container_ = $("#album-container");
     model_ = $("#album-model");
     infinite_ = tt_Infinite(album_container_, $("#album-contents"),
+			    false /* horizontal */,
     			    { items_per_page: albums_per_page,
     			      make_item_div: make_album_div
     			    });

@@ -3,7 +3,6 @@
 
 JS_FILES="
 ../waypoints/lib/jquery.waypoints.min.js
-../malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js
 ../jquery-hashchange/jquery.ba-hashchange.min.js
 ../jquery-loading/dist/jquery.loading.min.js
 ../1130507/base64.js
@@ -30,8 +29,6 @@ htdocs/icons/next2.png
 htdocs/icons/active.png
 htdocs/icons/parallel.png
 htdocs/icons/crosseye.png
-../malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css
-../malihu-custom-scrollbar-plugin/mCSB_buttons.png
 ../jquery-loading/dist/jquery.loading.min.css
 /tmp/tt_db5.js
 "
