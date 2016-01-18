@@ -30,7 +30,6 @@ function tt_Infinite(container, contents, horizontal, source) {
     var div_bot = div_top + div.outerHeight();
     var cont_top = Math.floor(container_.offset().top);
     var cont_bot = cont_top + container_.height();
-    console.log("div_top " + div_top + ", cont_top " + cont_top);
     if (div_top < cont_top) {
       container_.scrollTop(container_.scrollTop() - (cont_top - div_top));
     } else if (div_bot > cont_bot) {
@@ -68,7 +67,6 @@ function tt_Infinite(container, contents, horizontal, source) {
       return;
     }
     var div = children.eq(rel_index);
-    console.log("Hori: " + horizontal_);
     if (horizontal_) {
       scroll_into_view_hori(div);
     } else {

@@ -29,6 +29,7 @@ htdocs/icons/next2.png
 htdocs/icons/active.png
 htdocs/icons/parallel.png
 htdocs/icons/crosseye.png
+../malihu-custom-scrollbar-plugin/mCSB_buttons.png
 ../jquery-loading/dist/jquery.loading.min.css
 /tmp/tt_db5.js
 "

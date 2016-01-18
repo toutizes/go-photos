@@ -144,14 +144,6 @@ var TT_Image5 = (function () {
     }
   }
 
-  function set_hash_c(index, image, h) {
-    if (image.id === h.k) {
-      h.c = index;
-      h.k = null;
-      return false;
-    }
-  }
-
   function show_download_links(h, images) {
     var image, url;
     if (images.length > 0 && h.c < images.length) {
@@ -168,12 +160,20 @@ var TT_Image5 = (function () {
 
   function images_ready(h, images) {
     var ids = $.map(images, function (i) { return i.id; });
+    var i;
     montage_ = TT_Montage.create(8, Math.floor(mini_size_), ids);
     if (h.k !== null) {
       // Set h.c to the first images with id h.k.  If no image is
       // found h.c is set to 0.
       h.c = 0;
-      $.each(images, function (index, image) { return set_hash_c(index, image, h); });
+      for (i = 0; i < images.length; i++) {
+	// NOTE: use '==' and not '===' as h.k and image.id can be of different types.
+	if (images[i].id == h.k) {
+	  h.k = null;
+	  h.c = i;
+	  break;
+	}
+      }
     }
     if (h.c >= images.length) {
       h.c = images.length - 1;
@@ -241,8 +241,6 @@ var TT_Image5 = (function () {
   }
 
   function horizontal() {
-    console.log("w " + container_.width() + ", h " + container_.height());
-    console.log(container_);
     return container_.width() > container_.height();
   }
 
