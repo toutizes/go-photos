@@ -74,22 +74,21 @@ function tt_Infinite(container, contents, horizontal, source) {
     }
   }
 
-  // Append an element.
-  function append(element) {
-    contents_.append(element);
+  // Memorize what it needed to restore the position of contents_ later
+  // after adding elements to it.
+  function contents_pos() {
+    return horizontal_ ? contents_.outerWidth() : contents_.outerHeight();
   }
 
-  // Prepend an element while keeping the current scroll.
-  function prepend(element) {
-    var before, change;
+  // Restore the position of contents_.  'before' is what contents_pos() returned
+  // before adding elements to contents_.
+  // after adding contents to it.
+  function restore_contents_pos(before) {
+    var change;
     if (horizontal_) {
-      before = contents_.outerWidth();
-      contents_.prepend(element);
       change = contents_.outerWidth() - before;
-      container_.scrollLeft(container_.scrollLeft() + element.outerWidth());
+      container_.scrollLeft(container_.scrollLeft() + change);
     } else {
-      before = contents_.outerHeight();
-      contents_.prepend(element);
       change = contents_.outerHeight() - before;
       container_.scrollTop(container_.scrollTop() + change);
     }
@@ -149,7 +148,7 @@ function tt_Infinite(container, contents, horizontal, source) {
 	// No more minis to add.  No waypoints to set either.
 	return;
       }
-      append(item_div);
+      contents_.append(item_div);
       last_item_index_ += 1;
     }
     last_waypoint_ = add_waypoint(item_div, true /* after */);
@@ -159,19 +158,24 @@ function tt_Infinite(container, contents, horizontal, source) {
   // Takes special care to not change the scroll position of the
   // container.
   function add_prev_page_of_items() {
-    var i, item_div;
     var n = source_.items_per_page();
+    var pos_before = contents_pos();
     first_waypoint_ = destroy_waypoint(first_waypoint_);
+    var i, item_div;
     for (i = 0; i < n; i++) {
       item_div = source_.make_item_div(first_item_index_);
       if (item_div === null) {
 	// No more items to add.  No waypoints to set either.
-	return;
+	break;
       }
-      prepend(item_div);
+      contents_.prepend(item_div);
       first_item_index_ -= 1;
     }
-    first_waypoint_ = add_waypoint(item_div, false /* after */);
+    restore_contents_pos(pos_before);
+    if (item_div !== null) {
+      // Add a waypoint if we need it.
+      first_waypoint_ = add_waypoint(item_div, false /* after */);
+    }
   }
 
   // Same as add_next_page_of_items() but add a page centered
@@ -192,7 +196,7 @@ function tt_Infinite(container, contents, horizontal, source) {
 	// No more minis to add.
 	break;
       }
-      prepend(first_div);
+      contents_.prepend(first_div);
       first_item_index_ -= 1;
     }
     // Add a full page after the current image.
@@ -205,9 +209,10 @@ function tt_Infinite(container, contents, horizontal, source) {
       if (cur_div === null) {
 	cur_div = last_div;
       }
-      append(last_div);
+      contents_.append(last_div);
       last_item_index_ += 1;
     }
+    scroll_into_view(index);
     // Add waypoints to get more data.
     if (first_div) {
       first_waypoint_ = add_waypoint(first_div, false /* bottom */);
@@ -221,7 +226,6 @@ function tt_Infinite(container, contents, horizontal, source) {
   function display(index) {
     contents_.empty();
     add_center_page_of_items(index);
-    scroll_into_view(index);
   }
 
   // Clear the elements, destroy the waypoints.

@@ -1,6 +1,10 @@
 #!/bin/bash -eu
 # Installs a test image db in /tmp/db
 
+# For debug info
+#../waypoints/lib/jquery.waypoints.js
+# ../waypoints/lib/waypoints.debug.js
+
 JS_FILES="
 ../waypoints/lib/jquery.waypoints.min.js
 ../jquery-hashchange/jquery.ba-hashchange.min.js

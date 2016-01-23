@@ -58,20 +58,26 @@ var TT_Image5 = (function () {
     }
   }
 
-  function make_mini_div(index) {
+  function make_mini_div(idx) {
+    var index = 3 * idx;
     if (index < 0 || index >= h_images_.length) {
       return null;
     }
-    var mini = mini_model_.clone();
-    mini.attr("id", "m-" + index);
-    mini.data({index: index});
-    mini.css(montage_.bg_style(index));
-    mini.click(req_mini);
-    return mini;
+    var row = $("<div/>", {"class": "images-mini-row"});
+    var i, mini;
+    for (i = index; i < index + 3 && i < h_images_.length; i++) {
+      mini = mini_model_.clone();
+      mini.attr("id", "m-" + i);
+      mini.data({index: i});
+      mini.css(montage_.bg_style(i));
+      mini.click(req_mini);
+      row.append(mini);
+    }
+    return row;
   }
 
   function minis_per_page() {
-    var n = Math.ceil((container_.width() / mini_size_) *
+    var n = Math.ceil((1 + (container_.width() / (3 * mini_size_))) *
                       (container_.height() / mini_size_));
     return n;
   }
@@ -208,7 +214,7 @@ var TT_Image5 = (function () {
       infinite_ = make_infinite();
     }
     if (rebuild_minis) {
-      infinite_.display(h_.c);
+      infinite_.display(Math.floor(h_.c / 3));
     }
     // highlight current mini, and make it visible
     if (cur_mini_) {
@@ -217,7 +223,7 @@ var TT_Image5 = (function () {
     cur_mini_ = $("#m-" + h_.c).eq(0);
     if (cur_mini_) {
       cur_mini_.addClass("mini-current");
-      infinite_.scroll_into_view(h_.c);
+      infinite_.scroll_into_view(Math.floor(h_.c / 3));
     }
     show_keywords(h_, h_images_);
     show_download_links(h_, h_images_);
@@ -260,14 +266,14 @@ var TT_Image5 = (function () {
 	infinite_.destroy();
 	infinite_ = make_infinite();
 	if (h_ !== null) {
-	  infinite_.display(h_.c);
+	  infinite_.display(Math.floor(h_.c / 3));
 	  cur_mini_ = $("#m-" + h_.c).eq(0);
 	  if (cur_mini_ !== null) {
 	    cur_mini_.addClass("mini-current");
 	  }
 	}
       } else if (h_ !== null) {
-	infinite_.scroll_into_view(h_.c);
+	infinite_.scroll_into_view(Math.floor(h_.c / 3));
       }
     }
   }
