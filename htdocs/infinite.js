@@ -77,19 +77,19 @@ function tt_Infinite(container, contents, horizontal, source) {
   // Memorize what it needed to restore the position of contents_ later
   // after adding elements to it.
   function contents_pos() {
-    return horizontal_ ? contents_.outerWidth() : contents_.outerHeight();
+    var first = contents_.children().eq(0);
+    return {first: first, top: first.offset().top, left: first.offset().left};
   }
 
-  // Restore the position of contents_.  'before' is what contents_pos() returned
-  // before adding elements to contents_.
-  // after adding contents to it.
+  // Restore the position of contents_.  'before' is what
+  // contents_pos() returned before adding elements to contents_.
   function restore_contents_pos(before) {
     var change;
     if (horizontal_) {
-      change = contents_.outerWidth() - before;
+      change = before.first.offset().left - before.left;
       container_.scrollLeft(container_.scrollLeft() + change);
     } else {
-      change = contents_.outerHeight() - before;
+      change = before.first.offset().top - before.top;
       container_.scrollTop(container_.scrollTop() + change);
     }
   }
@@ -146,12 +146,14 @@ function tt_Infinite(container, contents, horizontal, source) {
       item_div = source_.make_item_div(last_item_index_);
       if (item_div === null) {
 	// No more minis to add.  No waypoints to set either.
-	return;
+	break;
       }
       contents_.append(item_div);
       last_item_index_ += 1;
     }
-    last_waypoint_ = add_waypoint(item_div, true /* after */);
+    if (item_div !== null) {
+      last_waypoint_ = add_waypoint(item_div, true /* after */);
+    }
   }
 
   // Same as add_next_page_of_items() but adds the previous page.
