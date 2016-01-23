@@ -107,6 +107,9 @@ nav ul ul li:hover {
     -moz-box-sizing: border-box;
     padding: 4px;
 }
+.images-mini-row {
+    display: inline-block;
+}
 @media screen and (orientation:landscape) {
     #mini-container {
         position: absolute;
