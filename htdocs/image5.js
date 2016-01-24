@@ -293,7 +293,6 @@ var TT_Image5 = (function () {
   }
 
   return {
-    h: function () { return h_; },
     resized: resized,
     display: display,
     hide: hide,

@@ -114,7 +114,9 @@ var TT_Slider5 = (function () {
     midi.css({left: midi_index * (pw + 2 * MIDI_PAD), top: 0, width: pw, height: ph});
     images_midi_.data({index: midi_index});
     images_midi_.css({left: -midi_index * (pw + 2 * MIDI_PAD) + MIDI_PAD});
-    cb();
+    if (cb !== null) {
+      cb();
+    }
   }
 
   function display(h, photo, img_url, mode, cb) {
@@ -150,6 +152,14 @@ var TT_Slider5 = (function () {
     display(h, photo, img_url, FULL, cb);
   }
 
+  function hide() {
+    images_maxi_container_.addClass("hidden");
+  }
+
+  function show() {
+    images_maxi_container_.removeClass("hidden");
+  }
+
   function initialize(threed) {
     images_midi_container_ = $("#images-midi-container");
     images_maxi_container_ = $("#images-maxi-container");
@@ -161,6 +171,8 @@ var TT_Slider5 = (function () {
 
   return {
     clear: clear,
+    hide: hide,
+    show: show,
     center: center,
     slide_left: slide_left,
     slide_right: slide_right,

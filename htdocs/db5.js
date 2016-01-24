@@ -3,7 +3,8 @@
 var TT_DB5 = (function () {
   "use strict";
 
-  var content_ = null,
+  var h_ = null,
+    content_ = null,
     portrait_ = null,
     header_,
     q_,
@@ -96,16 +97,16 @@ var TT_DB5 = (function () {
   }
 
   function hash_change() {
-    var h = get_hash();
-    display_form(h);
+    h_ = get_hash();
+    display_form(h_);
     // p2 is backwards compatibility for redirects from feed that goes through
     // db/s.  Change db/s to use mode "I"!
-    if (h.mode === IMAGE_MODE || h.mode === "p2") {
-      display_images(h);
-    } else if (h.mode === IFLOW_MODE) {
-      display_iflow(h);
-    } else if (h.mode === ALBUM_MODE || h.mode === NEWS_MODE) {
-      display_albums(h);
+    if (h_.mode === IMAGE_MODE || h_.mode === "p2") {
+      display_images(h_);
+    } else if (h_.mode === IFLOW_MODE) {
+      display_iflow(h_);
+    } else if (h_.mode === ALBUM_MODE || h_.mode === NEWS_MODE) {
+      display_albums(h_);
     }
   }
 
@@ -134,6 +135,10 @@ var TT_DB5 = (function () {
 
   function req_midi_images() {
     set_hash({full: false});
+  }
+
+  function req_full(i) {
+    set_hash({c: i, k: null, full: true});
   }
 
   function toggle_midi_maxi_images() {
@@ -186,9 +191,8 @@ var TT_DB5 = (function () {
   }
 
   function rel_next(n) {
-    var h = TT_Image5.h();
-    if (h !== null) {
-      set_hash({c: Math.max(0, h.c + n), k: null});
+    if (h_ !== null) {
+      set_hash({c: Math.max(0, h_.c + n), k: null});
     }
   }
 
@@ -265,6 +269,7 @@ var TT_DB5 = (function () {
     $("#prev-full").click(prev);
     $("#next-full").click(next);
     $("#midi-model").dblclick(toggle_midi_maxi_images);
+    $("#iflow-img-model").dblclick(toggle_midi_maxi_images);
     $(document.body).keydown(key_down);
     $("#q").keydown(function (e) {
       e.stopPropagation();
@@ -280,7 +285,7 @@ var TT_DB5 = (function () {
     TT_ThreeD2.initialize();
     TT_Slider5.initialize(TT_ThreeD2);
     TT_Image5.initialize(TT_Slider5);
-    TT_IFlow.initialize();
+    TT_IFlow.initialize(TT_Slider5);
     TT_Album5.initialize();
     header_ = $("#header");
     q_ = $("#q");
@@ -299,6 +304,7 @@ var TT_DB5 = (function () {
     req_album_mode: req_album_mode,
     req_image_index: req_image_index,
     req_string: req_string,
+    req_full: req_full,
     st_mode: st_mode,
     search: search,
     iflow: iflow
