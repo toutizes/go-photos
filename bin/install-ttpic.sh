@@ -18,6 +18,7 @@ htdocs/album5.js
 htdocs/image5.js
 htdocs/iflow.js
 htdocs/infinite.js
+htdocs/keywords.js
 htdocs/slider5.js
 htdocs/db5.js
 htdocs/montage.js

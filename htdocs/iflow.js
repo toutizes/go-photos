@@ -1,4 +1,4 @@
-/*global $, console, TT_Fetcher2, TT_Montage, TT_DB5, tt_Infinite*/
+/*global $, console, TT_Fetcher2, TT_Image5, TT_DB5, tt_Infinite, TT_Keywords*/
 /*jslint browser:true, nomen: true, unparam: true*/
 var TT_IFlow = (function () {
   "use strict";
@@ -21,6 +21,11 @@ var TT_IFlow = (function () {
   function req_full(e) {
     var data = $(this).data();
     TT_DB5.req_full(data.index);
+  }
+
+  function req_image(e) {
+    var data = $(this).data();
+    TT_DB5.req_image_index(data.index);
   }
 
   function image_img_url(image, kind) {
@@ -46,6 +51,10 @@ var TT_IFlow = (function () {
     var img, w_i;
     for (i = 0; i < h_images_.length; i++) {
       img = h_images_[i];
+      if (img.w == 0 || img.h == 0) {
+	img.w = 1200;
+	img.h = 900;
+      }
       w_i = padded((img.w * target_h_) / img.h);
       if (w_i / 2 > w_remaining) {
 	row_indices_.push(i);
@@ -110,6 +119,7 @@ var TT_IFlow = (function () {
       });
       img_elt.data({index: i});
       img_elt.dblclick(req_full);
+      img_elt.click(req_image);
       row_div.append(img_elt);
     }
     return row_div;
@@ -125,7 +135,7 @@ var TT_IFlow = (function () {
   }
 
   function images_ready(h, images) {
-    console.log("h.c: " + h.c);
+    TT_Image5.fix_h(h, images);
     if (h_ !== null) {
       $("#" + image_eltid(h_.c)).removeClass("iflow-img-current");
     }
@@ -154,6 +164,7 @@ var TT_IFlow = (function () {
     } else {
       slider_.hide();
     }
+    TT_Keywords.display(h_images_[h_.c]);
   }
 
   function display(h) {
@@ -185,7 +196,7 @@ var TT_IFlow = (function () {
 
   function show() {
     container_.removeClass("hidden");
-    if (h_.full) {
+    if (h_ && h_.full) {
       slider_.show();
     }
   }

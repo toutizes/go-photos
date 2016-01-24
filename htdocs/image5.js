@@ -1,12 +1,10 @@
-/*global $, console, TT_Fetcher2, TT_Montage, TT_DB5, TT_Preloader, tt_Infinite*/
+/*global $, console, TT_Fetcher2, TT_Montage, TT_DB5, TT_Preloader, tt_Infinite, TT_Keywords*/
 /*jslint browser:true, nomen: true, unparam: true*/
 var TT_Image5 = (function () {
   "use strict";
 
   // Display elements.
   var images_ = null;		// Container for IMAGE_MODE.
-  var keyword_model_ = null;	// Model for keywords.
-  var keywords_ = null;		// Container for keywords.
   var mini_model_ = null;	// Model for minis.
   var mini_size_ = 0;		// Size of the mini model.
   var container_ = null;	// Container for minis.
@@ -43,11 +41,6 @@ var TT_Image5 = (function () {
   function req_mini(e) {
     var data = $(this).data();
     TT_DB5.req_image_index(data.index);
-  }
-
-  function req_keyword(e) {
-    var data = $(this).data();
-    TT_DB5.req_string(data.kw, data.image);
   }
 
   function preload_next_images(images, c) {
@@ -120,36 +113,6 @@ var TT_Image5 = (function () {
     }
   }
 
-  function add_one_keyword(index, keyword, keyword_q, image_id, container) {
-    var kw = keyword_model_.clone().attr("id", null).text(keyword);
-    if (keyword_q.indexOf(" ") !== -1) {
-      keyword_q = "\"" + keyword_q + "\"";
-    }
-    kw.data({kw: keyword_q, image: image_id});
-    kw.click(req_keyword);
-    container.append(kw);
-    container.append(" ");
-  }
-
-  function add_keyword(index, keyword, image_id, container) {
-    add_one_keyword(index, keyword, keyword, image_id, container);
-  }
-
-  function show_keywords(h, images) {
-    var image, fn;
-    if (images.length > 0 && h.c < images.length) {
-      image = images[h.c];
-      keywords_.empty();
-      $("#keywords-album").empty();
-      add_one_keyword(0, image.albumId, "album:" + image.albumId, image.id,
-                      $("#keywords-album"));
-      fn = function (index, keyword) {
-        add_keyword(index, keyword, image.id, keywords_);
-      };
-      $.each(image.keywords, fn);
-    }
-  }
-
   function show_download_links(h, images) {
     var image, url;
     if (images.length > 0 && h.c < images.length) {
@@ -164,10 +127,8 @@ var TT_Image5 = (function () {
     }
   }
 
-  function images_ready(h, images) {
-    var ids = $.map(images, function (i) { return i.id; });
+  function fix_h(h, images) {
     var i;
-    montage_ = TT_Montage.create(8, Math.floor(mini_size_), ids);
     if (h.k !== null) {
       // Set h.c to the first images with id h.k.  If no image is
       // found h.c is set to 0.
@@ -187,6 +148,12 @@ var TT_Image5 = (function () {
     if (h.c < 0) {
       h.c = 0;
     }
+  }
+
+  function images_ready(h, images) {
+    var ids = $.map(images, function (i) { return i.id; });
+    montage_ = TT_Montage.create(8, Math.floor(mini_size_), ids);
+    fix_h(h, images);
     if (h.c === 0) {
       prev_.addClass("hidden");
     } else {
@@ -225,7 +192,7 @@ var TT_Image5 = (function () {
       cur_mini_.addClass("mini-current");
       infinite_.scroll_into_view(Math.floor(h_.c / 3));
     }
-    show_keywords(h_, h_images_);
+    TT_Keywords.display(h_images_[h_.c]);
     show_download_links(h_, h_images_);
   }
 
@@ -280,8 +247,8 @@ var TT_Image5 = (function () {
 
   function initialize(slider) {
     images_ = $("#images");
-    keyword_model_ = $("#keyword-model");
-    keywords_ = $("#keywords");
+    // keyword_model_ = $("#keyword-model");
+    // keywords_ = $("#keywords");
     mini_model_ = $("#mini-model");
     mini_size_ = mini_model_.width();
     container_ = $("#mini-container");
@@ -297,6 +264,8 @@ var TT_Image5 = (function () {
     display: display,
     hide: hide,
     show: show,
-    initialize: initialize
+    initialize: initialize,
+    // For iflow
+    fix_h: fix_h
   };
 }());

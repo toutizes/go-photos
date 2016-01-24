@@ -1,4 +1,4 @@
-/*global $, console, TT_Album5, TT_Image5, TT_Hash, TT_DisplayMode2, TT_ThreeD2, TT_Slider5, TT_IFlow*/
+/*global $, console, TT_Album5, TT_Image5, TT_Hash, TT_DisplayMode2, TT_ThreeD2, TT_Slider5, TT_IFlow, TT_Keywords*/
 /*jslint browser:true, nomen: true*/
 var TT_DB5 = (function () {
   "use strict";
@@ -60,6 +60,7 @@ var TT_DB5 = (function () {
     TT_Image5.display(h);
     if (content_ !== TT_Image5) {
       TT_Image5.show();
+      TT_Keywords.show();
       TT_Album5.hide();
       TT_IFlow.hide();
       content_ = TT_Image5;
@@ -70,6 +71,7 @@ var TT_DB5 = (function () {
     TT_IFlow.display(h);
     if (content_ !== TT_IFlow) {
       TT_IFlow.show();
+      TT_Keywords.show();
       TT_Album5.hide();
       TT_Image5.hide();
       content_ = TT_IFlow;
@@ -83,6 +85,7 @@ var TT_DB5 = (function () {
       TT_Album5.show();
       TT_Image5.hide();
       TT_IFlow.hide();
+      TT_Keywords.hide();
       content_ = TT_Album5;
     }
   }
@@ -179,7 +182,16 @@ var TT_DB5 = (function () {
   }
 
   function req_string(q, k) {
-    set_hash({mode: IMAGE_MODE, q: q, c: 0, k: k, stereo: false});
+    var mode = (h_.mode == ALBUM_MODE || h_.mode == NEWS_MODE) ? IMAGE_MODE : h_.mode;
+    var h = {mode: mode, q: q, stereo: false, full: false};
+    if (k === null) {
+      h.c = 0;
+      h.k = null;
+    } else {
+      h.c = null;
+      h.k = k;
+    }
+    set_hash(h);
   }
 
   function search() {
@@ -287,6 +299,7 @@ var TT_DB5 = (function () {
     TT_Image5.initialize(TT_Slider5);
     TT_IFlow.initialize(TT_Slider5);
     TT_Album5.initialize();
+    TT_Keywords.initialize();
     header_ = $("#header");
     q_ = $("#q");
     // Do it.
