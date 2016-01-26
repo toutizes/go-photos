@@ -51,7 +51,7 @@ func main0() {
   cpu := runtime.NumCPU()
   runtime.GOMAXPROCS(cpu)
   db := model.NewDatabase(os.Args[1])
-  db.Load(false, false)
+  db.Load(false, false, false)
   ids := collectQ(model.ParseQuery(":albums", db))
   print(len(ids))
 }
@@ -80,7 +80,7 @@ func main3() {
   db_root := os.Args[1]
 
   db := model.NewDatabase(db_root)
-  db.Load(false, false)
+  db.Load(false, false, false)
 
   q := model.ParseQuery("2015 degustations montoulieu", db)
   for img := range q {

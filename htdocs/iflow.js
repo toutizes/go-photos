@@ -52,6 +52,7 @@ var TT_IFlow = (function () {
     for (i = 0; i < h_images_.length; i++) {
       img = h_images_[i];
       if (img.w == 0 || img.h == 0) {
+	console.log("No size: " + img.albumId + "/" + img.filename);
 	img.w = 1200;
 	img.h = 900;
       }

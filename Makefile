@@ -18,10 +18,10 @@
 #
 # serve needs to have run install_html.
 serve_full: generate 
-	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --update_db=true --port=8080  --orig_root="/Users/matthieu/Google Drive/Photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
+	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --port=8080  --orig_root="/Users/matthieu/Google Drive/Photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
 
 serve_small: generate 
-	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --update_db=true --port=8080  --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
+	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --port=8080  --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
 
 install_html:
 	bin/install-ttpic.sh
@@ -63,9 +63,20 @@ clean:
 	rm -f $(STORE)/*.pb.go
 
 # Tests.
-DIR=2005
 run: generate
-	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/run.go --orig_root ~/projects/test-photos/2002
+	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/run.go --orig_root ~/Google\ Drive/Photos/2000/2000-03-25
+
+addkwds: generate
+	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/addkwds.go --root /tmp/a
+
+runadd: generate
+	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/run.go --root /tmp/a
+
+run2: generate
+	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/run.go --orig_root ~/Google\ Drive/Photos/2015/2015-12-14
+
+run3: generate
+	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/run.go --orig_root ~/Google\ Drive/Photos/2000/2000-03-25
 
 locserve: generate
 	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --orig_root ~/projects/test-photos --root /tmp/db-loc  --static_root=/tmp/db/htdocs --port 8080 --num_cpu 2

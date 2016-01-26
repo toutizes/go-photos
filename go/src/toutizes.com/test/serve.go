@@ -26,7 +26,10 @@ func main() {
   }
 
   db := model.NewDatabase(db_root)
-  db.Load(true, true)
+	update_disk := true
+	minify := true
+	force_reload := true
+  db.Load(update_disk, minify, force_reload)
   println("Serving...")
 
   http.HandleFunc("/q",

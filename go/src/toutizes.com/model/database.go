@@ -120,9 +120,9 @@ func (db *Database) Swap(ndb *Database) {
 }
 
 func (db *Database) SaveDirectory(dir *Directory) (err error) {
-  return writeIndex(db.IndexPath(dir.RelPat()),
-                    db.IndexTextPath(dir.RelPat()),
-                    dir.ToProto())
+	bin_path := db.IndexPath(dir.RelPat())
+	txt_path := db.IndexTextPath(dir.RelPat())
+  return writeIndex(bin_path, txt_path, dir.ToProto())
 }
 
 // Database Loader
@@ -144,6 +144,7 @@ type loaderResult struct {
 func readIndex(idx string, sdir *store.Directory) error {
   buffer, err := ioutil.ReadFile(idx)
   if err == nil {
+    // err = proto.UnmarshalText(string(buffer), sdir)
     err = proto.Unmarshal(buffer, sdir)
   }
   return err
@@ -168,29 +169,31 @@ func writeIndex(bin_path string, txt_path string, sdir *store.Directory) (err er
   return
 }
 
-func (db *Database) handleLoad(update_disk bool, lod *loaderLoad) (*loaderResult, error) {
+func (db *Database) handleLoad(
+	update_disk bool, force_reload bool, lod *loaderLoad) (*loaderResult, error) {
   if lod.err != nil {
     return nil, lod.err
   }
   var sdir store.Directory
   // Ignore missing index, means new directory.
-  index_path := db.IndexPath(lod.rel_pat)
-  readIndex(index_path, &sdir)
+  readIndex(db.IndexPath(lod.rel_pat), &sdir)
   origd := db.FullOrigPath(lod.rel_pat)
   subs, err := ioutil.ReadDir(origd)
   if err != nil {
     return nil, err
   }
   if sdir.DirectoryTimestamp == nil ||
-    ProtoToTime(*sdir.DirectoryTimestamp).Before(lod.orgd_mtime) {
-    err = UpdateDirectory(origd, subs, &sdir)
+    ProtoToTime(*sdir.DirectoryTimestamp).Before(lod.orgd_mtime) ||
+		force_reload {
+    err = UpdateDirectory(origd, subs, force_reload, &sdir)
     if err == nil {
       orgd_ts := TimeToProto(lod.orgd_mtime)
       sdir.DirectoryTimestamp = &orgd_ts
       if update_disk {
-        err = writeIndex(index_path, db.IndexTextPath(lod.rel_pat), &sdir)
+        err = writeIndex(db.IndexPath(lod.rel_pat), db.IndexTextPath(lod.rel_pat), 
+					               &sdir)
         if err != nil {
-          log.Printf("%s: %s\n", index_path, err.Error())
+          log.Printf("%s: %s\n", lod.rel_pat, err.Error())
           err = nil
         }
       }
@@ -204,11 +207,11 @@ func (db *Database) handleLoad(update_disk bool, lod *loaderLoad) (*loaderResult
 }
 
 // Worker function loading and checking directories.
-func (db *Database) loaderWorker(update_disk bool,
+func (db *Database) loaderWorker(update_disk bool, force_reload bool,
                                  lod_ch <-chan *loaderLoad,
                                  res_ch chan<- *loaderResult) {
   for lod := range lod_ch {
-    res, err := db.handleLoad(update_disk, lod)
+    res, err := db.handleLoad(update_disk, force_reload, lod)
     if err == nil {
       res_ch <- res
     } else {
@@ -232,6 +235,9 @@ func (db *Database) resetMontageDirectory() {
 
 func (db *Database) newLoad(rel_pat string) *loaderLoad {
   mod_time, ok := db.file_times.ModTime(rel_pat)
+	// Avoid weird time comparisons by rounding to seconds as we only
+	// store seconds in the protos.
+	mod_time = mod_time.Round(time.Second)
   if ok {
     return &loaderLoad{rel_pat: rel_pat, orgd_mtime: mod_time}
   } else {
@@ -246,12 +252,12 @@ func (a ByMostRecent) Len() int           { return len(a) }
 func (a ByMostRecent) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByMostRecent) Less(i, j int) bool { return a[i].Time().Before(a[j].Time()) }
 
-func (db *Database) Load(update_disk, minify bool) error {
+func (db *Database) Load(update_disk, minify, force_reload bool) error {
   N := 4
   pat_ch := make(chan *loaderLoad, N)
   res_ch := make(chan *loaderResult, N)
   for i := 0; i < N; i++ {
-    go db.loaderWorker(update_disk, pat_ch, res_ch)
+    go db.loaderWorker(update_disk, force_reload, pat_ch, res_ch)
   }
   log.Printf("Loading database\n");
   start_time := time.Now()

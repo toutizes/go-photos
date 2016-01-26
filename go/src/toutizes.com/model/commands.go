@@ -56,7 +56,7 @@ func HandleDownload(w http.ResponseWriter, r *http.Request, db *Database,
 
 func HandleReload(w http.ResponseWriter, r *http.Request, odb *Database) {
   ndb := DatabaseToReload(odb)
-  err := ndb.Load(true, true)
+  err := ndb.Load(true, true, false)
   if err != nil {
     fmt.Fprintf(w, err.Error())
   } else {

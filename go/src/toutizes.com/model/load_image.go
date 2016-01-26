@@ -50,26 +50,39 @@ func tagInt(ex *exif.Exif, ts exif.FieldName) (val int32, err error) {
   return
 }
 
+		
+func parseKeywords(s string) (keywords []string) {
+	if strings.HasPrefix(s, "convert: unknown image property") || len(s) == 0 {
+		return nil
+	}
+	if strings.HasSuffix(s, "\n") {
+		s = s[0:len(s) - 1]
+	}
+	return strings.Split(s, ";")
+}
+
 func getImageInfo(file string) (height int, width int, keywords []string, err error) {
   cmd := exec.Command(
     *BinRoot + "convert", file, "-format", "%h %w %[IPTC:2:25]", "info:")
   out, err := cmd.Output()
+	if err != nil {
+		// If there is no IPTC entry.
+		cmd = exec.Command(*BinRoot + "convert", file, "-format", "%h %w ", "info:")
+		out, err = cmd.Output()
+	}
   if err != nil {
-    log.Printf("%s: %s\n", file, err.Error())
-  } else {
-    splits := strings.SplitN(string(out), " ", 3)
-    height, err = strconv.Atoi(splits[0])
-    if err != nil {
-      log.Printf("%s: %s\n", file, err.Error())
-      return
-    }
-    width, err = strconv.Atoi(splits[1])
-    if err != nil {
-      log.Printf("%s: %s\n", file, err.Error())
-      return
-    }
-    keywords = strings.Split(splits[2], ";")
+		return
   }
+	splits := strings.SplitN(string(out), " ", 3)
+	height, err = strconv.Atoi(splits[0])
+	if err != nil {
+		return
+	}
+	width, err = strconv.Atoi(splits[1])
+	if err != nil {
+		return
+	}
+	keywords = parseKeywords(splits[2])
   return
 }
 
@@ -77,36 +90,36 @@ func getImageInfo(file string) (height int, width int, keywords []string, err er
 func LoadImageFile(file string, image *store.Item) error {
   fi, err := os.Open(file)
   if err != nil {
+		log.Printf("Error: %s\n", err.Error())
     return err
   }
   defer fi.Close()
+	found_time := false
+	var image_time time.Time
   ex, err := exif.Decode(bufio.NewReader(fi))
-  if err != nil {
-    return err
-  }
-  var image_time time.Time
-  found_time := false
-  dto, err := tagTime(ex, exif.DateTimeOriginal)
   if err == nil {
-    image_time = dto
-    found_time = true
-  }
-  if !found_time {
-    dtd, err := tagTime(ex, exif.DateTimeDigitized)
-    if err == nil {
-      log.Printf("Using DateTimeDigitized for: %s (%s)\n", file, dtd)
-      image_time = dtd
-      found_time = true
-    }
-  }
-  if !found_time {
-    dt, err := tagTime(ex, exif.DateTime)
-    if err == nil {
-      log.Printf("Using DateTime for: %s (%s)\n", file, dt)
-      image_time = dt
-      found_time = true
-    }
-  }
+		dto, err := tagTime(ex, exif.DateTimeOriginal)
+		if err == nil {
+			image_time = dto
+			found_time = true
+		}
+		if !found_time {
+			dtd, err := tagTime(ex, exif.DateTimeDigitized)
+			if err == nil {
+				log.Printf("Using DateTimeDigitized for: %s (%s)\n", file, dtd)
+				image_time = dtd
+				found_time = true
+			}
+		}
+		if !found_time {
+			dt, err := tagTime(ex, exif.DateTime)
+			if err == nil {
+				log.Printf("Using DateTime for: %s (%s)\n", file, dt)
+				image_time = dt
+				found_time = true
+			}
+		}
+	}
   if !found_time {
     log.Printf("Using file time for: %s\n", file)
     image_time = ProtoToTime(*image.FileTimestamp)
@@ -115,12 +128,14 @@ func LoadImageFile(file string, image *store.Item) error {
   image.ItemTimestamp = &its
   height, width, kwds, err := getImageInfo(file)
   if err == nil {
-    image.Keywords = kwds
+		if kwds != nil && len(kwds) > 0 {
+			image.Keywords = kwds
+		}
     image.Image = new(store.Image)
     image.Image.Height = proto.Int32(int32(height))
     image.Image.Width = proto.Int32(int32(width))
   } else {
-    log.Printf("%s: %s", file, err.Error())
+    log.Printf("Info got error %s: %s", file, err.Error())
   }
   return nil
 }

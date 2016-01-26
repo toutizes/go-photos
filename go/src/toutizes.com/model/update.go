@@ -1,11 +1,13 @@
 package model
 
 import (
+	"log"
   "os"
   "path"
   "strings"
 )
 
+// import "github.com/golang/protobuf/proto"
 import "toutizes.com/store"
 
 const (
@@ -94,19 +96,38 @@ func mergeVideo(old_vid *store.Item, new_vid *store.Item) *store.Item {
 func mergeImage(old_img *store.Item, new_img *store.Item) *store.Item {
   if old_img != nil {
     if len(new_img.Keywords) == 0 {
-      // Did not find keywords in the image, use old ones.
-      new_img.Keywords = old_img.Keywords
+      // Did not find keywords in the image, use old ones, but filter some.
+			for _, kwd := range old_img.Keywords {
+				kwd = strings.Replace(kwd, "\n", "", -1)
+				if len(kwd) > 0 {
+					new_img.Keywords = append(new_img.Keywords, kwd)
+				}
+			}
     }
     if new_img.ItemTimestamp == nil {
       // Did not find item timestamp in image, use old one.
       new_img.ItemTimestamp = old_img.ItemTimestamp
     }
-    new_img.Image = old_img.Image
+		if old_img.Image != nil {
+			if old_img.Image.Stereo != nil {
+				new_img.Image.Stereo = old_img.Image.Stereo
+			}
+			if old_img.Image.RotateDegrees != nil {
+				new_img.Image.RotateDegrees = old_img.Image.RotateDegrees
+			}
+			if old_img.Image.Height != nil {
+				new_img.Image.Height = old_img.Image.Height
+			}
+			if old_img.Image.Width != nil {
+				new_img.Image.Width = old_img.Image.Width
+			}
+		}
   }
   return new_img
 }
 
-func UpdateDirectory(origd string, subs []os.FileInfo, sdir *store.Directory) error {
+func UpdateDirectory(origd string, subs []os.FileInfo, force_reload bool, 
+	                   sdir *store.Directory) error {
   old_itms := make(map[string]*store.Item, len(sdir.Items))
   for _, itm := range sdir.Items {
     old_itms[*itm.Name] = itm
@@ -124,10 +145,16 @@ func UpdateDirectory(origd string, subs []os.FileInfo, sdir *store.Directory) er
   for _, new_img := range imgs {
     old_img, ok := old_itms[*new_img.Name]
     if !ok || old_img.FileTimestamp == nil || 
-      *old_img.FileTimestamp != *new_img.FileTimestamp {
-      LoadImageFile(path.Join(origd, *new_img.Name), new_img)
+      *old_img.FileTimestamp != *new_img.FileTimestamp || force_reload {
+      err := LoadImageFile(path.Join(origd, *new_img.Name), new_img)
+			if err != nil {
+				log.Printf("%s: %s\n", path.Join(origd, *new_img.Name), err.Error())
+			}
     }
     new_items = append(new_items, mergeImage(old_img, new_img))
+		if len(new_img.Keywords) == 0 {
+			log.Printf("%s: no keywords\n", path.Join(origd, *new_img.Name))
+		}
   }
 
   sdir.Items = new_items

@@ -18,6 +18,8 @@ var root = flag.String("root", "", "path to the database index, mini, etc")
 var url_prefix = flag.String("url_prefix", "/db", "prefix for the urls.")
 var num_cpu = flag.Int("num_cpu", 0, "Number of CPUs to use.  0 means MAXPROC.")
 var update_db = flag.Bool("update_db", true, "If true update the database files.")
+var force_reload = flag.Bool("force_reload", false, 
+	"If true force a reload of images.")
 
 
 func Log(n string, r *http.Request) {
@@ -49,7 +51,7 @@ func main() {
     log.Fatal("Must pass --root")
   }
   db := model.NewDatabase2(*orig_root, *root)
-  db.Load(*update_db, *update_db)
+  db.Load(*update_db, *update_db, *force_reload)
   log.Printf("Serving...")
 
   http.HandleFunc(*url_prefix + "/q",
