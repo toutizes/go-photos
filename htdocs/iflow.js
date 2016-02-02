@@ -51,7 +51,7 @@ var TT_IFlow = (function () {
     var img, w_i;
     for (i = 0; i < h_images_.length; i++) {
       img = h_images_[i];
-      if (img.w == 0 || img.h == 0) {
+      if (img.w === 0 || img.h === 0) {
 	console.log("No size: " + img.albumId + "/" + img.filename);
 	img.w = 1200;
 	img.h = 900;
@@ -135,6 +135,13 @@ var TT_IFlow = (function () {
     			    });
   }
 
+  function clear_infinite() {
+    if (infinite_ !== null) {
+      infinite_.destroy();
+      infinite_ = null;
+    }
+  }
+
   function images_ready(h, images) {
     TT_Image5.fix_h(h, images);
     if (h_ !== null) {
@@ -160,8 +167,8 @@ var TT_IFlow = (function () {
     $("#" + image_eltid(h_.c)).addClass("iflow-img-current");
     var img = h_images_[h_.c];
     if (h.full) {
-      slider_.show();
       slider_.show_full(h_, img, image_img_url(img, "midi"), null);
+      slider_.show();
     } else {
       slider_.hide();
     }
@@ -170,6 +177,7 @@ var TT_IFlow = (function () {
 
   function display(h) {
     if (h_ === null || h_.q !== h.q) {
+      clear_infinite();
       TT_Fetcher2.queryPhotos(h.q, function (images) { images_ready(h, images); });
     } else {
       images_ready(h, h_images_);
@@ -180,10 +188,7 @@ var TT_IFlow = (function () {
     if (slider_ !== null) {
       slider_.resized();
     }
-    if (infinite_ !== null) {
-      infinite_.destroy();
-      infinite_ = null;
-    }
+    clear_infinite();
     if (h_images_ !== null) {
       make_infinite();
       infinite_.display(0);

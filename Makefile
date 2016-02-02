@@ -50,7 +50,7 @@ sync:
 
 install_sync:
 	cd go; GOPATH=$$(pwd) GOBIN="bin" go install src/toutizes.com/async.go
-	cp go/bin/async "$(HOME)/Library/Application Support/Adobe/Lightroom/Export Actions/"
+	cp go/bin/async "$(HOME)/Library/Application Support/Adobe/Lightroom/Export Actions/async"
 
 # Protocol buffers
 STORE=src/toutizes.com/store

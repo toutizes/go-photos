@@ -259,6 +259,10 @@ var TT_DB5 = (function () {
       event.preventDefault();
       stereo_mode(TT_DisplayMode2.OVERLAY);
       break;
+    case 32:                    // space
+      event.preventDefault();
+      toggle_midi_maxi_images();
+      break;
     case 68: // D
     case 87: // W
       event.preventDefault();
