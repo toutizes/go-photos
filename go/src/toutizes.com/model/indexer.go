@@ -1,6 +1,8 @@
 package model
 
 import (
+	"hash"
+	"hash/fnv"
   "log"
   "strconv"
   "strings"
@@ -14,7 +16,7 @@ type keywordCounts struct {
 type Indexer struct {
   keyword_counts map[string]*keywordCounts
   images_by_keyword map[string][]*Image
-  images []*Image
+  images_by_id map[int]*Image
 }
 
 func NewIndexer() *Indexer {
@@ -47,10 +49,11 @@ func (idx *Indexer) Images(kwd string) []*Image {
 }
 
 func (idx *Indexer) Image(image_id int) *Image {
-  if image_id < 0 || image_id >= len(idx.images) {
-    return nil
+  img, ok := idx.images_by_id[image_id]
+  if ok {
+    return img
   } else {
-    return idx.images[image_id]
+    return nil
   }
 }
 
@@ -63,6 +66,17 @@ func (idx *Indexer) addImageByKeyword(img *Image, kwd string) {
   }
 }
 
+func imageHash(h hash.Hash32, dir *Directory, img *Image) int {
+	h.Reset()
+	h.Write([]byte(dir.RelPat()))
+	h.Write([]byte(img.Name()))
+	bytes, err := img.FileTime().MarshalBinary()
+	if err == nil {
+		h.Write(bytes)
+	}
+	return int(h.Sum32())
+}
+
 func (idx *Indexer) BuildIndex(db *Database) int {
   drop_cache := make(map[string]string, len(idx.keyword_counts))
 
@@ -71,10 +85,11 @@ func (idx *Indexer) BuildIndex(db *Database) int {
     idx.images_by_keyword[DropAccents(kwcnt.keyword, drop_cache)] =
       make([]*Image, 0, kwcnt.count)
   }
+	hasher := fnv.New32a()
   num_images := 0
   for _, dir := range db.Directories() {
     for _, img := range dir.Images() {
-      img.Id = num_images
+      img.Id = imageHash(hasher, dir, img)
       num_images += 1
       idx.addImageByKeyword(img, DropAccents(img.Name(), drop_cache))
       for _, kwd := range img.Keywords() {
@@ -85,10 +100,10 @@ func (idx *Indexer) BuildIndex(db *Database) int {
       }
     }
   }
-  idx.images = make([]*Image, num_images)
+  idx.images_by_id = make(map[int]*Image, num_images)
   for _, dir := range db.Directories() {
     for _, img := range dir.Images() {
-      idx.images[img.Id] = img
+      idx.images_by_id[img.Id] = img
     }
   }
   return num_images
