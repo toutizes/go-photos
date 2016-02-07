@@ -62,27 +62,37 @@ func parseKeywords(s string) (keywords []string) {
 }
 
 func getImageInfo(file string) (height int, width int, keywords []string, err error) {
-  cmd := exec.Command(
-    *BinRoot + "convert", file, "-format", "%h %w %[IPTC:2:25]", "info:")
-  out, err := cmd.Output()
+  args := []string{
+		*BinRoot + "convert", file, "-format", "%h\\ %w\\n%[IPTC:2:25]\\n", "info:"}
+  cmd := exec.Command(args[0], args[1:]...)
+  out, err := cmd.CombinedOutput()
 	if err != nil {
 		// If there is no IPTC entry.
-		cmd = exec.Command(*BinRoot + "convert", file, "-format", "%h %w ", "info:")
+		log.Printf("IPTC failed, trying just sizes: %s\n", file)
+		log.Printf("Cmd: %s =>\n%s\n", strings.Join(args, " "), string(out))
+		cmd = exec.Command(*BinRoot + "convert", file, "-format", "%h %w\\n", "info:")
 		out, err = cmd.Output()
 	}
   if err != nil {
 		return
   }
-	splits := strings.SplitN(string(out), " ", 3)
-	height, err = strconv.Atoi(splits[0])
-	if err != nil {
-		return
+	// First line is "height width"
+	// Second line is "kwd;kwd;kwd"
+	lines := strings.Split(string(out), "\n")
+	if len(lines) >= 1 {
+		h_w := strings.SplitN(lines[0], " ", 2)
+		height, err = strconv.Atoi(h_w[0])
+		if err != nil {
+			return
+		}
+		width, err = strconv.Atoi(h_w[1])
+		if err != nil {
+			return
+		}
 	}
-	width, err = strconv.Atoi(splits[1])
-	if err != nil {
-		return
+	if len(lines) >= 2 {
+		keywords = parseKeywords(lines[1])
 	}
-	keywords = parseKeywords(splits[2])
   return
 }
 

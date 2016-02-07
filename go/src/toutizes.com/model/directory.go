@@ -2,7 +2,7 @@ package model
 
 import (
   "errors"
-//   "log"
+  "log"
   "sort"
   "strconv"
   "strings"
@@ -121,6 +121,13 @@ func ProtoToDirectory(sdir *store.Directory, rel_pat string) *Directory {
   }
   dir.images = images 
   dir.Finalize()
+  for _, img := range dir.images {
+		if len(img.Keywords()) == 0 {
+			log.Printf("No keywords: %s/%s\n", rel_pat, img.Name())
+		} else if (img.Keywords()[0] == "") {
+			log.Printf("Empty keyword: %s/%s (%v)\n", rel_pat, img.Name(), img.Keywords())
+		}
+	}
   return dir
 }
 

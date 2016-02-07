@@ -119,8 +119,8 @@ var TT_IFlow = (function () {
 	height: row_h
       });
       img_elt.data({index: i});
-      img_elt.dblclick(req_full);
-      img_elt.click(req_image);
+      img_elt.click(req_full);
+      // img_elt.click(req_image);
       row_div.append(img_elt);
     }
     return row_div;

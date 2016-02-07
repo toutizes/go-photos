@@ -285,6 +285,7 @@ var TT_DB5 = (function () {
     $("#prev-full").click(prev);
     $("#next-full").click(next);
     $("#midi-model").dblclick(toggle_midi_maxi_images);
+    $("#midi-model").click(toggle_midi_maxi_images);
     $("#iflow-img-model").dblclick(toggle_midi_maxi_images);
     $(document.body).keydown(key_down);
     $("#q").keydown(function (e) {
