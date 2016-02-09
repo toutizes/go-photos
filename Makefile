@@ -49,8 +49,8 @@ sync:
 	cat /tmp/lrlog
 
 install_sync:
-	cd go; GOPATH=$$(pwd) GOBIN="bin" go install src/toutizes.com/async.go
-	cp go/bin/async "$(HOME)/Library/Application Support/Adobe/Lightroom/Export Actions/async"
+	cd go; GOPATH=$$(pwd) GOBIN="bin" go install src/toutizes.com/gsync.go
+	cp go/bin/gsync "$(HOME)/Library/Application Support/Adobe/Lightroom/Export Actions/gsync"
 
 # Protocol buffers
 STORE=src/toutizes.com/store

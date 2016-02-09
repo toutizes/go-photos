@@ -72,7 +72,7 @@ func andAdvance(qs []Query, imgs []*Image, img0 *Image) (*Image, bool) {
   same := true
   var ok bool
   for i, q := range qs {
-    for ; imgs[i].Id < img0.Id; {
+    for ; imgs[i].Rank < img0.Rank; {
       imgs[i], ok = <-q
       if !ok { return nil, false }
     }
@@ -137,7 +137,7 @@ func orFill(qs []Query) []*Image {
 func orAdvance(qs []Query, imgs []*Image) *Image {
   var min_img *Image
   for _, img := range imgs {
-    if img != nil  && (min_img == nil || img.Id < min_img.Id) {
+    if img != nil  && (min_img == nil || img.Rank < min_img.Rank) {
       min_img = img
     }
   }

@@ -90,6 +90,7 @@ func (idx *Indexer) BuildIndex(db *Database) int {
   for _, dir := range db.Directories() {
     for _, img := range dir.Images() {
       img.Id = imageHash(hasher, dir, img)
+			img.Rank = num_images
       num_images += 1
       idx.addImageByKeyword(img, DropAccents(img.Name(), drop_cache))
       for _, kwd := range img.Keywords() {

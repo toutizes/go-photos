@@ -26,6 +26,7 @@ type Image struct {
   rotate_degrees int32
   stereo *Stereo
   Id int
+  Rank int											// Used for queries.
 }
 
 func (img *Image) Directory() *Directory { return img.dir }

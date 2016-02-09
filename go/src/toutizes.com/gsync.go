@@ -76,6 +76,7 @@ func sync(pair RsyncPair) {
 }
 
 func main() {
+  os.Remove("/tmp/lrlog")
   logFile, _ := os.OpenFile("/tmp/lrlog", os.O_WRONLY | os.O_CREATE | os.O_SYNC, 0644)
   syscall.Dup2(int(logFile.Fd()), 1)
   syscall.Dup2(int(logFile.Fd()), 2)
