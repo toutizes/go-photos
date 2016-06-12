@@ -1,4 +1,4 @@
-/*global $, console, TT_Fetcher2, TT_Image5, TT_DB5, tt_Infinite, TT_Keywords*/
+/*global $, console, TT_Fetcher2, TT_Image5, TT_DB5, tt_Infinite, TT_Keywords, TT_Preloader*/
 /*jslint browser:true, nomen: true, unparam: true*/
 var TT_IFlow = (function () {
   "use strict";
@@ -17,15 +17,11 @@ var TT_IFlow = (function () {
   var infinite_ = null;		// The infinite scroller.
 
   var slider_ = null;		// Used to display full size images.
+  var preloader_ = null;	// TT_Preloader for images.
 
   function req_full(e) {
     var data = $(this).data();
     TT_DB5.req_full(data.index);
-  }
-
-  function req_image(e) {
-    var data = $(this).data();
-    TT_DB5.req_image_index(data.index);
   }
 
   function image_img_url(image, kind) {
@@ -120,7 +116,6 @@ var TT_IFlow = (function () {
       });
       img_elt.data({index: i});
       img_elt.click(req_full);
-      // img_elt.click(req_image);
       row_div.append(img_elt);
     }
     return row_div;
@@ -140,6 +135,16 @@ var TT_IFlow = (function () {
       infinite_.destroy();
       infinite_ = null;
     }
+  }
+
+  function preload_next_images(images, c) {
+    return function() {
+      if (images === h_images_) {
+	if (c + 1 < images.length) {
+          preloader_.preload(image_img_url(images[c + 1], "midi"));
+	}
+      }
+    };
   }
 
   function images_ready(h, images) {
@@ -167,7 +172,8 @@ var TT_IFlow = (function () {
     $("#" + image_eltid(h_.c)).addClass("iflow-img-current");
     var img = h_images_[h_.c];
     if (h.full) {
-      slider_.show_full(h_, img, image_img_url(img, "midi"), null);
+      slider_.show_full(h_, img, image_img_url(img, "midi"), 
+			preload_next_images(images, h.c));
       slider_.show();
     } else {
       slider_.hide();
@@ -211,6 +217,7 @@ var TT_IFlow = (function () {
     container_ = $("#iflow-container");
     img_model_ = $("#iflow-img-model");
     slider_ = slider;
+    preloader_ = TT_Preloader.create(10);
     pad_ = 10;
     row_indices_ = [];
   }

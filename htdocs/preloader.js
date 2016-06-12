@@ -5,6 +5,7 @@ var TT_Preloader = {
 
   preload: function (url) {
     'use strict';
+    console.log('Preload: ' + url);
     this.images[this.next].src = url;
     this.next = (this.next + 1) % this.images.length;
   },

@@ -21,7 +21,7 @@ serve_full: generate
 	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --port=8080  --orig_root="/Users/matthieu/Google Drive/Photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
 
 serve_small: generate 
-	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --port=8080  --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs --force_reload
+	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --port=8080  --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
 
 install_html:
 	bin/install-ttpic.sh

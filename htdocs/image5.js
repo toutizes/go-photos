@@ -13,7 +13,7 @@ var TT_Image5 = (function () {
 
   // Utility objects.
   var slider_ = null;		// TT_Slider for images.
-  var preloader_ = null;	// TT_Preloader for iamges.
+  var preloader_ = null;	// TT_Preloader for images.
   var infinite_ = null;		// Infinite scroller object for minis.
   var montage_ = null;		// TT_Montage for mini images.
 

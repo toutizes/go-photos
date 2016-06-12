@@ -41,6 +41,9 @@ func doScaleN(in_dir string, imgs []*Image, size int, out_dir string) {
     "-resize", fmt.Sprintf("%dx%d", size, size),
     "-quality", "90",
     "-path", out_dir }...)
+	if (size > 1000) {
+    args = append(args, []string{ "-interlace", "Plane"}...)
+	}
   for _, img := range imgs {
     args = append(args, path.Join(in_dir, img.Name()))
   }
@@ -72,7 +75,7 @@ func minify(db *Database, dir *Directory) int {
     doScaleN(orig_dir, to_minis, 180, mini_dir)
   }
   if to_midis != nil {
-    doScaleN(orig_dir, to_midis, 1024, midi_dir)
+    doScaleN(orig_dir, to_midis, 2048, midi_dir)
   }
   if num_resized > 0 {
     log.Printf("%s: resized %d in %d ms\n", rel_pat, num_resized,
