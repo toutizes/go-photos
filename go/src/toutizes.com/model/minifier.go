@@ -10,6 +10,7 @@ import (
   "os"
   "os/exec"
   "path"
+	"strings"
   "time"
 )
 
@@ -47,7 +48,12 @@ func doScaleN(in_dir string, imgs []*Image, size int, out_dir string) {
   for _, img := range imgs {
     args = append(args, path.Join(in_dir, img.Name()))
   }
-  exec.Command(args[0], args[1:]...).Run()
+  cmd := exec.Command(args[0], args[1:]...)
+  output, err := cmd.CombinedOutput()
+  if err != nil {
+    log.Printf("doScaleN failed (%s): %s\n", strings.Join(args, " "), err)
+    log.Printf("Full output: %s\n", string(output))
+  }
 }
 
 func minify(db *Database, dir *Directory) int {

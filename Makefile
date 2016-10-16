@@ -14,7 +14,7 @@
 #  $ git clone git://github.com/CarlosBonetti/jquery-loading
 #  $ git clone https://gist.github.com/1130507.git
 
-# Running locall (See locserve: below for testing locally.)
+# Running locally (See locserve: below for testing locally.)
 #
 # serve needs to have run install_html.
 serve_full: generate 
@@ -33,6 +33,11 @@ push_serve: generate
 
 push_html:
 	rsync --delete --recursive /tmp/db/htdocs/db/ ec2:/mnt/photos/htdocs/db/
+
+push_drive:
+	cd go; GOPATH=$$(pwd) go get -u github.com/odeke-em/drive/cmd/drive
+	cd go; GOPATH=$$(pwd) GOOS=linux GOARCH=amd64 go build -o bin_linux/drive src/github.com/odeke-em/drive/cmd/drive/main.go
+	rsync "go/bin_linux/drive" ec2:/mnt/photos/bin/
 
 # Drive sync.
 drive:
