@@ -7,7 +7,7 @@
 #  $ make get-go-dependencies
 #
 # The following dependencies must have been git cloned as siblings
-# of thie directory.
+# of this directory.
 #  $ cd ..
 #  $ git clone git://github.com/imakewebthings/waypoints
 #  $ git clone git://github.com/cowboy/jquery-hashchange
@@ -43,9 +43,9 @@ push_drive:
 drive:
 	cd go; GOPATH=$$(pwd) GOBIN="bin" go install src/github.com/odeke-em/drive/cmd/drive/main.go; mv bin/main bin/drive
 
-push_drive: 
-	cd go; GOPATH=$$(pwd) GOOS=linux GOARCH=amd64 go build -o bin_linux/drive src/github.com/odeke-em/drive/cmd/drive/main.go
-	rsync "go/bin_linux/drive" ec2:/mnt/photos/bin/
+# push_drive: 
+# 	cd go; GOPATH=$$(pwd) GOOS=linux GOARCH=amd64 go build -o bin_linux/drive src/github.com/odeke-em/drive/cmd/drive/main.go
+# 	rsync "go/bin_linux/drive" ec2:/mnt/photos/bin/
 
 # Lightroom sync.
 sync:

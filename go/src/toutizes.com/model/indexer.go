@@ -57,6 +57,16 @@ func (idx *Indexer) Image(image_id int) *Image {
   }
 }
 
+func (idx *Indexer) MatchingKeywords(pat string) []string {
+	var a = make([]string, 0, 10)
+	for kwd := range(idx.images_by_keyword) {
+		if strings.Contains(kwd, pat) {
+			a = append(a, kwd)
+		}
+	}
+	return a
+}
+
 func (idx *Indexer) addImageByKeyword(img *Image, kwd string) {
   imgs, ok := idx.images_by_keyword[kwd]
   if !ok {

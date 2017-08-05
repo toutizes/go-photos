@@ -312,6 +312,24 @@ func matches(pattern string, token string) bool {
   return match
 }
 
+func keywordMatchQuery(db *Database, s string) Query {
+	kwds := db.Indexer().MatchingKeywords(s)
+	n := len(kwds)
+	if n == 0 {
+		return KeywordQuery(db, "grimace")
+	}
+	// Limit to 10 matches to avoid issues with single letter matches.
+	if n > 10 {
+		n = 10
+	}
+	// Build an OR of all the matches.
+	qs := make([]Query, n)
+	for i := 0; i < n; i++ {
+		qs[i] = KeywordQuery(db, kwds[i])
+	}
+	return OrQuery(qs)
+}
+
 func ParseQuery(s string, db *Database) Query {
   tokens := tokenize(s)
   qs := make([]Query, len(tokens))
@@ -338,7 +356,8 @@ func ParseQuery(s string, db *Database) Query {
     if alt_q != nil {
       qs[i] = alt_q
     } else {
-      kwd_q := KeywordQuery(db, DropAccents(lower_t, nil))
+      kwd_q := keywordMatchQuery(db, DropAccents(lower_t, nil))
+			// We also search for time strings in the image keywords.
       if time_q != nil {
         qs[i] = OrQuery([]Query{kwd_q, time_q})
       } else {

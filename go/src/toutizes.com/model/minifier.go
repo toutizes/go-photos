@@ -36,6 +36,14 @@ func mustScale(img *Image, mini_times map[string]time.Time) bool {
 }
 
 func doScaleN(in_dir string, imgs []*Image, size int, out_dir string) {
+	chunk := 10
+	for i := 0; i < len(imgs); i += chunk {
+    log.Printf("doScaleN %s: %d, %d\n", out_dir, i, min(i + chunk, len(imgs)))
+		doScaleN_1(in_dir, imgs[i:min(i + chunk, len(imgs))], size, out_dir)
+	}
+}
+
+func doScaleN_1(in_dir string, imgs []*Image, size int, out_dir string) {
   args := make([]string, 0, len(imgs) + 10)
   args = append(args, []string{
     *BinRoot + "mogrify",

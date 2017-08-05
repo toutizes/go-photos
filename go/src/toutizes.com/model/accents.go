@@ -1,5 +1,9 @@
 package model
 
+import (
+  "strings"
+)
+
 var french_accents = map[rune]byte{
   'à': 'a',
   'â': 'a',
@@ -24,8 +28,15 @@ func DropAccents(s string, cache map[string]string) string {
       return ss
     }
   }
-  bs := make([]byte, 0, len(s))
-  for _, r := range s {
+	lower_s := strings.ToLower(s)
+	// Save ram by not keeping the lowercase version if the original was
+	// already lowercase.
+	if lower_s == s {
+		lower_s = s
+	}
+	// Why am I not using 'rune' here??  I do not remember.  I think I should.
+  bs := make([]byte, 0, len(lower_s))
+  for _, r := range lower_s {
     rr, ok := french_accents[r]
     if ok {
       changed = true
@@ -38,9 +49,10 @@ func DropAccents(s string, cache map[string]string) string {
   if changed {
     res = string(bs)
   } else {
-    res = s
+    res = lower_s
   }
   if cache != nil {
+		// Always use the original string as the cache key.
     cache[s] = res
   }
   return res
