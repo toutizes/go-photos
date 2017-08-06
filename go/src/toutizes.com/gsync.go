@@ -64,7 +64,7 @@ func quoteShell(s string) string {
 func sync(pair RsyncPair) {
   args := []string {
     "--recursive", "--relative", "--update", "--delete",
-    "--perms", "--omit-dir-times", "--times", "--timeout", "600",
+    "--perms", "--omit-dir-times=false", "--times", "--timeout", "600",
     pair.lr_from, pair.tt_to,
   }
   fmt.Printf("rsync %v\n", strings.Join(args, "' '"))

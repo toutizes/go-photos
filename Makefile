@@ -38,6 +38,7 @@ push_drive:
 	cd go; GOPATH=$$(pwd) go get -u github.com/odeke-em/drive/cmd/drive
 	cd go; GOPATH=$$(pwd) GOOS=linux GOARCH=amd64 go build -o bin_linux/drive src/github.com/odeke-em/drive/cmd/drive/main.go
 	rsync "go/bin_linux/drive" ec2:/mnt/photos/bin/
+	rsync "bin/fix-dir-time.py" ec2:/mnt/photos/bin/
 
 # Drive sync.
 drive:
