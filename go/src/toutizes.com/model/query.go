@@ -258,6 +258,23 @@ const (
 )
 
 func tokenize(s string) []string {
+	if strings.Contains(s, ",") && !strings.Contains(s, "\"") {
+		return tokenize_comma(s)
+	} else {
+		return tokenize_space(s)
+	}
+}
+
+func tokenize_comma(s string) []string {
+  splits := strings.Split(s, ",")
+  tokens := make([]string, len(splits))
+  for i, s := range splits {
+		tokens[i] = strings.Trim(s, " ")
+	}
+	return tokens
+}
+
+func tokenize_space(s string) []string {
   state := in_space
   var tokens []string
   from := 0
@@ -318,9 +335,9 @@ func keywordMatchQuery(db *Database, s string) Query {
 	if n == 0 {
 		return KeywordQuery(db, "grimace")
 	}
-	// Limit to 10 matches to avoid issues with single letter matches.
-	if n > 10 {
-		n = 10
+	// Limit to 10 * len(s) matches to avoid issues with single letter matches.
+	if n > 10 * len(s) {
+		n = 10 * len(s)
 	}
 	// Build an OR of all the matches.
 	qs := make([]Query, n)
@@ -335,34 +352,23 @@ func ParseQuery(s string, db *Database) Query {
   qs := make([]Query, len(tokens))
   for i, t := range tokens {
     lower_t := strings.ToLower(t)
-    var alt_q Query
-    var time_q Query
     switch {
     case strings.HasPrefix(lower_t, "count:"):
-      alt_q = KeywordCountQuery(db, t[len("count:"):])
+      qs[i] = KeywordCountQuery(db, t[len("count:"):])
     case strings.HasPrefix(lower_t, "stereo:"):
-      alt_q = StereoQuery(db)
+      qs[i] = StereoQuery(db)
     case strings.HasPrefix(lower_t, "album:"):
-      alt_q = DirectoryByNameQuery(db, t[len("album:"):])
+      qs[i] = DirectoryByNameQuery(db, t[len("album:"):])
     case t == "albums:":
-      alt_q = DirectoriesQuery(db)
+      qs[i] = DirectoriesQuery(db)
     case matches(year_re, t):
-      time_q = YearQuery(db, t)
+      qs[i] = OrQuery([]Query{YearQuery(db, t), KeywordQuery(db, t)})
     case matches (month_re, t):
-      time_q = MonthQuery(db, t)
+      qs[i] = OrQuery([]Query{MonthQuery(db, t), KeywordQuery(db, t)})
     case matches (day_re, t):
-      time_q = DayQuery(db, t)
-    }
-    if alt_q != nil {
-      qs[i] = alt_q
-    } else {
-      kwd_q := keywordMatchQuery(db, DropAccents(lower_t, nil))
-			// We also search for time strings in the image keywords.
-      if time_q != nil {
-        qs[i] = OrQuery([]Query{kwd_q, time_q})
-      } else {
-        qs[i] = kwd_q
-      }
+      qs[i] = OrQuery([]Query{DayQuery(db, t), KeywordQuery(db, t)})
+		default:
+			qs[i] = keywordMatchQuery(db, DropAccents(lower_t, nil))
     }
   }
   return AndQuery(qs)

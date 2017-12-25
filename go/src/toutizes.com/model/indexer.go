@@ -4,6 +4,7 @@ import (
 	"hash"
 	"hash/fnv"
   "log"
+  "sort"
   "strconv"
   "strings"
 )
@@ -57,13 +58,21 @@ func (idx *Indexer) Image(image_id int) *Image {
   }
 }
 
+
+type StringBySize []string
+
+func (a StringBySize) Len() int           { return len(a) }
+func (a StringBySize) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a StringBySize) Less(i, j int) bool { return len(a[i]) < len(a[j]) }
+
 func (idx *Indexer) MatchingKeywords(pat string) []string {
-	var a = make([]string, 0, 10)
+	var a = make([]string, 0, 100)
 	for kwd := range(idx.images_by_keyword) {
 		if strings.Contains(kwd, pat) {
 			a = append(a, kwd)
 		}
 	}
+	sort.Sort(StringBySize(a))
 	return a
 }
 
