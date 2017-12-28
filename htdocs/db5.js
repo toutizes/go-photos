@@ -37,8 +37,7 @@ var TT_DB5 = (function () {
     return h;
   }
 
-  function set_hash(h) {
-    var push_history = false;
+  function set_hash(h, push_history) {
     h = TT_Hash.fill_defaults(h, TT_Hash.get());
     TT_Hash.set(h, push_history);
   }
@@ -125,35 +124,35 @@ var TT_DB5 = (function () {
 
   // Requests for hash change.
   function req_image_mode() {
-    set_hash({mode: IMAGE_MODE});
+    set_hash({mode: IMAGE_MODE}, true);
   }
 
   function req_iflow_mode() {
-    set_hash({mode: IFLOW_MODE});
+    set_hash({mode: IFLOW_MODE}, true);
   }
 
   function req_image_index(i) {
-    set_hash({c: i, k: null});
+    set_hash({c: i, k: null}, true);
   }
 
   function req_midi_images() {
-    set_hash({full: false});
+    set_hash({full: false}, false);
   }
 
   function req_full(i) {
-    set_hash({c: i, k: null, full: true});
+    set_hash({c: i, k: null, full: true}, false);
   }
 
   function toggle_midi_maxi_images() {
     var h = get_hash();
     h.full = !h.full;
-    set_hash(h);
+    set_hash(h, false);
   }
 
   function toggle_stereo() {
     var h = get_hash();
     h.stereo = !h.stereo;
-    set_hash(h);
+    set_hash(h, false);
   }
 
   function stereo_mode(st_mode) {
@@ -164,7 +163,7 @@ var TT_DB5 = (function () {
     } else {
       h.stereo = false;
     }
-    set_hash(h);
+    set_hash(h, false);
   }
 
   function st_mode(name) {
@@ -178,7 +177,7 @@ var TT_DB5 = (function () {
   }
 
   function req_album_mode() {
-    set_hash({mode: ALBUM_MODE, stereo: false});
+    set_hash({mode: ALBUM_MODE, stereo: false}, true);
   }
 
   function req_string(q, k) {
@@ -191,20 +190,20 @@ var TT_DB5 = (function () {
       h.c = null;
       h.k = k;
     }
-    set_hash(h);
+    set_hash(h, true);
   }
 
   function search() {
-    set_hash({mode: IMAGE_MODE, q: q_.val(), c: 0, k: null, stereo: false});
+    set_hash({mode: IMAGE_MODE, q: q_.val(), c: 0, k: null, stereo: false}, true);
   }
 
   function iflow() {
-    set_hash({mode: IFLOW_MODE, q: q_.val(), c: 0, k: null, stereo: false});
+    set_hash({mode: IFLOW_MODE, q: q_.val(), c: 0, k: null, stereo: false}, true);
   }
 
   function rel_next(n) {
     if (h_ !== null) {
-      set_hash({c: Math.max(0, h_.c + n), k: null});
+      set_hash({c: Math.max(0, h_.c + n), k: null}, false);
     }
   }
 
