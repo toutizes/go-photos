@@ -13,6 +13,7 @@
 #  $ git clone git://github.com/cowboy/jquery-hashchange
 #  $ git clone git://github.com/CarlosBonetti/jquery-loading
 #  $ git clone https://gist.github.com/1130507.git
+SERVER=ce1
 
 # Running locally (See locserve: below for testing locally.)
 #
@@ -29,16 +30,16 @@ install_html:
 # Push to server
 push_serve: generate
 	cd go; GOPATH=$$(pwd) GOOS=linux GOARCH=amd64 go build -o bin_linux/aserve src/toutizes.com/test/aserve.go
-	rsync "go/bin_linux/aserve" ec2:/mnt/photos/bin/
+	rsync "go/bin_linux/aserve" $(SERVER):/mnt/photos/bin/
 
 push_html:
-	rsync --delete --recursive /tmp/db/htdocs/db/ ec2:/mnt/photos/htdocs/db/
+	rsync --delete --recursive /tmp/db/htdocs/db/ $(SERVER):/mnt/photos/htdocs/db/
 
 push_drive:
 	cd go; GOPATH=$$(pwd) go get -u github.com/odeke-em/drive/cmd/drive
 	cd go; GOPATH=$$(pwd) GOOS=linux GOARCH=amd64 go build -o bin_linux/drive src/github.com/odeke-em/drive/cmd/drive/main.go
-	rsync "go/bin_linux/drive" ec2:/mnt/photos/bin/
-	rsync "bin/fix-dir-time.py" ec2:/mnt/photos/bin/
+	rsync "go/bin_linux/drive" $(SERVER):/mnt/photos/bin/
+	rsync "bin/fix-dir-time.py" $(SERVER):/mnt/photos/bin/
 
 # Drive sync.
 drive:
@@ -46,7 +47,7 @@ drive:
 
 # push_drive: 
 # 	cd go; GOPATH=$$(pwd) GOOS=linux GOARCH=amd64 go build -o bin_linux/drive src/github.com/odeke-em/drive/cmd/drive/main.go
-# 	rsync "go/bin_linux/drive" ec2:/mnt/photos/bin/
+# 	rsync "go/bin_linux/drive" $(SERVER):/mnt/photos/bin/
 
 # Lightroom sync.
 sync:

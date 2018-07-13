@@ -368,7 +368,7 @@ func ParseQuery(s string, db *Database) Query {
     case matches (day_re, t):
       qs[i] = OrQuery([]Query{DayQuery(db, t), KeywordQuery(db, t)})
 		default:
-			qs[i] = keywordMatchQuery(db, DropAccents(lower_t, nil))
+			qs[i] = keywordMatchQuery(db, lower_t)
     }
   }
   return AndQuery(qs)

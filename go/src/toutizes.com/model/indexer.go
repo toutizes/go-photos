@@ -41,7 +41,7 @@ func (idx *Indexer) Intern(s string) string {
 }
 
 func (idx *Indexer) Images(kwd string) []*Image {
-  imgs, ok := idx.images_by_keyword[DropAccents(kwd, nil)]
+  imgs, ok := idx.images_by_keyword[kwd]
   if ok {
     return imgs
   } else {
@@ -101,8 +101,11 @@ func (idx *Indexer) BuildIndex(db *Database) int {
 
   idx.images_by_keyword = make(map[string][]*Image)
   for _, kwcnt := range idx.keyword_counts {
-    idx.images_by_keyword[DropAccents(kwcnt.keyword, drop_cache)] =
-      make([]*Image, 0, kwcnt.count)
+    idx.images_by_keyword[kwcnt.keyword] = make([]*Image, 0, kwcnt.count)
+		dropped := DropAccents(kwcnt.keyword, drop_cache)
+		if dropped != kwcnt.keyword {
+			idx.images_by_keyword[dropped] = make([]*Image, 0, kwcnt.count)
+		}
   }
 	hasher := fnv.New32a()
   num_images := 0
@@ -113,10 +116,18 @@ func (idx *Indexer) BuildIndex(db *Database) int {
       num_images += 1
       idx.addImageByKeyword(img, DropAccents(img.Name(), drop_cache))
       for _, kwd := range img.Keywords() {
-        idx.addImageByKeyword(img, DropAccents(kwd, drop_cache))
+        idx.addImageByKeyword(img, kwd)
+				dropped := DropAccents(kwd, drop_cache)
+				if dropped != kwd {
+					idx.addImageByKeyword(img, DropAccents(kwd, drop_cache))
+				}
       }
       for _, kwd := range img.SubKeywords() {
-        idx.addImageByKeyword(img, DropAccents(kwd, drop_cache))
+        idx.addImageByKeyword(img, kwd)
+				dropped := DropAccents(kwd, drop_cache)
+				if dropped != kwd {
+					idx.addImageByKeyword(img, DropAccents(kwd, drop_cache))
+				}
       }
     }
   }
