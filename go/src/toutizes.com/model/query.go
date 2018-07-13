@@ -1,6 +1,7 @@
 package model
 
 import (
+  "log"
   "regexp"
   "strings"
   "strconv"
@@ -257,6 +258,15 @@ const (
   in_string = 2
 )
 
+// Returns a list of strings, on element per token.
+// Multiword tokens can be grouped with strings:
+//   "julien devin" 2017
+// You can alternatively use commas:
+//   julien devin,2017
+//
+// Tokens in strings use full keyword match, not substring matches.
+// To help that they are returned prefixed with a "
+//   tokenize("\"julien devin\" 2018") ==> ["\"julien devin", "2018"]
 func tokenize(s string) []string {
 	if strings.Contains(s, ",") && !strings.Contains(s, "\"") {
 		return tokenize_comma(s)
@@ -292,10 +302,12 @@ func tokenize_space(s string) []string {
       switch state {
       case in_space:
         state = in_string
-        from = i + 1
+				// Include the " as the first char of the token
+        from = i
       case in_token:
         tokens = append(tokens, s[from:i])
-        from = i + 1
+				// Include the " as the first char of the token
+        from = i
         state = in_string
       case in_string:
         tokens = append(tokens, s[from:i])
@@ -349,6 +361,7 @@ func keywordMatchQuery(db *Database, s string) Query {
 
 func ParseQuery(s string, db *Database) Query {
   tokens := tokenize(s)
+	log.Printf("Query tokens: %#v\n", tokens)
   qs := make([]Query, len(tokens))
   for i, t := range tokens {
     lower_t := strings.ToLower(t)
@@ -367,6 +380,8 @@ func ParseQuery(s string, db *Database) Query {
       qs[i] = OrQuery([]Query{MonthQuery(db, t), KeywordQuery(db, t)})
     case matches (day_re, t):
       qs[i] = OrQuery([]Query{DayQuery(db, t), KeywordQuery(db, t)})
+    case strings.HasPrefix(lower_t, "\""):
+			qs[i] = KeywordQuery(db, lower_t[1:])
 		default:
 			qs[i] = keywordMatchQuery(db, lower_t)
     }
