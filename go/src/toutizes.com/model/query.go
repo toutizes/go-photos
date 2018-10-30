@@ -370,6 +370,8 @@ func ParseQuery(s string, db *Database) Query {
       qs[i] = KeywordCountQuery(db, t[len("count:"):])
     case strings.HasPrefix(lower_t, "stereo:"):
       qs[i] = StereoQuery(db)
+    case strings.HasPrefix(lower_t, "\"album:"):
+      qs[i] = DirectoryByNameQuery(db, t[len("\"album:"):len(t)])
     case strings.HasPrefix(lower_t, "album:"):
       qs[i] = DirectoryByNameQuery(db, t[len("album:"):])
     case t == "albums:":

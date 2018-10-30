@@ -23,7 +23,7 @@ var force_reload = flag.Bool("force_reload", false,
 
 
 func Log(n string, r *http.Request) {
-  log.Printf("%s %s\n", r.RemoteAddr, r.URL)
+  log.Printf("%s: %s %s\n", n, r.RemoteAddr, r.URL)
 }
 
 func LogHandler(n string, handler http.Handler) http.Handler {
@@ -84,10 +84,19 @@ func main() {
     LogHandler(
       "/maxi",
       http.StripPrefix(*url_prefix, http.FileServer(http.Dir(*root)))))
-  http.Handle("/",
+  // http.Handle("/",
+  //   LogHandler(
+  //     "/ default",
+  //     http.FileServer(http.Dir(*static_root + "/"))))
+  http.Handle(
+		"/db/",
     LogHandler(
-      "/ default",
-      http.FileServer(http.Dir(*static_root + "/"))))
+      "/db files",
+      http.FileServer(http.Dir(*static_root))))
+  http.HandleFunc("/",
+    func (w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/db/pic.html", 301)
+    })
 
   for {
     err := http.ListenAndServe(":" + *port, nil)

@@ -32,6 +32,8 @@ func main() {
   db.Load(update_disk, minify, force_reload)
   println("Serving...")
 
+	// THIS IS NOT THE SERVER.   See aserve.go instead.
+
   http.HandleFunc("/q",
     func (w http.ResponseWriter, r *http.Request) {
       model.HandleQuery(w, r, db)
@@ -48,6 +50,9 @@ func main() {
     func (w http.ResponseWriter, r *http.Request) {
       model.HandleCommands(w, r, db)
     })
+
+	// THIS IS NOT THE SERVER.   See aserve.go instead.
+
   http.HandleFunc("/f",
     func (w http.ResponseWriter, r *http.Request) {
       model.HandleFeed(w, r, db)

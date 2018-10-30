@@ -17,10 +17,11 @@ SERVER=ce1
 
 # Running locally (See locserve: below for testing locally.)
 #
-# serve needs to have run install_html.
+# serve_full needs to have run install_html.
 serve_full: generate 
 	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --port=8080  --orig_root="/Users/matthieu/Google Drive/Photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
 
+# serve_small needs to have run install_html.
 serve_small: generate 
 	cd go; GOPATH=$$(pwd) go run src/toutizes.com/test/aserve.go --port=8080  --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
 

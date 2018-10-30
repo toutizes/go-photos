@@ -1,8 +1,10 @@
+
+# Generated protocol buffers
 *~
+/aserved
 /go/bin/
 /go/bin_linux/
 /go/pkg/
 /go/src/github.com/
-# Generated protocol buffers
 /go/src/toutizes.com/store/
-
+/x
