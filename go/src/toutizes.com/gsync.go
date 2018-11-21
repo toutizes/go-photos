@@ -62,14 +62,17 @@ func quoteShell(s string) string {
 }
 
 func sync(pair RsyncPair) {
+	mkdir_args := []string {"-p", pair.tt_to}
   args := []string {
-    "--recursive", "--relative", "--update", "--delete",
+    "--recursive", "--relative", "--update", "--delete", "--remove-source-files",
     "--perms", "--omit-dir-times=false", "--times", "--timeout", "600",
     pair.lr_from, pair.tt_to,
   }
-  fmt.Printf("rsync %v\n", strings.Join(args, "' '"))
   start_time := time.Now()
   if true {
+		fmt.Printf("mkdir %v\n", strings.Join(mkdir_args, "' '"))
+		exec.Command("mkdir", mkdir_args...).Run()
+		fmt.Printf("rsync %v\n", strings.Join(args, "' '"))
     exec.Command("rsync", args...).Run()
     fmt.Printf("rsync... %vs\n", time.Since(start_time).Seconds())
   }
