@@ -4,7 +4,7 @@
 // Hash management.
 var TT_Hash = (function () {
   'use strict';
-  var log = false;
+  var log = true;
 
   function hashEncode(o) {
     var e, k;
@@ -18,6 +18,7 @@ var TT_Hash = (function () {
         e += '\x00' + k + '\x00' + o[k];
       }
     }
+    console.log('substr ' + e.substr(1));
     return btoa(e.substr(1));
   }
 
@@ -59,6 +60,9 @@ var TT_Hash = (function () {
 
   function setHashWithHistory(h, push_history) {
     var hash, u, hash_index;
+    console.log("push " + push_history)
+    console.log("hash.set ");
+    console.log(h);
     hash = hashEncode(h);
     if (push_history) {
       window.location.hash = hash;

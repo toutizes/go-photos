@@ -181,6 +181,7 @@ var TT_DB5 = (function () {
   }
 
   function req_string(q, k) {
+    console.log('req_string ' + q + ', ' + k);
     var mode = (h_.mode == ALBUM_MODE || h_.mode == NEWS_MODE) ? IMAGE_MODE : h_.mode;
     var h = {mode: mode, q: q, stereo: false, full: false};
     if (k === null) {
@@ -194,6 +195,7 @@ var TT_DB5 = (function () {
   }
 
   function search() {
+    console.log('search ' + q_.val());
     set_hash({mode: IMAGE_MODE, q: q_.val(), c: 0, k: null, stereo: false}, true);
   }
 
