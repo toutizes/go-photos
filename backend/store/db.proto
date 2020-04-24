@@ -1,0 +1,41 @@
+syntax = "proto2";
+
+package store;
+
+option go_package = "backend/store";
+
+message Stereo {
+  optional float dx = 1;
+  optional float dy = 2;
+  optional float ana_dx = 3;
+  optional float ana_dy = 4;
+}
+
+message Image {
+  optional int32 rotate_degrees = 2 [default = 0];
+  optional Stereo stereo = 3;
+  optional int32 height = 4;
+  optional int32 width = 5;
+}
+
+message Video {
+}
+
+message Item {
+  optional string name = 1;
+  optional int64 file_timestamp = 2;
+  optional int64 item_timestamp = 3;
+  repeated string keywords = 4;
+
+  // Use these as low overhead extensions.
+  optional Image image = 100;
+  optional Video video = 101;
+}
+
+message Directory {
+  optional int64 directory_timestamp = 4;
+  optional string order_by = 5;
+
+  repeated Item items = 6;
+  repeated string sub_directories = 7;
+}
