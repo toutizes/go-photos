@@ -1,10 +1,7 @@
 
 # Generated protocol buffers
-*~
-/aserved
-/go/bin/
-/go/bin_linux/
-/go/pkg/
-/go/src/github.com/
-/go/src/toutizes.com/store/
-/x
+**/*~
+/go.sum
+/bin/
+/bin_linux/
+
