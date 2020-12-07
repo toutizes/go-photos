@@ -2,11 +2,11 @@ SERVER=ce1
 
 # Toutizes.
 # serve_small needs to have run install_html.
-serve_small: generate 
+serve_small: generate install_html
 	go run backend/test/aserve.go --port=8080  --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
 
 install_html:
-	bin/install-ttpic.sh
+	cmd/install-ttpic.sh
 
 push_serve: generate
 	GOOS=linux GOARCH=amd64 go build -o bin_linux/aserve backend/test/aserve.go
