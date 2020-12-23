@@ -32,7 +32,7 @@ push_drive:
 	GOBIN=$$(pwd)/bin go get -u github.com/odeke-em/drive/cmd/drive
 	GOOS=linux GOARCH=amd64 go build -o bin_linux/drive github.com/odeke-em/drive/cmd/drive
 	rsync "bin_linux/drive" $(SERVER):/mnt/photos/bin/
-	rsync "bin/fix-dir-time.py" $(SERVER):/mnt/photos/bin/
+	rsync "cmd/fix-dir-time.py" $(SERVER):/mnt/photos/bin/
 
 # Lightroom sync.
 sync:
