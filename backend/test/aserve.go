@@ -70,21 +70,21 @@ func main() {
       Log("/viewer", r)
       model.HandleCommands(w, r, db)
     })
-  mux.Handle(
-    *url_prefix + "/mini/",
-    LogHandler(
-      "/mini",
-      http.StripPrefix(*url_prefix, http.FileServer(http.Dir(*root)))))
-  mux.Handle(
-    *url_prefix + "/midi/",
-    LogHandler(
-      "/midi",
-      http.StripPrefix(*url_prefix, http.FileServer(http.Dir(*root)))))
-  mux.Handle(
-    *url_prefix + "/maxi/",
-    LogHandler(
-      "/maxi",
-      http.StripPrefix(*url_prefix, http.FileServer(http.Dir(*root)))))
+  mux.HandleFunc(*url_prefix + "/mini/",
+    func(w http.ResponseWriter, r *http.Request) {
+      Log("/mini", r)
+      model.HandleFile(w, r, *url_prefix, *root)
+    })
+  mux.HandleFunc(*url_prefix + "/midi/",
+    func(w http.ResponseWriter, r *http.Request) {
+      Log("/midi", r)
+      model.HandleFile(w, r, *url_prefix, *root)
+    })
+  mux.HandleFunc(*url_prefix + "/maxi/",
+    func(w http.ResponseWriter, r *http.Request) {
+      Log("/maxi", r)
+      model.HandleFile(w, r, *url_prefix + "/maxi/", *orig_root)
+    })
   // mux.Handle("/",
   //   LogHandler(
   //     "/ default",
@@ -99,6 +99,10 @@ func main() {
 			http.Redirect(w, r, "/db/pic.html", 301)
     })
 
+  // Always serve on http:8081, useful for access from localhost.
+  go http.ListenAndServe(":8081", mux)
+
+  // Serve images on https:8443/http:8080 (redirect)
   if (*use_https) {
     // Redirect HTTP to HTTPS
     var http_mux = http.NewServeMux()

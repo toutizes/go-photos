@@ -119,6 +119,7 @@ var TT_Image5 = (function () {
       image = images[h.c];
       url = "viewer?command=download&q=" + encodeURIComponent($("#q").val());
       $("#nav-download").attr("href", image_maxi_url(image) + "?dl=true");
+      $("#nav-download").attr("download", image.filename);
       $("#nav-download-all").attr("href", url + "&s=L");
       $("#nav-download-all-small").attr("href", url + "&s=M");
       $("#download-area").css("visibility", "visible");

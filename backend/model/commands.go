@@ -8,6 +8,8 @@ import (
   "net/http"
   "net/url"
   "path"
+  "strconv"
+  "strings"
 )
 
 func HandleDownload(w http.ResponseWriter, r *http.Request, db *Database,
@@ -81,4 +83,28 @@ func HandleCommands(w http.ResponseWriter, r *http.Request, db *Database) {
   case "reload": HandleReload(w, r, db)
   default: log.Printf("Unknown command: %v\n", vals)
   }
+}
+
+func HandleFile(w http.ResponseWriter, r *http.Request, prefix string,
+                root string) {
+  vals, err := url.ParseQuery(r.URL.RawQuery)
+  if err != nil {
+    log.Printf("%v\n", err.Error())
+    w.WriteHeader(http.StatusBadRequest)
+    return
+  }
+  dl, has_dl := vals["dl"]
+  var rel_path = r.URL.Path
+  if (!strings.HasPrefix(rel_path, prefix)) {
+    w.WriteHeader(http.StatusForbidden)
+    return
+  }
+  rel_path = strings.TrimPrefix(rel_path, prefix)
+  var abs_path = path.Join(root, rel_path)
+  if (has_dl && dl[0] == "true") {
+    w.Header().Set("Content-Disposition", 
+      "attachment; filename=" + strconv.Quote(path.Base(rel_path)))
+    w.Header().Set("Content-Type", "image/jpeg")
+  }
+  http.ServeFile(w, r, abs_path)
 }
