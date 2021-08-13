@@ -61,10 +61,11 @@ func quoteShell(s string) string {
   return s
 }
 
+// For an incremental update do not pass --delete.
 func sync(pair RsyncPair) {
 	mkdir_args := []string {"-p", pair.tt_to}
   args := []string {
-    "--recursive", "--relative", "--update", "--delete", "--remove-source-files",
+    "--recursive", "--relative", "--update", /*"--delete",*/ "--remove-source-files",
     "--perms", "--omit-dir-times=false", "--times", "--timeout", "600",
     pair.lr_from, pair.tt_to,
   }

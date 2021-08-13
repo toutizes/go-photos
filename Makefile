@@ -44,6 +44,10 @@ install_sync:
 	go build -o bin/gsync sync/gsync.go
 	cp bin/gsync "$(HOME)/Library/Application Support/Adobe/Lightroom/Export Actions/gsync"
 
+install_sync_inc:
+	go build -o bin/gsync sync/gsync.go
+	cp bin/gsync "$(HOME)/Library/Application Support/Adobe/Lightroom/Export Actions/gsync_inc"
+
 # Rules
 %.pb.go: %.proto
 	protoc --go_out=. $<
