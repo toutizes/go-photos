@@ -3,7 +3,7 @@ SERVER=ce1
 # Toutizes.
 # serve_small needs to have run install_html.
 serve_small: generate install_html
-	go run backend/test/aserve.go --use_https=false --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/db-full --static_root=/tmp/db/htdocs
+	go run backend/test/aserve.go --bin_root=/opt/homebrew/bin/ --use_https=false --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/aserve/db-full --static_root=/tmp/aserve/db/htdocs
 
 install_html:
 	cmd/install-ttpic.sh
@@ -16,7 +16,7 @@ push_html:
 	rsync --delete --recursive /tmp/db/htdocs/db/ $(SERVER):/mnt/photos/htdocs/db/
 
 run: generate
-	go run backend/test/run.go --orig_root ~/Google\ Drive/Photos/2000
+	go run backend/test/run.go --orig_root /Volumes/GoogleDrive/Mon\ Drive/Photos/1997
 
 addkwds: generate
 	go run backend/test/addkwds.go --root /tmp/a
@@ -25,6 +25,7 @@ GENERATED=backend/store/db.pb.go
 generate: $(GENERATED)
 
 clean:
+	go clean
 	rm -f $(GENERATED)
 
 # Google drive.

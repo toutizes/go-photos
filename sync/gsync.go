@@ -3,11 +3,12 @@ package main
 import ( "fmt"; "net/http"; "os"; "os/exec"; "path"; "strings"; "syscall"; "time" )
 
 var lr_roots = []string{
-  "/Users/matthieu/Pictures/Lightroom/Photos",
-  "/Volumes/overflow/matthieu/Lightroom/Photos",
+  "/Users/matthieu/Pictures/Photos",
+  // "/Volumes/overflow/matthieu/Lightroom/Photos",
 }
 
 var g_root = "/Volumes/GoogleDrive/My Drive/Photos"
+var dry_run = false
 
 type RsyncPair struct {
   lr_from string
@@ -71,20 +72,24 @@ func sync(pair RsyncPair) {
     pair.lr_from, pair.tt_to,
   }
   start_time := time.Now()
-  if true {
-		fmt.Printf("mkdir %v\n", strings.Join(mkdir_args, "' '"))
+  fmt.Printf("mkdir %v\n", strings.Join(mkdir_args, "' '"))
+  if !dry_run {
 		exec.Command("mkdir", mkdir_args...).Run()
-		fmt.Printf("rsync %v\n", strings.Join(args, "' '"))
+	}	
+  fmt.Printf("rsync %v\n", strings.Join(args, "' '"))
+  if !dry_run {
     exec.Command("rsync", args...).Run()
-    fmt.Printf("rsync... %vs\n", time.Since(start_time).Seconds())
   }
+  fmt.Printf("rsync... %vs\n", time.Since(start_time).Seconds())
 }
 
 func main() {
-  os.Remove("/tmp/lrlog")
-  logFile, _ := os.OpenFile("/tmp/lrlog", os.O_WRONLY | os.O_CREATE | os.O_SYNC, 0644)
-  syscall.Dup2(int(logFile.Fd()), 1)
-  syscall.Dup2(int(logFile.Fd()), 2)
+  if !dry_run {
+    os.Remove("/tmp/lrlog")
+    logFile, _ := os.OpenFile("/tmp/lrlog", os.O_WRONLY | os.O_CREATE | os.O_SYNC, 0644)
+    syscall.Dup2(int(logFile.Fd()), 1)
+    syscall.Dup2(int(logFile.Fd()), 2)
+  }
   fmt.Printf("Args: %v\n", os.Args[1:])
   pairs := dirsToSync(os.Args[1:])
   for _, p := range pairs {

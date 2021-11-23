@@ -1,5 +1,5 @@
 #!/bin/bash -eu
-# Installs a test image db in /tmp/db
+# Installs a test image db in /tmp/aserve/db
 
 # For debug info
 #../waypoints/lib/jquery.waypoints.js
@@ -35,11 +35,13 @@ htdocs/icons/active.png
 htdocs/icons/parallel.png
 htdocs/icons/crosseye.png
 ../malihu-custom-scrollbar-plugin/mCSB_buttons.png
-../jquery-loading/dist/jquery.loading.min.css
 /tmp/tt_db5.js
 "
 
-ROOT=/tmp/db
+# Not needed anymore?
+# ../jquery-loading/dist/jquery.loading.min.css
+
+ROOT=/tmp/aserve/db
 PHOTOS=$HOME/projects/test-photos
 
 rm -rf $ROOT/htdocs
