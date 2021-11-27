@@ -1,4 +1,5 @@
 SERVER=ce1
+LR_ACTIONS="$(HOME)/Library/Application Support/Adobe/Lightroom/Export Actions"
 
 # Toutizes.
 # serve_small needs to have run install_html.
@@ -42,8 +43,11 @@ sync:
 	cat /tmp/lrlog
 
 install_sync:
-	go build -o bin/gsync sync/gsync.go
-	cp bin/gsync "$(HOME)/Library/Application Support/Adobe/Lightroom/Export Actions/gsync"
+	go build --ldflags='-X main.Type=F' -o $(LR_ACTIONS)/gsync sync/gsync.go
+	go build --ldflags='-X main.Type=I' -o $(LR_ACTIONS)/gsync_incr sync/gsync.go
+
+test_sync:
+	go run --ldflags='-X main.Type=I' sync/gsync.go '/Users/matthieu/Pictures/Photos/2021/2021-11-29/final/bar.jpg'
 
 install_sync_inc:
 	go build -o bin/gsync sync/gsync.go

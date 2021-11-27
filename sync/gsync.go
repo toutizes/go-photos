@@ -1,6 +1,15 @@
 package main
 
-import ( "fmt"; "net/http"; "os"; "os/exec"; "path"; "strings"; "syscall"; "time" )
+import ( 
+  "fmt"
+  "net/http"
+  "os"
+  "os/exec"
+  "path"
+  "strings"
+  "syscall"
+  "time" 
+)
 
 var lr_roots = []string{
   "/Users/matthieu/Pictures/Photos",
@@ -9,6 +18,9 @@ var lr_roots = []string{
 
 var g_root = "/Volumes/GoogleDrive/My Drive/Photos"
 var dry_run = false
+// F: full (deletes previous destination contents)
+// I: incremental (keeps previous destination contents)
+var Type = "F"
 
 type RsyncPair struct {
   lr_from string
@@ -25,7 +37,7 @@ func dirsToSync(paths []string) (pairs []RsyncPair) {
         if strings.HasPrefix(p, r) {
           lr_root_used = r
           has_chosen_root = true
-          break;
+          break
         }
       }
       if !has_chosen_root {
@@ -63,20 +75,23 @@ func quoteShell(s string) string {
   return s
 }
 
-// For an incremental update do not pass --delete.
 func sync(pair RsyncPair) {
 	mkdir_args := []string {"-p", pair.tt_to}
   args := []string {
-    "--recursive", "--relative", "--update", /*"--delete",*/ "--remove-source-files",
+    "--recursive", "--relative", "--update", "--remove-source-files",
     "--perms", "--omit-dir-times=false", "--times", "--timeout", "600",
-    pair.lr_from, pair.tt_to,
   }
+  if (Type == "F") {
+    args = append(args, "--delete")
+  }
+  args = append(args, pair.lr_from)
+  args = append(args, pair.tt_to)
   start_time := time.Now()
   fmt.Printf("mkdir %v\n", strings.Join(mkdir_args, "' '"))
   if !dry_run {
 		exec.Command("mkdir", mkdir_args...).Run()
 	}	
-  fmt.Printf("rsync %v\n", strings.Join(args, "' '"))
+  fmt.Printf("rsync '%v'\n", strings.Join(args, "' '"))
   if !dry_run {
     exec.Command("rsync", args...).Run()
   }
