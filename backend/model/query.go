@@ -75,6 +75,23 @@ func DirectoryByNameQuery(db *Database, name string) Query {
   return q
 }
 
+func DirectoryBySubnameQuery(db *Database, name string) Query {
+  q := make(chan *Image)
+
+  go func(q chan *Image, db *Database, name string) {
+    defer close(q)
+    for _, dir := range db.Directories() {
+      if strings.Contains(dir.RelPat(), name) {
+        for _, img := range dir.Images() {
+          q <- img
+        }
+      }
+    }
+  }(q, db, name)
+
+  return q
+}
+
 func andFill(qs []Query) []*Image {
   imgs := make([]*Image, len(qs))
   var ok bool
@@ -404,6 +421,8 @@ func ParseQuery(s string, db *Database) Query {
       qs[i] = DirectoryByNameQuery(db, t[len("\"album:"):len(t)])
     case strings.HasPrefix(lower_t, "album:"):
       qs[i] = DirectoryByNameQuery(db, t[len("album:"):])
+    case strings.HasPrefix(lower_t, "in:"):
+      qs[i] = DirectoryBySubnameQuery(db, t[len("in:"):])
     case t == "albums:":
       qs[i] = DirectoriesQuery(db)
     case matches(year_re, t):
@@ -415,7 +434,7 @@ func ParseQuery(s string, db *Database) Query {
     case matches(year_range_re, t):
       qs[i] = YearRangeQuery(db, t)
     case strings.HasPrefix(lower_t, "\""):
-			qs[i] = KeywordQuery(db, lower_t[1:])
+			qs[i] = KeywordQuery(db, lower_t[1:len(t)])
 		default:
 			qs[i] = keywordMatchQuery(db, lower_t)
     }

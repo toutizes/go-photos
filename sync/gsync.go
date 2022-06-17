@@ -16,7 +16,7 @@ var lr_roots = []string{
   // "/Volumes/overflow/matthieu/Lightroom/Photos",
 }
 
-var g_root = "/Volumes/GoogleDrive/My Drive/Photos"
+var g_root = "/Users/matthieu/Google Drive/My Drive/Photos"
 var dry_run = false
 // F: full (deletes previous destination contents)
 // I: incremental (keeps previous destination contents)
