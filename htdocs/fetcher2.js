@@ -106,11 +106,35 @@ var TT_Fetcher2 = (function () {
   }
 
   function by_timestamp_decreasing(a, b) {
-    return b.timestamp - a.timestamp;
+    if (a.timestamp < b.timestamp) {
+      return 1;
+    }
+    if (a.timestamp > b.timestamp) {
+      return -1;
+    }
+    if (a.filename < b.filename) {
+      return 1;
+    } 
+    if (a.filename > b.filename) {
+      return -1;
+    }
+    return 0;
   }
 
   function by_timestamp_increasing(a, b) {
-    return a.timestamp - b.timestamp;
+    if (a.timestamp < b.timestamp) {
+      return -1;
+    }
+    if (a.timestamp > b.timestamp) {
+      return 1;
+    }
+    if (a.filename < b.filename) {
+      return -1;
+    } 
+    if (a.filename > b.filename) {
+      return 1;
+    }
+    return 0;
   }
 
   function gotPhotoFeed(query, jphotos, cb) {
@@ -124,7 +148,7 @@ var TT_Fetcher2 = (function () {
       }
     }
     // console.log("Got photos: ", photos);
-    if (query.match(/^album:/)) {
+    if (query.match(/^("?)album:/)) {
       photos = photos.sort(by_timestamp_increasing);
     } else {
       photos = photos.sort(by_timestamp_decreasing);

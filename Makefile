@@ -15,7 +15,7 @@ push_serve: generate
 	rsync "bin_linux/aserve" $(SERVER):/mnt/photos/bin/
 
 push_html:
-	rsync --delete --recursive /tmp/db/htdocs/db/ $(SERVER):/mnt/photos/htdocs/db/
+	rsync --delete --recursive /tmp/aserve/db/htdocs/db/ $(SERVER):/mnt/photos/htdocs/db/
 
 run: generate
 	go run backend/test/run.go --orig_root /Volumes/GoogleDrive/Mon\ Drive/Photos/1997
