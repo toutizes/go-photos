@@ -16,7 +16,10 @@ var lr_roots = []string{
   // "/Volumes/overflow/matthieu/Lightroom/Photos",
 }
 
-var g_root = "/Users/matthieu/Google Drive/My Drive/Photos"
+var g_roots = []string{
+  "/Users/matthieu/Google Drive/My Drive/Photos",
+  "/Users/matthieu/Google Drive/Mon Drive/Photos"}
+
 var dry_run = false
 // F: full (deletes previous destination contents)
 // I: incremental (keeps previous destination contents)
@@ -27,10 +30,32 @@ type RsyncPair struct {
   tt_to string
 }
 
+func directoryExists(path string) bool {
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return err == nil
+}
+
+func findGRoot() string {
+	for _, dir := range g_roots {
+		if directoryExists(dir) {
+      return dir;
+		}
+	}
+  return "";
+}
+
 func dirsToSync(paths []string) (pairs []RsyncPair) {
   dirs := make(map[string]bool)
   has_chosen_root := false
   var lr_root_used string
+  var g_root = findGRoot();
+  if g_root == "" {
+    println("None of the g_roots exist!");
+    return;
+  }
   for _, p := range paths {
     if !has_chosen_root {
       for _, r := range lr_roots {
