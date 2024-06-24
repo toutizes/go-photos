@@ -27,7 +27,9 @@ var TT_Keywords = (function () {
   function display(image) {
     album_.empty();
     keywords_.empty();
-    add_keyword(image.albumId, "album:" + image.albumId, image.id, album_);
+    const date_str = new Date(image.timestamp * 1000).toLocaleDateString('en-CA');
+    add_keyword(date_str, date_str, image.id, album_);
+    add_keyword("Tout l'album", "album:" + image.albumId, image.id, album_);
     var i, keyword;
     for (i = 0; i < image.keywords.length; i++) {
       keyword = image.keywords[i];
