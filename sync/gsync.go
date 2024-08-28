@@ -13,6 +13,7 @@ import (
 
 var lr_roots = []string{
   "/Users/matthieu/Pictures/Photos",
+  "/Users/matthieu/Pics from Bernard/",
   // "/Volumes/overflow/matthieu/Lightroom/Photos",
 }
 

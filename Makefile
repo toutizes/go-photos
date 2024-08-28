@@ -38,17 +38,12 @@ push_drive:
 	rsync "cmd/fix-dir-time.py" $(SERVER):/mnt/photos/bin/
 
 # Lightroom sync.
-sync:
-	rm -f /tmp/lrlog
-	go run sync/async.go /Users/matthieu/Pictures/Lightroom/Photos/2015/2015-01-18/final/*.jpg
-	cat /tmp/lrlog
-
 install_sync:
 	go build --ldflags='-X main.Type=F' -o $(LR_ACTIONS)/gsync sync/gsync.go
 	go build --ldflags='-X main.Type=I' -o $(LR_ACTIONS)/gsync_incr sync/gsync.go
 
 test_sync:
-	go run --ldflags='-X main.Type=I' sync/gsync.go '/Users/matthieu/Pictures/Photos/2021/2021-11-29/final/bar.jpg'
+	go run --ldflags='-X main.Type=I' sync/gsync.go '/Users/matthieu/Pics from Bernard/Bernard/1953 and before/final/fianchabi.jpg'
 
 install_sync_inc:
 	go build -o bin/gsync sync/gsync.go
