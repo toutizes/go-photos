@@ -79,9 +79,10 @@ func DirectoryBySubnameQuery(db *Database, name string) Query {
   q := make(chan *Image)
 
   go func(q chan *Image, db *Database, name string) {
+    var sub_name = strings.ToLower(name)
     defer close(q)
     for _, dir := range db.Directories() {
-      if strings.Contains(strings.ToLower(dir.RelPat()), name) {
+      if strings.Contains(strings.ToLower(dir.RelPat()), sub_name) {
         for _, img := range dir.Images() {
           q <- img
         }
