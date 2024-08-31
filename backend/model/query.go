@@ -435,7 +435,7 @@ func ParseQuery(s string, db *Database) Query {
     case matches(year_range_re, t):
       qs[i] = YearRangeQuery(db, t)
     case strings.HasPrefix(lower_t, "\""):
-			qs[i] = KeywordQuery(db, lower_t[1:len(t)])
+			qs[i] = KeywordSynonymsQuery(db, lower_t[1:len(t)])
 		default:
 			qs[i] = keywordMatchQuery(db, lower_t)
     }
