@@ -99,6 +99,9 @@ var known_people = []*Person{
   NewPerson("cécile moncla", "cécile chartier"),
   NewPerson("bonne maman", "marcelle moncla"),
   NewPerson("bon papa", "robert moncla", "marcel moncla"),
+  NewPerson("oncle pierre", "oncle caillou"),
+  NewPerson("tante jehanne", "tante farce"),
+  NewPerson("brigitte debast", "brigitte nagashima"),
 }
 
 func KeywordSynonymsQuery(db *Database, kwd string) Query {

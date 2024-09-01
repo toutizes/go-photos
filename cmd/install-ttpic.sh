@@ -27,6 +27,7 @@ htdocs/util.js
 cat $JS_FILES > /tmp/tt_db5.js
 
 INSTALL_FILES="
+htdocs/aide.html
 htdocs/pic.html
 htdocs/pic5.css
 htdocs/icons/prev2.png
