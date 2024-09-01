@@ -253,7 +253,7 @@ func YearRangeQuery(db *Database, year_range string) Query {
   tim_from, err := time.Parse("2006 MST", year_range[0:4] + " PST")
   tim_to, err := time.Parse("2006 MST", year_range[6:10] + " PST")
   if err == nil {
-    return TimeRangeQuery(db, tim_from, tim_to)
+    return TimeRangeQuery(db, tim_from, tim_to.AddDate(1, 0, 0))
   } else {
     return nil
   }
@@ -424,6 +424,8 @@ func ParseQuery(s string, db *Database) Query {
       qs[i] = DirectoryByNameQuery(db, t[len("album:"):])
     case strings.HasPrefix(lower_t, "in:"):
       qs[i] = DirectoryBySubnameQuery(db, t[len("in:"):])
+    case strings.HasPrefix(lower_t, "titre:"):
+      qs[i] = DirectoryBySubnameQuery(db, t[len("titre:"):])
     case t == "albums:":
       qs[i] = DirectoriesQuery(db)
     case matches(year_re, t):
