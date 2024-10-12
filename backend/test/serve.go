@@ -1,3 +1,4 @@
+// OBSOLETE.  Now using aserve.go.
 package main
 
 import (

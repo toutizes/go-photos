@@ -1,0 +1,49 @@
+<!--
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8"/>
+    <!-- needed for testing locally ?? -->
+    <meta name="referrer" content="no-referrer-when-downgrade"/>
+    <!-- <meta name="viewport" content="initial-scale=1.0" /> -->
+    <title>Images 5</title>
+    <!-- <link rel="stylesheet" type="text/css" href="pic5.css" /> -->
+    <script src="https://code.jquery.com/jquery-1.9.0.js"></script>
+    <script src="https://code.jquery.com/jquery-migrate-1.0.0.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="tt_db5.js"></script>
+  </head>
+  <body>
+    <script>TT_DB5.init();</script>
+    <div>Bonjour,</div>
+    <div>
+      Pour des raisons de confidentialité et de sécurité il faut
+      s'identifier pour accéder aux photos de toutizes.
+    </div>
+    <div>
+      On enregistre juste votre addresse mail pour savoir qui accède aux
+      photos. On ne la partage avec personne.
+    </div>
+    <script>
+      function TT_DB5_onSignIn(googleUser) {
+        TT_DB5.onSignIn(googleUser);
+      }
+    </script>
+    <div id="g_id_onload"
+         data-client_id="481915992198-47runrlrqf4bo1q7l6j81baq7en9i450.apps.googleusercontent.com"
+         data-context="use"
+         data-ux_mode="popup"
+         data-callback="TT_DB5_onSignIn"
+         data-auto_prompt="false">
+    </div>
+
+    <div class="g_id_signin"
+         data-type="standard"
+         data-shape="rectangular"
+         data-theme="outline"
+         data-text="signin_with"
+         data-size="large"
+         data-logo_alignment="left">
+    </div>
+  </body>
+</html>

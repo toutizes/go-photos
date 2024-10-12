@@ -5,6 +5,8 @@ import (
   "log"
   "net/http"
   "runtime"
+
+  // "github.com/alexedwards/scs/v2"
 )
 
 import (
@@ -21,6 +23,8 @@ var force_reload = flag.Bool("force_reload", false,
   "If true force a reload of images.")
 var use_https = flag.Bool("use_https", false, "If true listen for HTTPS in 443.")
 
+// var sessionManager *scs.SessionManager
+// var cookieSalt = "da89HIuneDMBa8eThg-9VYcDScApDUKIXaiFXcbvMys"
 
 func Log(n string, r *http.Request) {
   log.Printf("%s: %s %s\n", n, r.RemoteAddr, r.URL)
@@ -50,9 +54,14 @@ func main() {
   if *root == "" {
     log.Fatal("Must pass --root")
   }
+  model.LoadSynonyms(*static_root)
   db := model.NewDatabase2(*orig_root, *root)
   db.Load(*update_db, *update_db, *force_reload)
   log.Printf("Serving...")
+
+  // // Initialize the session manager
+  // sessionManager = scs.New()
+  // sessionManager.Store = scs.NewCookieStore([]byte(cookieSalt))
 
   var mux = http.NewServeMux()
   mux.HandleFunc(*url_prefix + "/q",

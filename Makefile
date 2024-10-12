@@ -14,8 +14,9 @@ push_serve: generate
 	GOOS=linux GOARCH=amd64 go build -o bin_linux/aserve backend/test/aserve.go
 	rsync "bin_linux/aserve" $(SERVER):/mnt/photos/bin/
 
-push_html:
+push_html: install_html
 	rsync --delete --recursive /tmp/aserve/db/htdocs/db/ $(SERVER):/mnt/photos/htdocs/db/
+	rsync --delete --recursive /tmp/aserve/db/htdocs/synonyms.txt $(SERVER):/mnt/photos/htdocs/synonyms.txt
 
 run: generate
 	go run backend/test/run.go --orig_root /Volumes/GoogleDrive/Mon\ Drive/Photos/1997

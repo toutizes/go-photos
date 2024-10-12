@@ -106,5 +106,8 @@ func HandleFile(w http.ResponseWriter, r *http.Request, prefix string,
       "attachment; filename=" + strconv.Quote(path.Base(rel_path)))
     w.Header().Set("Content-Type", "image/jpeg")
   }
+  // For google auth.
+  // https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid#cross_origin_opener_policy
+  w.Header().Set("Cross-Origin-Opener-Policy", "same-origin-allow-popups")
   http.ServeFile(w, r, abs_path)
 }

@@ -28,8 +28,11 @@ cat $JS_FILES > /tmp/tt_db5.js
 
 INSTALL_FILES="
 htdocs/aide.html
+htdocs/tos.html
+htdocs/privacy.html
 htdocs/pic.html
 htdocs/pic5.css
+htdocs/secpic.html
 htdocs/icons/prev2.png
 htdocs/icons/next2.png
 htdocs/icons/active.png
@@ -39,8 +42,7 @@ htdocs/icons/crosseye.png
 /tmp/tt_db5.js
 "
 
-# Not needed anymore?
-# ../jquery-loading/dist/jquery.loading.min.css
+SYNS="backend/model/synonyms.txt"
 
 ROOT=/tmp/aserve/db
 PHOTOS=$HOME/projects/test-photos
@@ -48,8 +50,4 @@ PHOTOS=$HOME/projects/test-photos
 rm -rf $ROOT/htdocs
 mkdir -p $ROOT/htdocs/db
 cp $INSTALL_FILES $ROOT/htdocs/db
-
-# mkdir $ROOT/mini
-# mkdir $ROOT/midi
-# ln -s $PHOTOS $ROOT/maxi
-# ln -s $PHOTOS $ROOT/originals
+cp $SYNS $ROOT/htdocs/

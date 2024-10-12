@@ -297,6 +297,29 @@ var TT_DB5 = (function () {
     });
   }
 
+  function onSignIn(googleUser) {
+    console.log("onSignin");
+    console.log(googleUser);
+    var id_token = googleUser.getAuthResponse().id_token;
+    // Send the ID token to your backend for verification
+    $.ajax({
+      type: 'POST',
+      url: '/auth-google', // Your backend endpoint
+      data: { id_token: id_token },
+      success: function(response) {
+        // TODO: redirect to authpic.html.
+        // Handle successful authentication (e.g., redirect, update UI)
+        console.log("Success");
+        console.log(response);
+      },
+      error: function(error) {
+        // Handle authentication error
+        console.log("Failure");
+        console.log(error);
+      }
+    });
+  }
+
   function initialize() {
     resized();
     bind_events();
@@ -326,6 +349,7 @@ var TT_DB5 = (function () {
     req_full: req_full,
     st_mode: st_mode,
     search: search,
-    iflow: iflow
+    iflow: iflow,
+    onSignIn: onSignIn
   };
 }());
