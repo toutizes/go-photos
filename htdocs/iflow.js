@@ -5,6 +5,8 @@ var TT_IFlow = (function () {
 
   var target_h_ = 200;		// Target height of each row.
   var container_ = null;	// Iflow div.
+  var prev_ = null; 		// Previous image button.
+  var next_ = null; 		// Next image button.
   var img_model_ = null;	// Model for images.
 
   var h_ = null;		// last hash used for display.
@@ -165,8 +167,24 @@ var TT_IFlow = (function () {
       infinite_.scroll_into_view(row_index);
     }
     if (h.full) {
+      console.log("full");
+      console.log(h.c);
+      console.log(images.length);
+      if (h.c === 0) {
+        console.log("hiding prev");
+        prev_.addClass("hidden");
+      } else {
+        prev_.removeClass("hidden");
+      }
+      if (h.c === images.length - 1) {
+        next_.addClass("hidden");
+      } else {
+        next_.removeClass("hidden");
+      }
       container_.addClass("muted");
     } else {
+      prev_.addClass("hidden");
+      next_.addClass("hidden");
       container_.removeClass("muted");
     }
     $("#" + image_eltid(h_.c)).addClass("iflow-img-current");
@@ -215,6 +233,8 @@ var TT_IFlow = (function () {
 
   function initialize(slider) {
     container_ = $("#iflow-container");
+    prev_ = $("#prev-full");
+    next_ = $("#next-full");
     img_model_ = $("#iflow-img-model");
     slider_ = slider;
     preloader_ = TT_Preloader.create(10);
