@@ -46,6 +46,7 @@ var TT_Album5 = (function () {
   }
 
   function albums_ready(albums) {
+    $("#image-count").text("Albums: " + albums.length);
     albums_ = albums.sort(by_date_updated);
     var ids = $.map(albums_, function (a) { return a.coverId; });
     montage_ = TT_Montage.create(8, Math.floor(model_.width()), ids);

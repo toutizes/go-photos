@@ -8,6 +8,7 @@ var TT_IFlow = (function () {
   var prev_ = null; 		// Previous image button.
   var next_ = null; 		// Next image button.
   var img_model_ = null;	// Model for images.
+  var image_count_= null;       // Element that displays the count of images.
 
   var h_ = null;		// last hash used for display.
   var h_images_ = null;		// last images fetched from h_.
@@ -149,7 +150,23 @@ var TT_IFlow = (function () {
     };
   }
 
+  function show_download_links(h, images) {
+    var image, url;
+    if (images.length > 0 && h.c < images.length) {
+      image = images[h.c];
+      url = "viewer?command=download&q=" + encodeURIComponent($("#q").val());
+      $("#nav-download").attr("href", image_img_url(image, "maxi") + "?dl=true");
+      $("#nav-download").attr("download", image.filename);
+      $("#nav-download-all").attr("href", url + "&s=L");
+      $("#nav-download-all-small").attr("href", url + "&s=M");
+      $("#download-area").css("visibility", "visible");
+    } else {
+      $("#download-area").css("visibility", "hidden");
+    }
+  }
+
   function images_ready(h, images) {
+    image_count_.text("Images: " + images.length);
     TT_Image5.fix_h(h, images);
     if (h_ !== null) {
       $("#" + image_eltid(h_.c)).removeClass("iflow-img-current");
@@ -197,6 +214,7 @@ var TT_IFlow = (function () {
       slider_.hide();
     }
     TT_Keywords.display(h_images_[h_.c]);
+    show_download_links(h_, h_images_);
   }
 
   function display(h) {
@@ -236,6 +254,7 @@ var TT_IFlow = (function () {
     prev_ = $("#prev-full");
     next_ = $("#next-full");
     img_model_ = $("#iflow-img-model");
+    image_count_ = $("#image-count");
     slider_ = slider;
     preloader_ = TT_Preloader.create(10);
     pad_ = 10;
