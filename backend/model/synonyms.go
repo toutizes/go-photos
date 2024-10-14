@@ -13,21 +13,20 @@ type Person struct {
 }
 
 func newPerson(full_names ...string) *Person {
-  log.Printf("New person: %v\n", full_names[0])
+	log.Printf("New person: %v\n", full_names[0])
 	p := new(Person)
 	p.name_set = make(map[string]struct{}, len(full_names))
-	for i, n := range full_names {
+	for _, n := range full_names {
 		p.name_set[n] = struct{}{}
-    if i > 0 {
-      log.Printf(" syn: %v\n", n)
-    }
+	}
+  for k, v := range p.name_set {
+		all_names[k] = v
 	}
 	return p
 }
 
 func hasName(p *Person, name string) bool {
 	_, exists := p.name_set[name]
-  log.Printf("HasName(%v): %v\n", name, exists)
 	return exists
 }
 
@@ -49,6 +48,7 @@ func personQuery(db *Database, p *Person) Query {
 }
 
 var known_people = []*Person{}
+var all_names = map[string]struct{}{}
 
 func LoadSynonyms(root string) {
 	syns_path := path.Join(root, "synonyms.txt")
@@ -81,4 +81,9 @@ func KeywordSynonymsQuery(db *Database, kwd string) Query {
 		}
 	}
 	return KeywordQuery(db, kwd)
+}
+
+func IsName(db *Database, kwd string) bool {
+	_, exists := all_names[kwd]
+	return exists
 }
