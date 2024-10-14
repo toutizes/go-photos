@@ -8,6 +8,7 @@ var TT_DB5 = (function () {
     portrait_ = null,
     header_,
     q_,
+    last_image_mode_ = "I",
     IMAGE_MODE,
     IFLOW_MODE,
     ALBUM_MODE,
@@ -149,6 +150,19 @@ var TT_DB5 = (function () {
     set_hash(h, false);
   }
 
+  function toggle_iflow() {
+    var h = get_hash();
+    if (h_.mode === IMAGE_MODE) {
+      h.mode = IFLOW_MODE;
+      last_image_mode_ = h.mode;
+      set_hash(h, false);
+    } else if (h_.mode === IFLOW_MODE) {
+      h.mode = IMAGE_MODE;
+      last_image_mode_ = h.mode;
+      set_hash(h, false);
+    }
+  }
+
   function toggle_stereo() {
     var h = get_hash();
     h.stereo = !h.stereo;
@@ -196,11 +210,7 @@ var TT_DB5 = (function () {
 
   function search() {
     console.log('search ' + q_.val());
-    set_hash({mode: IMAGE_MODE, q: q_.val(), c: 0, k: null, stereo: false}, true);
-  }
-
-  function iflow() {
-    set_hash({mode: IFLOW_MODE, q: q_.val(), c: 0, k: null, stereo: false}, true);
+    set_hash({mode: last_image_mode_, q: q_.val(), c: 0, k: null, stereo: false}, true);
   }
 
   function rel_next(n) {
@@ -349,7 +359,7 @@ var TT_DB5 = (function () {
     req_full: req_full,
     st_mode: st_mode,
     search: search,
-    iflow: iflow,
+    iflow: toggle_iflow,
     onSignIn: onSignIn
   };
 }());
