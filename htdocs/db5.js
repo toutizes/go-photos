@@ -8,7 +8,7 @@ var TT_DB5 = (function () {
     portrait_ = null,
     header_,
     q_,
-    last_image_mode_ = "I",
+    last_image_mode_ = "F",
     IMAGE_MODE,
     IFLOW_MODE,
     ALBUM_MODE,
@@ -125,7 +125,7 @@ var TT_DB5 = (function () {
 
   // Requests for hash change.
   function req_image_mode() {
-    set_hash({mode: IMAGE_MODE}, true);
+    set_hash({mode: last_image_mode_}, true);
   }
 
   function req_iflow_mode() {
@@ -196,7 +196,7 @@ var TT_DB5 = (function () {
 
   function req_string(q, k) {
     console.log('req_string ' + q + ', ' + k);
-    var mode = (h_.mode == ALBUM_MODE || h_.mode == NEWS_MODE) ? IMAGE_MODE : h_.mode;
+    var mode = (h_.mode == ALBUM_MODE || h_.mode == NEWS_MODE) ? last_image_mode_ : h_.mode;
     var h = {mode: mode, q: q, stereo: false, full: false};
     if (k === null) {
       h.c = 0;
@@ -352,7 +352,6 @@ var TT_DB5 = (function () {
   return {
     init: init,
     req_image_mode: req_image_mode,
-    req_iflow_mode: req_iflow_mode,
     req_album_mode: req_album_mode,
     req_image_index: req_image_index,
     req_string: req_string,
