@@ -318,7 +318,7 @@ func (db *Database) Load(update_disk, minify, force_reload bool) error {
 	if minify {
 		start_time = time.Now()
 		go db.resetMontageDirectory()
-		num_minified := MinifyDatabase(db)
+		num_minified := MinifyDatabase(db, false, false)
 		log.Printf("Minifed %d images in %g ms\n",
 			num_minified,
 			time.Since(start_time).Seconds()*1000)

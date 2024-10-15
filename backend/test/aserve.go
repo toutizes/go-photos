@@ -18,8 +18,7 @@ var root = flag.String("root", "", "path to the database index, mini, etc")
 var url_prefix = flag.String("url_prefix", "/db", "prefix for the urls.")
 var num_cpu = flag.Int("num_cpu", 0, "Number of CPUs to use.  0 means MAXPROC.")
 var update_db = flag.Bool("update_db", true, "If true update the database files.")
-var force_reload = flag.Bool("force_reload", false,
-	"If true force a reload of images.")
+var force_reload = flag.Bool("force_reload", false, "If true force a reload of images.")
 var use_https = flag.Bool("use_https", false, "If true listen for HTTPS in 443.")
 
 // var sessionManager *scs.SessionManager

@@ -33,6 +33,7 @@ htdocs/privacy.html
 htdocs/pic.html
 htdocs/pic5.css
 htdocs/secpic.html
+htdocs/icons/loading.webp
 htdocs/icons/prev2.png
 htdocs/icons/next2.png
 htdocs/icons/active.png

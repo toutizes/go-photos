@@ -3,7 +3,7 @@
 var TT_IFlow = (function () {
   "use strict";
 
-  var target_h_ = 200;		// Target height of each row.
+  var target_h_ = 300;		// Target height of each row.
   var container_ = null;	// Iflow div.
   var prev_ = null; 		// Previous image button.
   var next_ = null; 		// Next image button.

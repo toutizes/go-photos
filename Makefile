@@ -21,6 +21,13 @@ push_html: install_html
 run: generate
 	go run backend/test/run.go --orig_root /Volumes/GoogleDrive/Mon\ Drive/Photos/1997
 
+minify: 
+	go run backend/util/minify.go --bin_root=/opt/homebrew/bin/ --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/aserve/db-full
+
+push_minify:
+	GOOS=linux GOARCH=amd64 go build -o bin_linux/minify backend/util/minify.go
+	rsync "bin_linux/minify" $(SERVER):/mnt/photos/bin/
+
 addkwds: generate
 	go run backend/test/addkwds.go --root /tmp/a
 
