@@ -125,6 +125,7 @@ var TT_Slider5 = (function () {
     images_midi_.addClass("slider");
     sequence_ += 1;
     slide_sequence = sequence_;
+    $("#midi-full .midiimg").attr("src", "loading-noir.webp");
     image = new Image();
     image.onload = function () { img_ready(h, photo, image, slide_sequence, mode, cb); };
     image.src = img_url;
