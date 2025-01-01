@@ -259,7 +259,7 @@ func (a ByMostRecent) Less(i, j int) bool { return a[i].Time().Before(a[j].Time(
 
 func (db *Database) Load(update_disk, minify, force_reload bool) error {
 	LoadSynonyms(db.static_root)
-	N := 4
+	N := 3
 	pat_ch := make(chan *loaderLoad, N)
 	res_ch := make(chan *loaderResult, N)
 	for i := 0; i < N; i++ {

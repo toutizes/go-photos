@@ -35,6 +35,9 @@ var TT_DB5 = (function () {
                                        st_mode: TT_DisplayMode2.ACTIVE.code});
     h.c = Math.max(0, parseInt(h.c, 10));
     h.st_mode = parseInt(h.st_mode, 10);
+    if (h.mode == IMAGE_MODE) {
+      h.mode = IFLOW_MODE;
+    }
     return h;
   }
 
@@ -91,11 +94,11 @@ var TT_DB5 = (function () {
   }
 
   function display_form(h) {
-    if (h.full) {
-      header_.addClass("muted");
-    } else {
-      header_.removeClass("muted");
-    }
+    // if (h.full) {
+    //   header_.addClass("muted");
+    // } else {
+    //   header_.removeClass("muted");
+    // }
     q_.val(h.q);
   }
 

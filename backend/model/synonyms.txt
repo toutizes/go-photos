@@ -27,7 +27,7 @@ françois devin
 zacharie devin
 marin devin
 julie devin
-stéphanie peulmeul,stéphanie devin
+stéphanie peulmeul,stéphanie devin,stéphanie peulmeule
 samuel devin
 élie devin
 leïla devin
@@ -37,13 +37,13 @@ virgile devin
 lucas devin
 clémence devin
 éloi devin
-nathalie verbeck,nathalie devin
+nathalie verbeke,nathalie verbeck,nathalie devin
 rémi devin
 noé devin
 lucile devin,lucile devin-casado,lucile casado
 liam devin,liam devin-casado,liam casado,marie devin,marie devin-casado,marie casado
 katie casado,katie devin-casado
-emmanuel devin
+emmanuel devin,manu devin
 coline devin,coco
 julien devin,juju
 catherine granger,katiouche
@@ -54,8 +54,12 @@ marisol devin
 cécile moncla,cécile chartier
 bonne maman,marcelle moncla
 bon papa,robert moncla,marcel moncla
-oncle pierre,oncle caillou
-tante jehanne,tante farce
+oncle pierre,oncle caillou,pierre devin
+tante farce,jehanne devin,jehanne debast
 brigitte debast,brigitte nagashima
 odile marfaing,odile simoneau
 sylvie denatale,sylvie monier,sylvie monnier
+anne-marie marfaing,anne-marie gagnon
+marie-christine debast,marie-christine kermorgant
+anne devin,anne coignet,banane
+philipe fafiote,fafa

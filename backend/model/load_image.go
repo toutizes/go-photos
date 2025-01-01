@@ -195,14 +195,14 @@ func parseKeywords(s string) (keywords []string) {
 
 func getImageInfo(file string) (height int, width int, keywords []string, err error) {
 	args := []string{
-		*BinRoot + "convert", file, "-format", "%h\\ %w\\n%[IPTC:2:25]\\n", "info:"}
+		*BinRoot + "magick", file, "-format", "%h\\ %w\\n%[IPTC:2:25]\\n", "info:"}
 	cmd := exec.Command(args[0], args[1:]...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		// If there is no IPTC entry.
 		log.Printf("IPTC failed, trying just sizes: %s\n", file)
 		log.Printf("Cmd: %s =>\n%s\n", strings.Join(args, " "), string(out))
-		cmd = exec.Command(*BinRoot+"convert", file, "-format", "%h %w\\n", "info:")
+		cmd = exec.Command(*BinRoot + "magick", file, "-format", "%h %w\\n", "info:")
 		out, err = cmd.Output()
 	}
 	if err != nil {
@@ -215,10 +215,14 @@ func getImageInfo(file string) (height int, width int, keywords []string, err er
 		h_w := strings.SplitN(lines[0], " ", 2)
 		height, err = strconv.Atoi(h_w[0])
 		if err != nil {
+      log.Printf("Cmd: %s =>\n%s\n", strings.Join(args, " "), string(out))
+      log.Printf("Error in Atoi for height: %s\n", h_w[0])
 			return
 		}
 		width, err = strconv.Atoi(h_w[1])
 		if err != nil {
+      // log.Printf("Cmd: %s =>\n%s\n", strings.Join(args, " "), string(out))
+      // log.Printf("Error in Atoi for width: %s\n", h_w[1])
 			return
 		}
 	}

@@ -1,6 +1,7 @@
 package model
 
 import (
+  "fmt"
 	"log"
 	"regexp"
 	"strconv"
@@ -280,6 +281,36 @@ func DayQuery(db *Database, year_month_day string) Query {
 	}
 }
 
+func parseMonthDay(monthDayString string) ([2]int, error) {
+	parts := strings.Split(monthDayString, "-")
+	if len(parts) != 2 {
+		return [2]int{}, fmt.Errorf("invalid date format: expected MM-DD, got %s", monthDayString)
+	}
+
+	month, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return [2]int{}, fmt.Errorf("invalid month: %s", parts[0])
+	}
+
+	day, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return [2]int{}, fmt.Errorf("invalid day: %s", parts[1])
+	}
+
+	return [2]int{month, day}, nil
+}
+
+func MonthDayQuery(db *Database, month_day string) Query {
+  dateArray, err := parseMonthDay(month_day)
+	if err != nil {
+		return KeywordQuery(db, month_day)
+	}
+	filter := func(img *Image) bool {
+    return img.ItemTime().Month() == time.Month(dateArray[0]) && img.ItemTime().Day() == dateArray[1]
+	}
+	return FilteredQuery(db, filter)
+}
+
 func KeywordCountQuery(db *Database, count string) Query {
 	cnt, err := strconv.Atoi(count)
 	if err == nil {
@@ -388,6 +419,7 @@ const (
 	month_re      = "^[12][0-9][0-9][0-9]-[0-9][0-9]$"
 	day_re        = "^[12][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$"
 	year_range_re = "^[12][0-9][0-9][0-9]--[12][0-9][0-9][0-9]$"
+  month_day_re  = "^[0-1]?[0-9]-[0-3]?[0-9]$"
 )
 
 func matches(pattern string, token string) bool {
@@ -445,6 +477,8 @@ func ParseQuery(s string, db *Database) Query {
 			qs[i] = OrQuery([]Query{MonthQuery(db, t), KeywordQuery(db, t)})
 		case matches(day_re, t):
 			qs[i] = OrQuery([]Query{DayQuery(db, t), KeywordQuery(db, t)})
+		case matches(month_day_re, t):
+			qs[i] = MonthDayQuery(db, t)
 		case matches(year_range_re, t):
 			qs[i] = YearRangeQuery(db, t)
 		case strings.HasPrefix(lower_t, "\""):
