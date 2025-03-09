@@ -16,6 +16,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final TextEditingController _searchController = TextEditingController();
   String _currentSearch = '';
+  int? _scrollToImageId;  // Add this to track which image to scroll to
 
   @override
   void dispose() {
@@ -26,6 +27,24 @@ class _HomeScreenState extends State<HomeScreen> {
   void _performSearch(String query) {
     setState(() {
       _currentSearch = query;
+      _scrollToImageId = null;  // Reset scroll target on manual search
+    });
+  }
+
+  void _clearSearch() {
+    setState(() {
+      _currentSearch = '';
+      _searchController.clear();
+      _scrollToImageId = null;
+    });
+  }
+
+  void _handleKeywordSearch(String keyword, int imageId) {
+    setState(() {
+      _selectedIndex = 1;  // Switch to Images tab
+      _currentSearch = keyword;
+      _searchController.text = keyword;
+      _scrollToImageId = imageId;  // Set the image to scroll to
     });
   }
 
@@ -37,9 +56,19 @@ class _HomeScreenState extends State<HomeScreen> {
           controller: _searchController,
           decoration: InputDecoration(
             hintText: _selectedIndex == 0 ? 'Search albums...' : 'Search photos...',
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () => _performSearch(_searchController.text),
+            suffixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_currentSearch.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: _clearSearch,
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () => _performSearch(_searchController.text),
+                ),
+              ],
             ),
             border: InputBorder.none,
           ),
@@ -63,6 +92,8 @@ class _HomeScreenState extends State<HomeScreen> {
           FlowView(
             apiService: widget.apiService,
             searchQuery: _selectedIndex == 1 ? _currentSearch : '',
+            scrollToImageId: _scrollToImageId,
+            onKeywordSearch: _handleKeywordSearch,
           ),
         ],
       ),

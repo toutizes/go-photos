@@ -7,6 +7,7 @@ class ImageDetailView extends StatefulWidget {
   final ApiService apiService;
   final List<ImageModel> allImages;
   final int currentIndex;
+  final Function(String, int)? onKeywordSearch;
 
   const ImageDetailView({
     super.key,
@@ -14,6 +15,7 @@ class ImageDetailView extends StatefulWidget {
     required this.apiService,
     required this.allImages,
     required this.currentIndex,
+    this.onKeywordSearch,
   });
 
   @override
@@ -112,11 +114,19 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                           Wrap(
                             spacing: 8,
                             runSpacing: 4,
-                            children: image.keywords.map((keyword) => Chip(
-                              label: Text(keyword),
-                              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                              labelStyle: TextStyle(
-                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            children: image.keywords.map((keyword) => GestureDetector(
+                              onTap: () {
+                                if (widget.onKeywordSearch != null) {
+                                  widget.onKeywordSearch!(keyword, image.id);
+                                  Navigator.of(context).pop();
+                                }
+                              },
+                              child: Chip(
+                                label: Text(keyword),
+                                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                                labelStyle: TextStyle(
+                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                ),
                               ),
                             )).toList(),
                           ),

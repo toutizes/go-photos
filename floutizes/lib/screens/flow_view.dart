@@ -6,11 +6,15 @@ import 'image_detail_view.dart';
 class FlowView extends StatefulWidget {
   final ApiService apiService;
   final String searchQuery;
+  final int? scrollToImageId;  // ID of the image to scroll to after loading
+  final Function(String, int)? onKeywordSearch;  // Callback for keyword search with current image ID
 
   const FlowView({
     super.key,
     required this.apiService,
     required this.searchQuery,
+    this.scrollToImageId,
+    this.onKeywordSearch,
   });
 
   @override
@@ -20,11 +24,18 @@ class FlowView extends StatefulWidget {
 class _FlowViewState extends State<FlowView> {
   Future<List<ImageModel>>? _imagesFuture;
   bool _isLoading = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _loadImages();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -46,7 +57,40 @@ class _FlowViewState extends State<FlowView> {
       } else {
         _imagesFuture = widget.apiService.searchImages(widget.searchQuery);
       }
-      await _imagesFuture;
+      
+      // Wait for the images to load, then scroll if needed
+      final images = await _imagesFuture;
+      if (images == null) return;  // Don't attempt to scroll if images is null
+      
+      if (widget.scrollToImageId != null && mounted) {
+        final index = images.indexWhere((img) => img.id == widget.scrollToImageId);
+        if (index != -1) {
+          // Wait for the grid to be built
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            
+            // Calculate the grid metrics
+            final width = MediaQuery.of(context).size.width;
+            final height = MediaQuery.of(context).size.height;
+            final itemWidth = (width - 32) / 3;  // Account for padding and spacing
+            final rowHeight = itemWidth;  // Square items
+            final row = index ~/ 3;
+            
+            // Calculate target offset to center the item
+            final itemOffset = row * rowHeight;
+            final targetOffset = itemOffset - (height - rowHeight) / 2;
+            
+            // Ensure the scroll controller is ready
+            if (_scrollController.hasClients) {
+              _scrollController.animateTo(
+                targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeInOut,
+              );
+            }
+          });
+        }
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -87,10 +131,38 @@ class _FlowViewState extends State<FlowView> {
 
         final images = snapshot.data!;
         if (images.isEmpty) {
-          return const Center(child: Text('No images found'));
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.search_off,
+                  size: 48,
+                  color: Colors.grey,
+                ),
+                const SizedBox(height: 16),
+                if (widget.searchQuery.isEmpty)
+                  const Text('No images available')
+                else
+                  Column(
+                    children: [
+                      Text('No images found for "${widget.searchQuery}"'),
+                      const SizedBox(height: 8),
+                      if (widget.onKeywordSearch != null)
+                        TextButton.icon(
+                          onPressed: () => widget.onKeywordSearch!('', -1),
+                          icon: const Icon(Icons.clear),
+                          label: const Text('Clear search'),
+                        ),
+                    ],
+                  ),
+              ],
+            ),
+          );
         }
 
         return GridView.builder(
+          controller: _scrollController,
           padding: const EdgeInsets.all(8),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
@@ -109,6 +181,7 @@ class _FlowViewState extends State<FlowView> {
                       apiService: widget.apiService,
                       allImages: images,
                       currentIndex: index,
+                      onKeywordSearch: widget.onKeywordSearch,
                     ),
                   ),
                 );
