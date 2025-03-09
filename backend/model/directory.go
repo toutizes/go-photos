@@ -148,6 +148,7 @@ type JsonDirectory struct {
   Dts int64                     // Timestamp of album directory
   Nimgs int                     // Number of images in album
   Cov int                       // Cover image id
+  CovName string                // Cover image name
 }
 
 func (dir *Directory) Json(jdir *JsonDirectory) {
@@ -158,6 +159,7 @@ func (dir *Directory) Json(jdir *JsonDirectory) {
   if len(dir.images) > 0 {
     img0 := dir.images[0]
     jdir.Cov = img0.Id
+    jdir.CovName = img0.Name()
   }
 }
 

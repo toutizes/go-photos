@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:logging/logging.dart';
 import 'package:http/http.dart' as http;
 import '../models/image.dart';
+import '../models/directory.dart';
 
 class ApiService {
   static final _log = Logger('ApiService');
@@ -47,7 +48,6 @@ class ApiService {
         Uri.parse(url),
         headers: headers,
       );
-      print("after client.get()");
       _logResponse('GET', url, response);
 
       if (response.statusCode == 200) {
@@ -64,11 +64,10 @@ class ApiService {
     }
   }
 
-  Future<List<ImageModel>> getAlbums() async {
-    final url = '$baseUrl/db/q?q=:albums';
+  Future<List<DirectoryModel>> getAlbums() async {
+    final url = '$baseUrl/db/q?q=albums:&kind=album';
     final headers = {
       'Accept': 'application/json',
-      'Origin': baseUrl,
     };
     _logRequest('GET', url, headers);
 
@@ -82,7 +81,7 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = json.decode(response.body);
-        return jsonList.map((json) => ImageModel.fromJson(json)).toList();
+        return jsonList.map((json) => DirectoryModel.fromJson(json)).toList();
       } else {
         final error = 'Failed to fetch albums: ${response.statusCode}';
         _logResponse('GET', url, response, error);

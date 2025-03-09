@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/image.dart';
+import '../models/directory.dart';
 import '../services/api_service.dart';
 
 class AlbumsView extends StatefulWidget {
@@ -12,7 +13,7 @@ class AlbumsView extends StatefulWidget {
 }
 
 class _AlbumsViewState extends State<AlbumsView> {
-  Future<List<ImageModel>>? _albumsFuture;
+  Future<List<DirectoryModel>>? _albumsFuture;
 
   @override
   void initState() {
@@ -22,7 +23,7 @@ class _AlbumsViewState extends State<AlbumsView> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<ImageModel>>(
+    return FutureBuilder<List<DirectoryModel>>(
       future: _albumsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -65,9 +66,10 @@ class _AlbumsViewState extends State<AlbumsView> {
           itemCount: albums.length,
           itemBuilder: (context, index) {
             final album = albums[index];
+            print("TT album.albumDir: ${album.id} ${album.coverId}");
             return GestureDetector(
               onTap: () async {
-                final images = await widget.apiService.getAlbumImages(album.albumDir);
+                final images = await widget.apiService.getAlbumImages(album.id);
                 if (!mounted) return;
                 
                 Navigator.push(
@@ -75,7 +77,7 @@ class _AlbumsViewState extends State<AlbumsView> {
                   MaterialPageRoute(
                     builder: (context) => AlbumDetailView(
                       apiService: widget.apiService,
-                      albumPath: album.albumDir,
+                      albumPath: album.id,
                       images: images,
                     ),
                   ),
@@ -90,7 +92,7 @@ class _AlbumsViewState extends State<AlbumsView> {
                       child: Hero(
                         tag: 'album_${album.id}',
                         child: Image.network(
-                          widget.apiService.getImageUrl(album.miniPath),
+                          widget.apiService.getImageUrl(album.coverMidiPath),
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return const Center(
@@ -106,18 +108,15 @@ class _AlbumsViewState extends State<AlbumsView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            album.albumDir,
+                            album.id,
                             style: Theme.of(context).textTheme.titleMedium,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (album.keywords.isNotEmpty)
-                            Text(
-                              album.keywords.join(', '),
-                              style: Theme.of(context).textTheme.bodySmall,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                          Text(
+                            '${album.imageCount} photos',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
                         ],
                       ),
                     ),
