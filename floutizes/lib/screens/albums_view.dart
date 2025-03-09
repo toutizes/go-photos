@@ -5,8 +5,13 @@ import '../services/api_service.dart';
 
 class AlbumsView extends StatefulWidget {
   final ApiService apiService;
+  final Function(String) onSearch;  // Callback to trigger search
 
-  const AlbumsView({super.key, required this.apiService});
+  const AlbumsView({
+    super.key, 
+    required this.apiService,
+    required this.onSearch,
+  });
 
   @override
   State<AlbumsView> createState() => _AlbumsViewState();
@@ -66,22 +71,9 @@ class _AlbumsViewState extends State<AlbumsView> {
           itemCount: albums.length,
           itemBuilder: (context, index) {
             final album = albums[index];
-            print("TT album.albumDir: ${album.id} ${album.coverId}");
             return GestureDetector(
-              onTap: () async {
-                final images = await widget.apiService.getAlbumImages(album.id);
-                if (!mounted) return;
-                
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AlbumDetailView(
-                      apiService: widget.apiService,
-                      albumPath: album.id,
-                      images: images,
-                    ),
-                  ),
-                );
+              onTap: () {
+                widget.onSearch('album:${album.id}');
               },
               child: Card(
                 clipBehavior: Clip.antiAlias,

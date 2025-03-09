@@ -14,7 +14,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 1;
+  int _selectedIndex = 0;  // Start with Albums view
   final TextEditingController _searchController = TextEditingController();
   List<ImageModel>? _searchResults;
   bool _isLoading = false;
@@ -26,7 +26,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _performSearch(String query) async {
-    if (query.isEmpty) return;
+    if (query.isEmpty) {
+      setState(() {
+        _searchResults = null;
+      });
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -37,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _searchResults = results;
         _isLoading = false;
-        _selectedIndex = 2;
+        _selectedIndex = 1;  // Switch to Images tab when showing search results
       });
     } catch (e) {
       setState(() {
@@ -68,76 +73,125 @@ class _HomeScreenState extends State<HomeScreen> {
           onSubmitted: _performSearch,
         ),
       ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          FlowView(apiService: widget.apiService),
-          AlbumsView(apiService: widget.apiService),
-          _buildSearchView(),
-        ],
-      ),
+      body: _searchResults != null
+          ? _buildSearchResults()
+          : IndexedStack(
+              index: _selectedIndex,
+              children: [
+                AlbumsView(
+                  apiService: widget.apiService,
+                  onSearch: (query) {
+                    _searchController.text = query;
+                    _performSearch(query);
+                  },
+                ),
+                FlowView(apiService: widget.apiService),
+              ],
+            ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+            // Clear search when switching tabs
+            if (_searchResults != null) {
+              _searchResults = null;
+              _searchController.clear();
+            }
+          });
+        },
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.photo_library),
-            label: 'Flow',
-          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.album),
             label: 'Albums',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
+            icon: Icon(Icons.photo_library),
+            label: 'Images',
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSearchView() {
+  Widget _buildSearchResults() {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_searchResults == null) {
-      return const Center(child: Text('Search for photos'));
-    }
-
     if (_searchResults!.isEmpty) {
-      return const Center(child: Text('No results found'));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('No results found'),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _searchResults = null;
+                  _searchController.clear();
+                });
+              },
+              child: const Text('Clear Search'),
+            ),
+          ],
+        ),
+      );
     }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(8),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-      ),
-      itemCount: _searchResults!.length,
-      itemBuilder: (context, index) {
-        final image = _searchResults![index];
-        return GestureDetector(
-          onTap: () {
-            // TODO: Navigate to image detail view
-          },
-          child: Hero(
-            tag: 'image_${image.id}',
-            child: Image.network(
-              widget.apiService.getImageUrl(image.miniPath),
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return const Center(
-                  child: Icon(Icons.error_outline),
-                );
-              },
-            ),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('${_searchResults!.length} ${_searchResults!.length == 1 ? 'image' : 'images'}'),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _searchResults = null;
+                    _searchController.clear();
+                  });
+                },
+                child: const Text('Clear Search'),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+        Expanded(
+          child: GridView.builder(
+            padding: const EdgeInsets.all(8),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+            ),
+            itemCount: _searchResults!.length,
+            itemBuilder: (context, index) {
+              final image = _searchResults![index];
+              return GestureDetector(
+                onTap: () {
+                  // TODO: Navigate to image detail view
+                },
+                child: Hero(
+                  tag: 'image_${image.id}',
+                  child: Image.network(
+                    widget.apiService.getImageUrl(image.miniPath),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(
+                        child: Icon(Icons.error_outline),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 } 
