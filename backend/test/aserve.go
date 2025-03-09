@@ -35,6 +35,13 @@ func LogHandler(n string, handler http.Handler) http.Handler {
 	})
 }
 
+// Add CORS headers to all responses
+func AddCorsHeaders(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Origin")
+}
+
 func main() {
 	flag.Parse()
 
@@ -64,31 +71,42 @@ func main() {
 	mux.HandleFunc(*url_prefix+"/q",
 		func(w http.ResponseWriter, r *http.Request) {
 			Log("/q", r)
+			// Handle OPTIONS request for CORS
+			if r.Method == "OPTIONS" {
+				AddCorsHeaders(w)
+				return
+			}
+			AddCorsHeaders(w)
 			model.HandleQuery(w, r, db)
 		})
 	mux.HandleFunc(*url_prefix+"/montage/",
 		func(w http.ResponseWriter, r *http.Request) {
 			Log("/montage", r)
+			AddCorsHeaders(w)
 			model.HandleMontage2(w, r, db)
 		})
 	mux.HandleFunc(*url_prefix+"/viewer",
 		func(w http.ResponseWriter, r *http.Request) {
 			Log("/viewer", r)
+			AddCorsHeaders(w)
 			model.HandleCommands(w, r, db)
 		})
 	mux.HandleFunc(*url_prefix+"/mini/",
 		func(w http.ResponseWriter, r *http.Request) {
 			Log("/mini", r)
+			AddCorsHeaders(w)
 			model.HandleFile(w, r, *url_prefix, *root)
 		})
 	mux.HandleFunc(*url_prefix+"/midi/",
 		func(w http.ResponseWriter, r *http.Request) {
 			Log("/midi", r)
+			AddCorsHeaders(w)
 			model.HandleFile(w, r, *url_prefix, *root)
 		})
 	mux.HandleFunc(*url_prefix+"/maxi/",
 		func(w http.ResponseWriter, r *http.Request) {
 			Log("/maxi", r)
+			AddCorsHeaders(w)
 			model.HandleFile(w, r, *url_prefix+"/maxi/", *orig_root)
 		})
 	// mux.Handle("/",
