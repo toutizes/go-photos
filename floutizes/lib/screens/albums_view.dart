@@ -5,12 +5,14 @@ import '../services/api_service.dart';
 
 class AlbumsView extends StatefulWidget {
   final ApiService apiService;
-  final Function(String) onSearch;  // Callback to trigger search
+  final String searchQuery;
+  final Function(String) onAlbumSelected;
 
   const AlbumsView({
-    super.key, 
+    super.key,
     required this.apiService,
-    required this.onSearch,
+    required this.searchQuery,
+    required this.onAlbumSelected,
   });
 
   @override
@@ -19,15 +21,49 @@ class AlbumsView extends StatefulWidget {
 
 class _AlbumsViewState extends State<AlbumsView> {
   Future<List<DirectoryModel>>? _albumsFuture;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _albumsFuture = widget.apiService.getAlbums();
+    _loadAlbums();
+  }
+
+  @override
+  void didUpdateWidget(AlbumsView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.searchQuery != oldWidget.searchQuery) {
+      _loadAlbums();
+    }
+  }
+
+  Future<void> _loadAlbums() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      if (widget.searchQuery.isEmpty) {
+        _albumsFuture = widget.apiService.getAlbums();
+      } else {
+        _albumsFuture = widget.apiService.searchAlbums(widget.searchQuery);
+      }
+      await _albumsFuture;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return FutureBuilder<List<DirectoryModel>>(
       future: _albumsFuture,
       builder: (context, snapshot) {
@@ -43,11 +79,7 @@ class _AlbumsViewState extends State<AlbumsView> {
                 Text('Error loading albums: ${snapshot.error}'),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _albumsFuture = widget.apiService.getAlbums();
-                    });
-                  },
+                  onPressed: _loadAlbums,
                   child: const Text('Retry'),
                 ),
               ],
@@ -72,9 +104,7 @@ class _AlbumsViewState extends State<AlbumsView> {
           itemBuilder: (context, index) {
             final album = albums[index];
             return GestureDetector(
-              onTap: () {
-                widget.onSearch('album:${album.id}');
-              },
+              onTap: () => widget.onAlbumSelected(album.id),
               child: Card(
                 clipBehavior: Clip.antiAlias,
                 child: Column(
@@ -106,7 +136,7 @@ class _AlbumsViewState extends State<AlbumsView> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            '${album.imageCount} photos',
+                            '${album.imageCount} ${album.imageCount == 1 ? 'photo' : 'photos'}',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],

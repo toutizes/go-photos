@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import '../models/image.dart';
 import '../services/api_service.dart';
 
 class FlowView extends StatefulWidget {
   final ApiService apiService;
-  final String? initialQuery;
+  final String searchQuery;
 
   const FlowView({
     super.key,
     required this.apiService,
-    this.initialQuery,
+    required this.searchQuery,
   });
 
   @override
@@ -18,101 +17,108 @@ class FlowView extends StatefulWidget {
 }
 
 class _FlowViewState extends State<FlowView> {
-  static const _pageSize = 20;
-  
-  final PagingController<int, ImageModel> _pagingController =
-      PagingController(firstPageKey: 0);
-  
-  String _currentQuery = '';
-  List<ImageModel> _allImages = [];
+  Future<List<ImageModel>>? _imagesFuture;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _currentQuery = widget.initialQuery ?? '';
-    _pagingController.addPageRequestListener(_fetchPage);
+    _loadImages();
   }
 
   @override
-  void dispose() {
-    _pagingController.dispose();
-    super.dispose();
+  void didUpdateWidget(FlowView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.searchQuery != oldWidget.searchQuery) {
+      _loadImages();
+    }
   }
 
-  Future<void> _fetchPage(int pageKey) async {
-    try {
-      if (_allImages.isEmpty || pageKey == 0) {
-        final newItems = await widget.apiService.searchImages(_currentQuery);
-        _allImages = newItems;
-      }
+  Future<void> _loadImages() async {
+    setState(() {
+      _isLoading = true;
+    });
 
-      final startIndex = pageKey * _pageSize;
-      final isLastPage = startIndex + _pageSize >= _allImages.length;
-      
-      if (isLastPage) {
-        _pagingController.appendLastPage(
-          _allImages.sublist(startIndex),
-        );
+    try {
+      if (widget.searchQuery.isEmpty) {
+        _imagesFuture = widget.apiService.searchImages('all:');
       } else {
-        final nextPageKey = pageKey + 1;
-        _pagingController.appendPage(
-          _allImages.sublist(startIndex, startIndex + _pageSize),
-          nextPageKey,
-        );
+        _imagesFuture = widget.apiService.searchImages(widget.searchQuery);
       }
-    } catch (error) {
-      _pagingController.error = error;
+      await _imagesFuture;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return PagedGridView<int, ImageModel>(
-      pagingController: _pagingController,
-      builderDelegate: PagedChildBuilderDelegate<ImageModel>(
-        itemBuilder: (context, item, index) => GestureDetector(
-          onTap: () {
-            // TODO: Navigate to image detail view
-          },
-          child: Hero(
-            tag: 'image_${item.id}',
-            child: Image.network(
-              widget.apiService.getImageUrl(item.miniPath),
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return const Center(
-                  child: Icon(Icons.error_outline),
-                );
-              },
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return FutureBuilder<List<ImageModel>>(
+      future: _imagesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Error loading images: ${snapshot.error}'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _loadImages,
+                  child: const Text('Retry'),
+                ),
+              ],
             ),
+          );
+        }
+
+        final images = snapshot.data!;
+        if (images.isEmpty) {
+          return const Center(child: Text('No images found'));
+        }
+
+        return GridView.builder(
+          padding: const EdgeInsets.all(8),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
           ),
-        ),
-        firstPageProgressIndicatorBuilder: (_) => const Center(
-          child: CircularProgressIndicator(),
-        ),
-        noItemsFoundIndicatorBuilder: (_) => const Center(
-          child: Text('No images found'),
-        ),
-        firstPageErrorIndicatorBuilder: (context) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Error: ${_pagingController.error}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => _pagingController.refresh(),
-                child: const Text('Retry'),
+          itemCount: images.length,
+          itemBuilder: (context, index) {
+            final image = images[index];
+            return GestureDetector(
+              onTap: () {
+                // TODO: Navigate to image detail view
+              },
+              child: Hero(
+                tag: 'image_${image.id}',
+                child: Image.network(
+                  widget.apiService.getImageUrl(image.miniPath),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Icon(Icons.error_outline),
+                    );
+                  },
+                ),
               ),
-            ],
-          ),
-        ),
-      ),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 1.0,
-        mainAxisSpacing: 8.0,
-        crossAxisSpacing: 8.0,
-      ),
+            );
+          },
+        );
+      },
     );
   }
 } 

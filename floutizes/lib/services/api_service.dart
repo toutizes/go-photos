@@ -156,6 +156,35 @@ class ApiService {
     }
   }
 
+  Future<List<DirectoryModel>> searchAlbums(String query) async {
+    final url = '$baseUrl/db/q?q=in:${Uri.encodeComponent(query)}&kind=album';
+    final headers = {
+      'Accept': 'application/json',
+    };
+    _logRequest('GET', url, headers);
+
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: headers,
+      );
+
+      _logResponse('GET', url, response);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = json.decode(response.body);
+        return jsonList.map((json) => DirectoryModel.fromJson(json)).toList();
+      } else {
+        final error = 'Failed to search albums: ${response.statusCode}';
+        _logResponse('GET', url, response, error);
+        throw Exception(error);
+      }
+    } catch (e) {
+      _log.severe('Error searching albums: $e');
+      rethrow;
+    }
+  }
+
   String getImageUrl(String relativePath) {
     final url = '$baseUrl$relativePath';
     _log.finer('Image URL: $url');
