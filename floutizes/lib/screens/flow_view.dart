@@ -107,6 +107,8 @@ class _FlowViewState extends State<FlowView> {
                     builder: (context) => ImageDetailView(
                       image: image,
                       apiService: widget.apiService,
+                      allImages: images,
+                      currentIndex: index,
                     ),
                   ),
                 );
