@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/image.dart';
 import '../services/api_service.dart';
+import 'image_detail_view.dart';
 
 class FlowView extends StatefulWidget {
   final ApiService apiService;
@@ -101,7 +102,14 @@ class _FlowViewState extends State<FlowView> {
             final image = images[index];
             return GestureDetector(
               onTap: () {
-                // TODO: Navigate to image detail view
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ImageDetailView(
+                      image: image,
+                      apiService: widget.apiService,
+                    ),
+                  ),
+                );
               },
               child: Hero(
                 tag: 'image_${image.id}',
