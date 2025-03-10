@@ -219,7 +219,18 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('${image.width} × ${image.height}'),
+                              Row(
+                                children: [
+                                  Text('${image.width} × ${image.height}'),
+                                  const SizedBox(width: 8),
+                                  SelectableText(
+                                    'ID: ${image.id}',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context).colorScheme.secondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                               GestureDetector(
                                 onTap: () {
                                   if (widget.onKeywordSearch != null) {

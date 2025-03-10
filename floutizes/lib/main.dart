@@ -44,10 +44,15 @@ final _router = GoRouter(
       routes: [
         GoRoute(
           path: ':searchQuery',
-          builder: (context, state) => HomeScreen(
-            initialView: ViewType.images,
-            initialSearchString: state.pathParameters['searchQuery'],
-          ),
+          builder: (context, state) {
+            final searchQuery = state.pathParameters['searchQuery'] ?? '';
+            final imageId = state.uri.queryParameters['imageId'];
+            return HomeScreen(
+              initialView: ViewType.images,
+              initialSearchString: searchQuery,
+              initialImageId: imageId != null ? int.tryParse(imageId) : null,
+            );
+          },
         ),
       ],
     ),

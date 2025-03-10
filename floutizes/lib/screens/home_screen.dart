@@ -8,11 +8,13 @@ import '../models/view_type.dart';
 class HomeScreen extends StatefulWidget {
   final ViewType initialView;
   final String? initialSearchString;
+  final int? initialImageId;
 
   const HomeScreen({
     super.key, 
     required this.initialView,
     this.initialSearchString,
+    this.initialImageId,
   });
 
   @override
@@ -34,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _currentSearch = widget.initialSearchString!;
       _searchController.text = widget.initialSearchString!;
     }
+    _scrollToImageId = widget.initialImageId;
     _loadHelpContent();
   }
 
