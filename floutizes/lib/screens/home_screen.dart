@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'flow_view.dart';
 import 'albums_view.dart';
 import '../services/api_service.dart';
@@ -17,6 +19,20 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _currentSearch = '';
   int? _scrollToImageId;  // Add this to track which image to scroll to
+  String _helpContent = '';  // Will store the loaded markdown content
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHelpContent();
+  }
+
+  Future<void> _loadHelpContent() async {
+    final String content = await rootBundle.loadString('assets/search_help.md');
+    setState(() {
+      _helpContent = content;
+    });
+  }
 
   @override
   void dispose() {
@@ -48,6 +64,28 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _showSearchHelp(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Aide pour la recherche'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Markdown(
+            data: _helpContent,
+            shrinkWrap: true,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,6 +105,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 IconButton(
                   icon: const Icon(Icons.search),
                   onPressed: () => _performSearch(_searchController.text),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.help_outline),
+                  onPressed: () => _showSearchHelp(context),
+                  tooltip: 'Search syntax help',
                 ),
               ],
             ),
