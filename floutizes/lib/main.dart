@@ -9,8 +9,8 @@ void main() {
   ApiService.initLogging();
 
   // Initialize ApiService singleton
-  final backendUrl = const String.fromEnvironment('BACKEND',
-      defaultValue: 'http://localhost:8080');
+  const backendUrl =
+      String.fromEnvironment('BACKEND', defaultValue: 'http://localhost:8080');
   ApiService.initialize(baseUrl: backendUrl);
 
   runApp(const MyApp());
@@ -19,40 +19,57 @@ void main() {
 final _router = GoRouter(
   initialLocation: '/albums',
   routes: [
-    GoRoute(
-      path: '/albums',
-      builder: (context, state) => const HomeScreen(
-        initialView: ViewType.albums,
-        initialSearchString: null,
-      ),
-      routes: [
-        GoRoute(
-          path: ':searchQuery',
-          builder: (context, state) => HomeScreen(
-            initialView: ViewType.albums,
-            initialSearchString: state.pathParameters['searchQuery'],
-          ),
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) {
+        return ScaffoldWithNestedNavigation(navigationShell: navigationShell);
+      },
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/albums',
+              builder: (context, state) => const HomeScreen(
+                initialView: ViewType.albums,
+                initialSearchString: null,
+              ),
+              routes: [
+                GoRoute(
+                  path: ':searchQuery',
+                  builder: (context, state) => HomeScreen(
+                    initialView: ViewType.albums,
+                    initialSearchString: state.pathParameters['searchQuery'],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-      ],
-    ),
-    GoRoute(
-      path: '/images',
-      builder: (context, state) => const HomeScreen(
-        initialView: ViewType.images,
-        initialSearchString: null,
-      ),
-      routes: [
-        GoRoute(
-          path: ':searchQuery',
-          builder: (context, state) {
-            final searchQuery = state.pathParameters['searchQuery'] ?? '';
-            final imageId = state.uri.queryParameters['imageId'];
-            return HomeScreen(
-              initialView: ViewType.images,
-              initialSearchString: searchQuery,
-              initialImageId: imageId != null ? int.tryParse(imageId) : null,
-            );
-          },
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/images',
+              builder: (context, state) => const HomeScreen(
+                initialView: ViewType.images,
+                initialSearchString: null,
+              ),
+              routes: [
+                GoRoute(
+                  path: ':searchQuery',
+                  builder: (context, state) {
+                    final searchQuery =
+                        state.pathParameters['searchQuery'] ?? '';
+                    final imageId = state.uri.queryParameters['imageId'];
+                    return HomeScreen(
+                      initialView: ViewType.images,
+                      initialSearchString: searchQuery,
+                      initialImageId:
+                          imageId != null ? int.tryParse(imageId) : null,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
         ),
       ],
     ),
@@ -81,6 +98,34 @@ class MyApp extends StatelessWidget {
         ),
       ),
       routerConfig: _router,
+    );
+  }
+}
+
+class ScaffoldWithNestedNavigation extends StatelessWidget {
+  const ScaffoldWithNestedNavigation({
+    super.key,
+    required this.navigationShell,
+  });
+
+  final StatefulNavigationShell navigationShell;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: navigationShell,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: navigationShell.currentIndex,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.album), label: 'Albums'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.photo_library), label: 'Photos'),
+        ],
+        onTap: (index) => navigationShell.goBranch(
+          index,
+          initialLocation: index == navigationShell.currentIndex,
+        ),
+      ),
     );
   }
 }

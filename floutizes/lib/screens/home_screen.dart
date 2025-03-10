@@ -151,26 +151,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentView == ViewType.albums ? 0 : 1,
-        onTap: (index) {
-          setState(() {
-            _currentView = index == 0 ? ViewType.albums : ViewType.images;
-            _currentSearch = '';
-            _searchController.clear();
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.album),
-            label: 'Albums',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.photo_library),
-            label: 'Images',
-          ),
-        ],
-      ),
     );
   }
 } 
