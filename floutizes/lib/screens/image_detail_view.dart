@@ -5,14 +5,12 @@ import '../services/api_service.dart';
 import 'photo_view.dart';
 
 class ImageDetailView extends StatefulWidget {
-  final ImageModel image;
   final List<ImageModel> allImages;
   final int currentIndex;
   final Function(String, int)? onKeywordSearch;
 
   const ImageDetailView({
     super.key,
-    required this.image,
     required this.allImages,
     required this.currentIndex,
     this.onKeywordSearch,
