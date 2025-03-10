@@ -206,7 +206,8 @@ func main() {
 			http.FileServer(http.Dir(*static_root))))
 	mux.HandleFunc("/",
 		func(w http.ResponseWriter, r *http.Request) {
-			http.Redirect(w, r, "/db/pic.html", 301)
+			// http.Redirect(w, r, "/db/pic.html", 301)
+			http.Redirect(w, r, "/app/", 301)
 		})
 
 	// Add the Flutter web app handler

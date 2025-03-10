@@ -12,6 +12,7 @@ install_html:
 
 install_flutter: 
 	rsync --delete --recursive floutizes/build/web/* /tmp/aserve/db/htdocs/flutter
+	rsync --delete --recursive /tmp/aserve/db/htdocs/synonyms.txt $(SERVER):/mnt/photos/htdocs/synonyms.txt
 
 push_serve: generate 
 	GOOS=linux GOARCH=amd64 go build -o bin_linux/aserve backend/test/aserve.go
