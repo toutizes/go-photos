@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'screens/home_screen.dart';
 import 'services/api_service.dart';
 import 'models/view_type.dart';
+import 'screens/image_detail_view.dart';
 
 void main() {
   // Initialize logging
@@ -17,6 +18,7 @@ void main() {
 }
 
 final _router = GoRouter(
+  debugLogDiagnostics: true,
   initialLocation: '/albums',
   routes: [
     StatefulShellRoute.indexedStack(
@@ -66,6 +68,27 @@ final _router = GoRouter(
                           imageId != null ? int.tryParse(imageId) : null,
                     );
                   },
+                  routes: [
+                    GoRoute(
+                      path: 'details/:index',
+                      builder: (context, state) {
+                        final queryString =
+                            state.pathParameters['searchQuery'] ?? '';
+                        final index =
+                            int.tryParse(state.pathParameters['index'] ?? '');
+                        if (index == null) {
+                          return const Center(child: Text('Invalid index'));
+                        }
+                        return ImageDetailView(
+                          searchQuery: queryString,
+                          currentIndex: index,
+                          onKeywordSearch: (query, imageId) {
+                            context.go('/images/$query?imageId=$imageId');
+                          },
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),

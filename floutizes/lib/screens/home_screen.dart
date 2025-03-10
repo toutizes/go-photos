@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:go_router/go_router.dart';
 import 'flow_view.dart';
 import 'albums_view.dart';
 import '../models/view_type.dart';
@@ -11,7 +12,7 @@ class HomeScreen extends StatefulWidget {
   final int? initialImageId;
 
   const HomeScreen({
-    super.key, 
+    super.key,
     required this.initialView,
     this.initialSearchString,
     this.initialImageId,
@@ -25,8 +26,8 @@ class _HomeScreenState extends State<HomeScreen> {
   late ViewType _currentView;
   final TextEditingController _searchController = TextEditingController();
   String _currentSearch = '';
-  int? _scrollToImageId;  // Add this to track which image to scroll to
-  String _helpContent = '';  // Will store the loaded markdown content
+  int? _scrollToImageId; // Add this to track which image to scroll to
+  String _helpContent = ''; // Will store the loaded markdown content
 
   @override
   void initState() {
@@ -54,27 +55,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _performSearch(String query) {
-    setState(() {
-      _currentSearch = query;
-      _scrollToImageId = null;  // Reset scroll target on manual search
-    });
+    if (_currentView == ViewType.albums) {
+      context.go('/albums/${Uri.encodeComponent(query)}');
+    } else {
+      context.go('/images/${Uri.encodeComponent(query)}');
+    }
   }
 
   void _clearSearch() {
-    setState(() {
-      _currentSearch = '';
-      _searchController.clear();
-      _scrollToImageId = null;
-    });
-  }
-
-  void _handleKeywordSearch(String keyword, int imageId) {
-    setState(() {
-      _currentView = ViewType.images;  // Switch to Images tab
-      _currentSearch = keyword;
-      _searchController.text = keyword;
-      _scrollToImageId = imageId;  // Set the image to scroll to
-    });
+    _performSearch('');
   }
 
   void _showSearchHelp(BuildContext context) {
@@ -106,7 +95,9 @@ class _HomeScreenState extends State<HomeScreen> {
         title: TextField(
           controller: _searchController,
           decoration: InputDecoration(
-            hintText: _currentView == ViewType.albums ? 'Recherche albums...' : 'Recherche photos...',
+            hintText: _currentView == ViewType.albums
+                ? 'Recherche albums...'
+                : 'Recherche photos...',
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -136,21 +127,17 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           AlbumsView(
             searchQuery: _currentView == ViewType.albums ? _currentSearch : '',
-            onAlbumSelected: (albumId) {
-              setState(() {
-                _currentView = ViewType.images;
-                _currentSearch = 'album:$albumId';
-                _searchController.text = _currentSearch;
-              });
-            },
+            onAlbumSelected: (albumId) =>
+                context.go('/images/album%3A${Uri.encodeComponent(albumId)}'),
           ),
           FlowView(
             searchQuery: _currentView == ViewType.images ? _currentSearch : '',
             scrollToImageId: _scrollToImageId,
-            onKeywordSearch: _handleKeywordSearch,
+            onKeywordSearch: (String keyword, int imageId) => context
+                .go('/images/${Uri.encodeComponent(keyword)}?imageId=$imageId'),
           ),
         ],
       ),
     );
   }
-} 
+}

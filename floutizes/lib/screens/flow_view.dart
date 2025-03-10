@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../models/image.dart';
 import '../services/api_service.dart';
-import 'image_detail_view.dart';
 
 class FlowView extends StatefulWidget {
   final String searchQuery;
@@ -61,7 +61,8 @@ class _FlowViewState extends State<FlowView> {
         final images = await _imagesFuture;
         if (images == null) return;
 
-        final index = images.indexWhere((img) => img.id == widget.scrollToImageId);
+        final index =
+            images.indexWhere((img) => img.id == widget.scrollToImageId);
         if (index != -1) {
           // Wait for the grid to be built
           WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -70,22 +71,24 @@ class _FlowViewState extends State<FlowView> {
             // Add a small delay to ensure the ScrollController is attached
             await Future.delayed(const Duration(milliseconds: 100));
             if (!mounted) return;
-            
+
             // Calculate the grid metrics
             final width = MediaQuery.of(context).size.width;
             final height = MediaQuery.of(context).size.height;
-            final itemWidth = (width - 32) / 3;  // Account for padding and spacing
-            final rowHeight = itemWidth + 8;  // Square items + spacing
+            final itemWidth =
+                (width - 32) / 3; // Account for padding and spacing
+            final rowHeight = itemWidth + 8; // Square items + spacing
             final row = index ~/ 3;
-            
+
             // Calculate target offset to center the item
             final itemOffset = row * rowHeight;
             final targetOffset = itemOffset - (height - rowHeight) / 2;
-            
+
             // Ensure the scroll controller is ready
             if (_scrollController.hasClients) {
               _scrollController.animateTo(
-                targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
+                targetOffset.clamp(
+                    0.0, _scrollController.position.maxScrollExtent),
                 duration: const Duration(milliseconds: 500),
                 curve: Curves.easeInOut,
               );
@@ -184,15 +187,8 @@ class _FlowViewState extends State<FlowView> {
             final image = images[index];
             return GestureDetector(
               onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => ImageDetailView(
-                      searchQuery: widget.searchQuery.isEmpty ? 'all:' : widget.searchQuery,
-                      currentIndex: index,
-                      onKeywordSearch: widget.onKeywordSearch,
-                    ),
-                  ),
-                );
+                context.go(
+                    '/images/${Uri.encodeComponent(widget.searchQuery)}/details/$index');
               },
               child: Hero(
                 tag: 'image_${image.id}',
