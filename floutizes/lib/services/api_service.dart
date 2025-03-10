@@ -10,6 +10,11 @@ class ApiService {
   final String baseUrl;
   final http.Client _client;
 
+  // Cache for search results
+  final int _maxCacheSize = 3;
+  final Map<String, List<ImageModel>> _searchCache = {};
+  final List<String> _cacheOrder = [];
+
   ApiService._({required this.baseUrl}) : _client = http.Client();
 
   static void initLogging() {
@@ -30,6 +35,21 @@ class ApiService {
     return _instance!;
   }
 
+  void _addToCache(String query, List<ImageModel> results) {
+    // Remove oldest entry if cache is full
+    if (_cacheOrder.length >= _maxCacheSize && !_searchCache.containsKey(query)) {
+      final oldestQuery = _cacheOrder.removeAt(0);
+      _searchCache.remove(oldestQuery);
+    }
+
+    // Add new results to cache
+    if (!_searchCache.containsKey(query)) {
+      _cacheOrder.add(query);
+    }
+    _searchCache[query] = results;
+    _logger.fine('Cache updated for query: $query (cache size: ${_searchCache.length})');
+  }
+
   void _logRequest(String method, String url, Map<String, String> headers) {
     _logger.info('$method $url');
     _logger.fine('Headers: $headers');
@@ -48,6 +68,12 @@ class ApiService {
   }
 
   Future<List<ImageModel>> searchImages(String query) async {
+    // Check cache first
+    if (_searchCache.containsKey(query)) {
+      _logger.fine('Cache hit for query: $query');
+      return _searchCache[query]!;
+    }
+
     final url = '$baseUrl/db/q?q=${Uri.encodeComponent(query)}';
     final headers = {
       'Accept': 'application/json',
@@ -63,7 +89,12 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = json.decode(response.body);
-        return jsonList.map((json) => ImageModel.fromJson(json)).toList();
+        final results = jsonList.map((json) => ImageModel.fromJson(json)).toList();
+        
+        // Add results to cache
+        _addToCache(query, results);
+        
+        return results;
       } else {
         final error = 'Failed to search images: ${response.statusCode}';
         _logResponse('GET', url, response, error);
@@ -105,33 +136,7 @@ class ApiService {
   }
 
   Future<List<ImageModel>> getAlbumImages(String albumPath) async {
-    final url = '$baseUrl/db/q?q=album:${Uri.encodeComponent(albumPath)}';
-    final headers = {
-      'Accept': 'application/json',
-      'Origin': baseUrl,
-    };
-    _logRequest('GET', url, headers);
-
-    try {
-      final response = await _client.get(
-        Uri.parse(url),
-        headers: headers,
-      );
-
-      _logResponse('GET', url, response);
-
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonList = json.decode(response.body);
-        return jsonList.map((json) => ImageModel.fromJson(json)).toList();
-      } else {
-        final error = 'Failed to fetch album images: ${response.statusCode}';
-        _logResponse('GET', url, response, error);
-        throw Exception(error);
-      }
-    } catch (e) {
-      _logger.severe('Error fetching album images: $e');
-      rethrow;
-    }
+    return searchImages('album:$albumPath');
   }
 
   Future<void> downloadAlbum(String albumPath,
