@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/image.dart';
 import '../services/api_service.dart';
+import 'photo_view.dart';
 
 class ImageDetailView extends StatefulWidget {
   final ImageModel image;
@@ -133,18 +134,29 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                 return Column(
                   children: [
                     Expanded(
-                      child: InteractiveViewer(
-                        maxScale: 5.0,
-                        child: Hero(
-                          tag: 'image_${image.id}',
-                          child: Image.network(
-                            widget.apiService.getImageUrl(image.midiPath),
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Center(
-                                child: Icon(Icons.error_outline, size: 48),
-                              );
-                            },
+                      child: GestureDetector(
+                        onDoubleTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => PhotoView(
+                                imageUrl: widget.apiService.getImageUrl(image.midiPath),
+                              ),
+                            ),
+                          );
+                        },
+                        child: InteractiveViewer(
+                          maxScale: 5.0,
+                          child: Hero(
+                            tag: 'image_${image.id}',
+                            child: Image.network(
+                              widget.apiService.getImageUrl(image.midiPath),
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Icon(Icons.error_outline, size: 48),
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),
