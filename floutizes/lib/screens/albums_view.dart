@@ -4,13 +4,11 @@ import '../models/directory.dart';
 import '../services/api_service.dart';
 
 class AlbumsView extends StatefulWidget {
-  final ApiService apiService;
   final String searchQuery;
   final Function(String) onAlbumSelected;
 
   const AlbumsView({
     super.key,
-    required this.apiService,
     required this.searchQuery,
     required this.onAlbumSelected,
   });
@@ -44,9 +42,9 @@ class _AlbumsViewState extends State<AlbumsView> {
 
     try {
       if (widget.searchQuery.isEmpty) {
-        _albumsFuture = widget.apiService.getAlbums();
+        _albumsFuture = ApiService.instance.getAlbums();
       } else {
-        _albumsFuture = widget.apiService.searchAlbums(widget.searchQuery);
+        _albumsFuture = ApiService.instance.searchAlbums(widget.searchQuery);
       }
       await _albumsFuture;
     } finally {
@@ -122,7 +120,7 @@ class _AlbumsViewState extends State<AlbumsView> {
                       child: Hero(
                         tag: 'album_${album.id}',
                         child: Image.network(
-                          widget.apiService.getImageUrl(album.coverMidiPath),
+                          ApiService.instance.getImageUrl(album.coverMidiPath),
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return const Center(
@@ -160,83 +158,3 @@ class _AlbumsViewState extends State<AlbumsView> {
     );
   }
 }
-
-class AlbumDetailView extends StatelessWidget {
-  final ApiService apiService;
-  final String albumPath;
-  final List<ImageModel> images;
-
-  const AlbumDetailView({
-    super.key,
-    required this.apiService,
-    required this.albumPath,
-    required this.images,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(albumPath),
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) async {
-              try {
-                await apiService.downloadAlbum(albumPath, highQuality: value == 'download_hq');
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Download started')),
-                );
-              } catch (e) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Download failed: $e')),
-                );
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'download_normal',
-                child: Text('Download Album'),
-              ),
-              const PopupMenuItem(
-                value: 'download_hq',
-                child: Text('Download Album (HQ)'),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(8),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          childAspectRatio: 1.0,
-          mainAxisSpacing: 8.0,
-          crossAxisSpacing: 8.0,
-        ),
-        itemCount: images.length,
-        itemBuilder: (context, index) {
-          final image = images[index];
-          return GestureDetector(
-            onTap: () {
-              // TODO: Navigate to image detail view
-            },
-            child: Hero(
-              tag: 'image_${image.id}',
-              child: Image.network(
-                apiService.getImageUrl(image.miniPath),
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Center(
-                    child: Icon(Icons.error_outline),
-                  );
-                },
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-} 

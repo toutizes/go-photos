@@ -7,6 +7,10 @@ void main() {
   // Initialize logging
   ApiService.initLogging();
   
+  // Initialize ApiService singleton
+  final backendUrl = const String.fromEnvironment('BACKEND', defaultValue: 'http://localhost:8080');
+  ApiService.initialize(baseUrl: backendUrl);
+  
   runApp(const MyApp());
 }
 
@@ -15,10 +19,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get the backend URL from environment variable or use default
-    final backendUrl = const String.fromEnvironment('BACKEND', defaultValue: 'http://localhost:8080');
-    final apiService = ApiService(baseUrl: backendUrl);
-
     return MaterialApp(
       title: 'Toutizes Photos',
       theme: ThemeData(
@@ -35,8 +35,7 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: HomeScreen(
-        apiService: apiService,
+      home: const HomeScreen(
         initialView: ViewType.albums,
       ),
     );

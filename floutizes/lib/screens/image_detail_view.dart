@@ -6,7 +6,6 @@ import 'photo_view.dart';
 
 class ImageDetailView extends StatefulWidget {
   final ImageModel image;
-  final ApiService apiService;
   final List<ImageModel> allImages;
   final int currentIndex;
   final Function(String, int)? onKeywordSearch;
@@ -14,7 +13,6 @@ class ImageDetailView extends StatefulWidget {
   const ImageDetailView({
     super.key,
     required this.image,
-    required this.apiService,
     required this.allImages,
     required this.currentIndex,
     this.onKeywordSearch,
@@ -55,7 +53,7 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     for (var i = -2; i <= 2; i++) {
       final targetIndex = currentIndex + i;
       if (targetIndex >= 0 && targetIndex < widget.allImages.length && i != 0) {
-        final imageUrl = widget.apiService
+        final imageUrl = ApiService.instance
             .getImageUrl(widget.allImages[targetIndex].midiPath);
         precacheImage(NetworkImage(imageUrl), context);
       }
@@ -139,7 +137,7 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => PhotoView(
-                                imageUrl: widget.apiService.getImageUrl(image.midiPath),
+                                imageUrl: ApiService.instance.getImageUrl(image.midiPath),
                               ),
                             ),
                           );
@@ -149,7 +147,7 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                           child: Hero(
                             tag: 'image_${image.id}',
                             child: Image.network(
-                              widget.apiService.getImageUrl(image.midiPath),
+                              ApiService.instance.getImageUrl(image.midiPath),
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) {
                                 return const Center(

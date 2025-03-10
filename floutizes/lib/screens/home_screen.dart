@@ -7,13 +7,11 @@ import '../services/api_service.dart';
 import '../models/view_type.dart';
 
 class HomeScreen extends StatefulWidget {
-  final ApiService apiService;
   final ViewType initialView;
   final String? initialSearchString;
 
   const HomeScreen({
     super.key, 
-    required this.apiService,
     required this.initialView,
     this.initialSearchString,
   });
@@ -135,7 +133,6 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _currentView == ViewType.albums ? 0 : 1,
         children: [
           AlbumsView(
-            apiService: widget.apiService,
             searchQuery: _currentView == ViewType.albums ? _currentSearch : '',
             onAlbumSelected: (albumId) {
               setState(() {
@@ -146,7 +143,6 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           FlowView(
-            apiService: widget.apiService,
             searchQuery: _currentView == ViewType.images ? _currentSearch : '',
             scrollToImageId: _scrollToImageId,
             onKeywordSearch: _handleKeywordSearch,

@@ -4,7 +4,6 @@ import '../services/api_service.dart';
 import 'image_detail_view.dart';
 
 class FlowView extends StatefulWidget {
-  final ApiService apiService;
   final String searchQuery;
   final int? scrollToImageId; // ID of the image to scroll to after loading
   final Function(String, int)?
@@ -12,7 +11,6 @@ class FlowView extends StatefulWidget {
 
   const FlowView({
     super.key,
-    required this.apiService,
     required this.searchQuery,
     this.scrollToImageId,
     this.onKeywordSearch,
@@ -62,9 +60,9 @@ class _FlowViewState extends State<FlowView> {
       _isLoading = true;
       _sortedImages = null;
       if (widget.searchQuery.isEmpty) {
-        _imagesFuture = widget.apiService.searchImages('all:');
+        _imagesFuture = ApiService.instance.searchImages('all:');
       } else {
-        _imagesFuture = widget.apiService.searchImages(widget.searchQuery);
+        _imagesFuture = ApiService.instance.searchImages(widget.searchQuery);
       }
     });
 
@@ -213,7 +211,6 @@ class _FlowViewState extends State<FlowView> {
                   MaterialPageRoute(
                     builder: (context) => ImageDetailView(
                       image: image,
-                      apiService: widget.apiService,
                       allImages: sortedImages,
                       currentIndex: index,
                       onKeywordSearch: widget.onKeywordSearch,
@@ -224,7 +221,7 @@ class _FlowViewState extends State<FlowView> {
               child: Hero(
                 tag: 'image_${image.id}',
                 child: Image.network(
-                  widget.apiService.getImageUrl(image.miniPath),
+                  ApiService.instance.getImageUrl(image.miniPath),
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return const Center(
