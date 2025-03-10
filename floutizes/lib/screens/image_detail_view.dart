@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/image.dart';
 import '../services/api_service.dart';
 
@@ -25,6 +26,7 @@ class ImageDetailView extends StatefulWidget {
 class _ImageDetailViewState extends State<ImageDetailView> {
   late PageController _pageController;
   late int _currentIndex;
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
@@ -32,12 +34,17 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     _currentIndex = widget.currentIndex;
     _pageController = PageController(initialPage: widget.currentIndex);
     _pageController.addListener(_onPageChanged);
+    // Request focus when the view is created
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
   }
 
   @override
   void dispose() {
     _pageController.removeListener(_onPageChanged);
     _pageController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -52,9 +59,9 @@ class _ImageDetailViewState extends State<ImageDetailView> {
 
   void _showNavigationButtons() {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Swipe left or right to navigate between images'),
-        duration: const Duration(seconds: 2),
+      const SnackBar(
+        content: Text('Use arrow keys or swipe left/right to navigate between images'),
+        duration: Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -78,139 +85,158 @@ class _ImageDetailViewState extends State<ImageDetailView> {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          PageView.builder(
-            controller: _pageController,
-            itemCount: widget.allImages.length,
-            itemBuilder: (context, index) {
-              final image = widget.allImages[index];
-              return Column(
+      body: KeyboardListener(
+        focusNode: _focusNode,
+        onKeyEvent: (event) {
+          if (event is KeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.arrowLeft && _currentIndex > 0) {
+              _pageController.previousPage(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            } else if (event.logicalKey == LogicalKeyboardKey.arrowRight && 
+                       _currentIndex < widget.allImages.length - 1) {
+              _pageController.nextPage(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            }
+          }
+        },
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              itemCount: widget.allImages.length,
+              itemBuilder: (context, index) {
+                final image = widget.allImages[index];
+                return Column(
+                  children: [
+                    Expanded(
+                      child: InteractiveViewer(
+                        maxScale: 5.0,
+                        child: Hero(
+                          tag: 'image_${image.id}',
+                          child: Image.network(
+                            widget.apiService.getImageUrl(image.midiPath),
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Center(
+                                child: Icon(Icons.error_outline, size: 48),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      color: Theme.of(context).colorScheme.surface,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (image.keywords.isNotEmpty) ...[
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: image.keywords.map((keyword) => GestureDetector(
+                                onTap: () {
+                                  if (widget.onKeywordSearch != null) {
+                                    widget.onKeywordSearch!(keyword, image.id);
+                                    Navigator.of(context).pop();
+                                  }
+                                },
+                                child: Chip(
+                                  label: Text(keyword),
+                                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                                  labelStyle: TextStyle(
+                                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                  ),
+                                ),
+                              )).toList(),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('${image.width} × ${image.height}'),
+                              Text(_formatDate(image.itemTimestamp)),
+                            ],
+                          ),
+                          if (image.stereo != null) ...[
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Stereo Image',
+                              style: TextStyle(fontStyle: FontStyle.italic),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            Positioned.fill(
+              child: Row(
                 children: [
-                  Expanded(
-                    child: InteractiveViewer(
-                      maxScale: 5.0,
-                      child: Hero(
-                        tag: 'image_${image.id}',
-                        child: Image.network(
-                          widget.apiService.getImageUrl(image.maxiPath),
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Center(
-                              child: Icon(Icons.error_outline, size: 48),
-                            );
-                          },
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _pageController.hasClients && (_pageController.page?.round() ?? widget.currentIndex) > 0
+                          ? () => _pageController.previousPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            )
+                          : null,
+                      child: SizedBox(
+                        width: 60,
+                        child: Opacity(
+                          opacity: _pageController.hasClients && (_pageController.page?.round() ?? widget.currentIndex) > 0
+                              ? 0.7
+                              : 0,
+                          child: const Icon(
+                            Icons.chevron_left,
+                            size: 40,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    color: Theme.of(context).colorScheme.surface,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (image.keywords.isNotEmpty) ...[
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: image.keywords.map((keyword) => GestureDetector(
-                              onTap: () {
-                                if (widget.onKeywordSearch != null) {
-                                  widget.onKeywordSearch!(keyword, image.id);
-                                  Navigator.of(context).pop();
-                                }
-                              },
-                              child: Chip(
-                                label: Text(keyword),
-                                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                                labelStyle: TextStyle(
-                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                                ),
-                              ),
-                            )).toList(),
+                  const Spacer(),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _pageController.hasClients && 
+                            (_pageController.page?.round() ?? widget.currentIndex) < widget.allImages.length - 1
+                          ? () => _pageController.nextPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            )
+                          : null,
+                      child: SizedBox(
+                        width: 60,
+                        child: Opacity(
+                          opacity: _pageController.hasClients && 
+                                  (_pageController.page?.round() ?? widget.currentIndex) < widget.allImages.length - 1
+                              ? 0.7
+                              : 0,
+                          child: const Icon(
+                            Icons.chevron_right,
+                            size: 40,
+                            color: Colors.white,
                           ),
-                          const SizedBox(height: 16),
-                        ],
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('${image.width} × ${image.height}'),
-                            Text(_formatDate(image.itemTimestamp)),
-                          ],
                         ),
-                        if (image.stereo != null) ...[
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Stereo Image',
-                            style: TextStyle(fontStyle: FontStyle.italic),
-                          ),
-                        ],
-                      ],
+                      ),
                     ),
                   ),
                 ],
-              );
-            },
-          ),
-          Positioned.fill(
-            child: Row(
-              children: [
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _pageController.hasClients && (_pageController.page?.round() ?? widget.currentIndex) > 0
-                        ? () => _pageController.previousPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          )
-                        : null,
-                    child: SizedBox(
-                      width: 60,
-                      child: Opacity(
-                        opacity: _pageController.hasClients && (_pageController.page?.round() ?? widget.currentIndex) > 0
-                            ? 0.7
-                            : 0,
-                        child: const Icon(
-                          Icons.chevron_left,
-                          size: 40,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _pageController.hasClients && 
-                          (_pageController.page?.round() ?? widget.currentIndex) < widget.allImages.length - 1
-                        ? () => _pageController.nextPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          )
-                        : null,
-                    child: SizedBox(
-                      width: 60,
-                      child: Opacity(
-                        opacity: _pageController.hasClients && 
-                                (_pageController.page?.round() ?? widget.currentIndex) < widget.allImages.length - 1
-                            ? 0.7
-                            : 0,
-                        child: const Icon(
-                          Icons.chevron_right,
-                          size: 40,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
