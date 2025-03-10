@@ -54,7 +54,8 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     for (var i = -2; i <= 2; i++) {
       final targetIndex = currentIndex + i;
       if (targetIndex >= 0 && targetIndex < widget.allImages.length && i != 0) {
-        final imageUrl = widget.apiService.getImageUrl(widget.allImages[targetIndex].midiPath);
+        final imageUrl = widget.apiService
+            .getImageUrl(widget.allImages[targetIndex].midiPath);
         precacheImage(NetworkImage(imageUrl), context);
       }
     }
@@ -74,7 +75,8 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   void _showNavigationButtons() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Use arrow keys or swipe left/right to navigate between images'),
+        content: Text(
+            'Utilisez les flèches ou faites glisser de gauche à droite pour voir les images.'),
         duration: Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
@@ -104,13 +106,14 @@ class _ImageDetailViewState extends State<ImageDetailView> {
         focusNode: _focusNode,
         onKeyEvent: (event) {
           if (event is KeyDownEvent) {
-            if (event.logicalKey == LogicalKeyboardKey.arrowLeft && _currentIndex > 0) {
+            if (event.logicalKey == LogicalKeyboardKey.arrowLeft &&
+                _currentIndex > 0) {
               _pageController.previousPage(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
               );
-            } else if (event.logicalKey == LogicalKeyboardKey.arrowRight && 
-                       _currentIndex < widget.allImages.length - 1) {
+            } else if (event.logicalKey == LogicalKeyboardKey.arrowRight &&
+                _currentIndex < widget.allImages.length - 1) {
               _pageController.nextPage(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
@@ -154,23 +157,33 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                             Wrap(
                               spacing: 8,
                               runSpacing: 4,
-                              children: image.keywords.map((keyword) => GestureDetector(
-                                onTap: () {
-                                  if (widget.onKeywordSearch != null) {
-                                    // Quote keywords containing spaces
-                                    final searchQuery = keyword.contains(' ') ? '"$keyword"' : keyword;
-                                    widget.onKeywordSearch!(searchQuery, image.id);
-                                    Navigator.of(context).pop();
-                                  }
-                                },
-                                child: Chip(
-                                  label: Text(keyword),
-                                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                                  labelStyle: TextStyle(
-                                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                                  ),
-                                ),
-                              )).toList(),
+                              children: image.keywords
+                                  .map((keyword) => GestureDetector(
+                                        onTap: () {
+                                          if (widget.onKeywordSearch != null) {
+                                            // Quote keywords containing spaces
+                                            final searchQuery =
+                                                keyword.contains(' ')
+                                                    ? '"$keyword"'
+                                                    : keyword;
+                                            widget.onKeywordSearch!(
+                                                searchQuery, image.id);
+                                            Navigator.of(context).pop();
+                                          }
+                                        },
+                                        child: Chip(
+                                          label: Text(keyword),
+                                          backgroundColor: Theme.of(context)
+                                              .colorScheme
+                                              .primaryContainer,
+                                          labelStyle: TextStyle(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onPrimaryContainer,
+                                          ),
+                                        ),
+                                      ))
+                                  .toList(),
                             ),
                             const SizedBox(height: 16),
                           ],
@@ -178,7 +191,24 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text('${image.width} × ${image.height}'),
-                              Text(_formatDate(image.itemTimestamp)),
+                              GestureDetector(
+                                onTap: () {
+                                  if (widget.onKeywordSearch != null) {
+                                    final date =
+                                        _formatDate(image.itemTimestamp);
+                                    widget.onKeywordSearch!(date, image.id);
+                                    Navigator.of(context).pop();
+                                  }
+                                },
+                                child: Text(
+                                  _formatDate(image.itemTimestamp),
+                                  style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                           if (image.stereo != null) ...[
@@ -201,16 +231,22 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                   Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: _pageController.hasClients && (_pageController.page?.round() ?? widget.currentIndex) > 0
+                      onTap: _pageController.hasClients &&
+                              (_pageController.page?.round() ??
+                                      widget.currentIndex) >
+                                  0
                           ? () => _pageController.previousPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            )
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              )
                           : null,
                       child: SizedBox(
                         width: 60,
                         child: Opacity(
-                          opacity: _pageController.hasClients && (_pageController.page?.round() ?? widget.currentIndex) > 0
+                          opacity: _pageController.hasClients &&
+                                  (_pageController.page?.round() ??
+                                          widget.currentIndex) >
+                                      0
                               ? 0.7
                               : 0,
                           child: const Icon(
@@ -226,18 +262,22 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                   Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: _pageController.hasClients && 
-                            (_pageController.page?.round() ?? widget.currentIndex) < widget.allImages.length - 1
+                      onTap: _pageController.hasClients &&
+                              (_pageController.page?.round() ??
+                                      widget.currentIndex) <
+                                  widget.allImages.length - 1
                           ? () => _pageController.nextPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            )
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              )
                           : null,
                       child: SizedBox(
                         width: 60,
                         child: Opacity(
-                          opacity: _pageController.hasClients && 
-                                  (_pageController.page?.round() ?? widget.currentIndex) < widget.allImages.length - 1
+                          opacity: _pageController.hasClients &&
+                                  (_pageController.page?.round() ??
+                                          widget.currentIndex) <
+                                      widget.allImages.length - 1
                               ? 0.7
                               : 0,
                           child: const Icon(
@@ -261,4 +301,4 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   String _formatDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
-} 
+}
