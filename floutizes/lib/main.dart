@@ -30,19 +30,10 @@ final _router = GoRouter(
           routes: [
             GoRoute(
               path: '/albums',
-              builder: (context, state) => const HomeScreen(
+              builder: (context, state) => HomeScreen(
                 initialView: ViewType.albums,
-                initialSearchString: null,
+                initialSearchString: state.uri.queryParameters['q'],
               ),
-              routes: [
-                GoRoute(
-                  path: ':searchQuery',
-                  builder: (context, state) => HomeScreen(
-                    initialView: ViewType.albums,
-                    initialSearchString: state.pathParameters['searchQuery'],
-                  ),
-                ),
-              ],
             ),
           ],
         ),
@@ -50,45 +41,37 @@ final _router = GoRouter(
           routes: [
             GoRoute(
               path: '/images',
-              builder: (context, state) => const HomeScreen(
-                initialView: ViewType.images,
-                initialSearchString: null,
-              ),
+              builder: (context, state) {
+                final imageId = state.uri.queryParameters['imageId'];
+                final q = state.uri.queryParameters['q'];
+                return HomeScreen(
+                  key: ValueKey("$imageId $q"),
+                  initialView: ViewType.images,
+                  initialSearchString: q,
+                  initialImageId:
+                      imageId != null ? int.tryParse(imageId) : null,
+                );
+              },
               routes: [
                 GoRoute(
-                  path: ':searchQuery',
+                  path: 'details/:index',
                   builder: (context, state) {
-                    final searchQuery =
-                        state.pathParameters['searchQuery'] ?? '';
-                    final imageId = state.uri.queryParameters['imageId'];
-                    return HomeScreen(
-                      initialView: ViewType.images,
-                      initialSearchString: searchQuery,
-                      initialImageId:
-                          imageId != null ? int.tryParse(imageId) : null,
+                    final index =
+                        int.tryParse(state.pathParameters['index'] ?? '');
+                    if (index == null) {
+                      return const Center(child: Text('Invalid index'));
+                    }
+                    final q = state.uri.queryParameters['q'];
+                    return ImageDetailView(
+                      key: ValueKey(q),
+                      searchQuery: state.uri.queryParameters['q'] ?? '',
+                      currentIndex: index,
+                      onKeywordSearch: (query, imageId) {
+                        context.go(
+                            '/images?q=${Uri.encodeComponent(query)}&imageId=$imageId');
+                      },
                     );
                   },
-                  routes: [
-                    GoRoute(
-                      path: 'details/:index',
-                      builder: (context, state) {
-                        final queryString =
-                            state.pathParameters['searchQuery'] ?? '';
-                        final index =
-                            int.tryParse(state.pathParameters['index'] ?? '');
-                        if (index == null) {
-                          return const Center(child: Text('Invalid index'));
-                        }
-                        return ImageDetailView(
-                          searchQuery: queryString,
-                          currentIndex: index,
-                          onKeywordSearch: (query, imageId) {
-                            context.go('/images/$query?imageId=$imageId');
-                          },
-                        );
-                      },
-                    ),
-                  ],
                 ),
               ],
             ),

@@ -56,9 +56,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _performSearch(String query) {
     if (_currentView == ViewType.albums) {
-      context.go('/albums/${Uri.encodeComponent(query)}');
+      context.go('/albums?q=${Uri.encodeComponent(query)}');
     } else {
-      context.go('/images/${Uri.encodeComponent(query)}');
+      context.go('/images?q=${Uri.encodeComponent(query)}');
     }
   }
 
@@ -128,13 +128,13 @@ class _HomeScreenState extends State<HomeScreen> {
           AlbumsView(
             searchQuery: _currentView == ViewType.albums ? _currentSearch : '',
             onAlbumSelected: (albumId) =>
-                context.go('/images/album%3A${Uri.encodeComponent(albumId)}'),
+                context.go('/images?q=album%3A${Uri.encodeComponent(albumId)}'),
           ),
           FlowView(
             searchQuery: _currentView == ViewType.images ? _currentSearch : '',
             scrollToImageId: _scrollToImageId,
-            onKeywordSearch: (String keyword, int imageId) => context
-                .go('/images/${Uri.encodeComponent(keyword)}?imageId=$imageId'),
+            onKeywordSearch: (String keyword, int imageId) => context.go(
+                '/images?q=${Uri.encodeComponent(keyword)}&imageId=$imageId'),
           ),
         ],
       ),

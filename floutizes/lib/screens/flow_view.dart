@@ -5,9 +5,10 @@ import '../services/api_service.dart';
 
 class FlowView extends StatefulWidget {
   final String searchQuery;
-  final int? scrollToImageId; // ID of the image to scroll to after loading
-  final Function(String, int)?
-      onKeywordSearch; // Callback for keyword search with current image ID
+  // ID of the image to scroll to after loading
+  final int? scrollToImageId;
+  // Callback for keyword search with current image ID
+  final Function(String, int)? onKeywordSearch;
 
   const FlowView({
     super.key,
@@ -188,7 +189,7 @@ class _FlowViewState extends State<FlowView> {
             return GestureDetector(
               onTap: () {
                 context.go(
-                    '/images/${Uri.encodeComponent(widget.searchQuery)}/details/$index');
+                    '/images/details/$index?q=${Uri.encodeComponent(widget.searchQuery)}');
               },
               child: Hero(
                 tag: 'image_${image.id}',
