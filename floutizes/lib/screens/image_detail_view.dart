@@ -106,7 +106,9 @@ class _ImageDetailViewState extends State<ImageDetailView> {
         focusNode: _focusNode,
         onKeyEvent: (event) {
           if (event is KeyDownEvent) {
-            if (event.logicalKey == LogicalKeyboardKey.arrowLeft &&
+            if (event.logicalKey == LogicalKeyboardKey.escape) {
+              Navigator.of(context).pop();
+            } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft &&
                 _currentIndex > 0) {
               _pageController.previousPage(
                 duration: const Duration(milliseconds: 300),
@@ -153,40 +155,57 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (image.keywords.isNotEmpty) ...[
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 4,
-                              children: image.keywords
-                                  .map((keyword) => GestureDetector(
-                                        onTap: () {
-                                          if (widget.onKeywordSearch != null) {
-                                            // Quote keywords containing spaces
-                                            final searchQuery =
-                                                keyword.contains(' ')
-                                                    ? '"$keyword"'
-                                                    : keyword;
-                                            widget.onKeywordSearch!(
-                                                searchQuery, image.id);
-                                            Navigator.of(context).pop();
-                                          }
-                                        },
-                                        child: Chip(
-                                          label: Text(keyword),
-                                          backgroundColor: Theme.of(context)
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              // Album chip first
+                              GestureDetector(
+                                onTap: () {
+                                  if (widget.onKeywordSearch != null) {
+                                    final albumQuery = 'album:${image.albumDir}';
+                                    widget.onKeywordSearch!(albumQuery, image.id);
+                                    Navigator.of(context).pop();
+                                  }
+                                },
+                                child: Chip(
+                                  avatar: const Icon(Icons.album, size: 18),
+                                  label: Text(image.albumDir),
+                                  backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                                  labelStyle: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSecondaryContainer,
+                                  ),
+                                ),
+                              ),
+                              // Then all keywords
+                              if (image.keywords.isNotEmpty)
+                                ...image.keywords.map((keyword) => GestureDetector(
+                                      onTap: () {
+                                        if (widget.onKeywordSearch != null) {
+                                          // Quote keywords containing spaces
+                                          final searchQuery = keyword.contains(' ')
+                                              ? '"$keyword"'
+                                              : keyword;
+                                          widget.onKeywordSearch!(
+                                              searchQuery, image.id);
+                                          Navigator.of(context).pop();
+                                        }
+                                      },
+                                      child: Chip(
+                                        label: Text(keyword),
+                                        backgroundColor: Theme.of(context)
+                                            .colorScheme
+                                            .primaryContainer,
+                                        labelStyle: TextStyle(
+                                          color: Theme.of(context)
                                               .colorScheme
-                                              .primaryContainer,
-                                          labelStyle: TextStyle(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onPrimaryContainer,
-                                          ),
+                                              .onPrimaryContainer,
                                         ),
-                                      ))
-                                  .toList(),
-                            ),
-                            const SizedBox(height: 16),
-                          ],
+                                      ),
+                                    )),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [

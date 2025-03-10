@@ -13,6 +13,13 @@ run-ios-simulator-pro15:
 run-ios-simulator-pro15-tt:
 	flutter run -d "iPhone 15 Pro Max" --dart-define BACKEND=https://toutizes.com
 
+run-pixel8:
+	flutter run -d 3A101FDJH0099F
+
+run-pixel8-tt:
+	flutter run -d 3A101FDJH0099F --dart-define BACKEND=https://toutizes.com
+
+
 launch-emulator:
 	flutter emulators --launch Apple
 
