@@ -76,11 +76,11 @@ class _AlbumsViewState extends State<AlbumsView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Error loading albums: ${snapshot.error}'),
+                Text('Erreur albums: ${snapshot.error}'),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: _loadAlbums,
-                  child: const Text('Retry'),
+                  child: const Text('Réessayer'),
                 ),
               ],
             ),
@@ -89,7 +89,7 @@ class _AlbumsViewState extends State<AlbumsView> {
 
         final albums = snapshot.data!;
         if (albums.isEmpty) {
-          return const Center(child: Text('No albums found'));
+          return const Center(child: Text('Pas d\'albums'));
         }
 
         // Sort albums by directoryTime (descending) and id (ascending)

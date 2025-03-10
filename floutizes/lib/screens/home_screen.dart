@@ -68,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Aide pour la recherche'),
+        title: const Text('Aide recherche'),
         content: SizedBox(
           width: double.maxFinite,
           child: Markdown(
@@ -79,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            child: const Text('Fermer'),
           ),
         ],
       ),
@@ -93,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: TextField(
           controller: _searchController,
           decoration: InputDecoration(
-            hintText: _selectedIndex == 0 ? 'Search albums...' : 'Search photos...',
+            hintText: _selectedIndex == 0 ? 'Recherche albums...' : 'Recherche photos...',
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -109,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 IconButton(
                   icon: const Icon(Icons.help_outline),
                   onPressed: () => _showSearchHelp(context),
-                  tooltip: 'Search syntax help',
+                  tooltip: 'Aide recherche',
                 ),
               ],
             ),

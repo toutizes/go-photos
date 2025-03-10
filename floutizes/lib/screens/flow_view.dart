@@ -142,7 +142,7 @@ class _FlowViewState extends State<FlowView> {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: _loadImages,
-                  child: const Text('Retry'),
+                  child: const Text('Réssayer'),
                 ),
               ],
             ),
@@ -162,17 +162,17 @@ class _FlowViewState extends State<FlowView> {
                 ),
                 const SizedBox(height: 16),
                 if (widget.searchQuery.isEmpty)
-                  const Text('No images available')
+                  const Text('Pas d\'images disponibles')
                 else
                   Column(
                     children: [
-                      Text('No images found for "${widget.searchQuery}"'),
+                      Text('Pas d\'images pour "${widget.searchQuery}"'),
                       const SizedBox(height: 8),
                       if (widget.onKeywordSearch != null)
                         TextButton.icon(
                           onPressed: () => widget.onKeywordSearch!('', -1),
                           icon: const Icon(Icons.clear),
-                          label: const Text('Clear search'),
+                          label: const Text('Annuler'),
                         ),
                     ],
                   ),
