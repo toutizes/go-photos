@@ -14,8 +14,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Configure the API service with the live backend URL
-    final apiService = ApiService(baseUrl: 'http://localhost:8080');
+    // Get the backend URL from environment variable or use default
+    final backendUrl = const String.fromEnvironment('BACKEND', defaultValue: 'http://localhost:8080');
+    final apiService = ApiService(baseUrl: backendUrl);
 
     return MaterialApp(
       title: 'Toutizes Photos',
