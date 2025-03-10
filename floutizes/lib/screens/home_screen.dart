@@ -3,7 +3,6 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'flow_view.dart';
 import 'albums_view.dart';
-import '../services/api_service.dart';
 import '../models/view_type.dart';
 
 class HomeScreen extends StatefulWidget {
