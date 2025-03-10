@@ -1,6 +1,9 @@
 build: FORCE
 	flutter build web
 
+build-web-release:
+	flutter build web --release --base-href /app/
+
 run-web:
 	flutter run -d chrome --web-port 33337
 

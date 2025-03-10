@@ -4,11 +4,14 @@ LR_ACTIONS="$(HOME)/Library/Application Support/Adobe/Lightroom/Export Actions"
 # Toutizes.
 # serve_small needs to have run install_html.
 # http://localhost:8080
-serve_small: generate install_html
+serve_small: generate install_flutter
 	go run backend/test/aserve.go --bin_root=/opt/homebrew/bin/ --use_https=false --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/aserve/db-full --static_root=/tmp/aserve/db/htdocs
 
 install_html:
 	cmd/install-ttpic.sh
+
+install_flutter: 
+	rsync --delete --recursive floutizes/build/web/* /tmp/aserve/db/htdocs/flutter
 
 push_serve: generate 
 	GOOS=linux GOARCH=amd64 go build -o bin_linux/aserve backend/test/aserve.go
@@ -16,6 +19,10 @@ push_serve: generate
 
 push_html: install_html
 	rsync --delete --recursive /tmp/aserve/db/htdocs/db/ $(SERVER):/mnt/photos/htdocs/db/
+	rsync --delete --recursive /tmp/aserve/db/htdocs/synonyms.txt $(SERVER):/mnt/photos/htdocs/synonyms.txt
+
+push_flutter: 
+	rsync --delete --recursive floutizes/build/web/* $(SERVER):/mnt/photos/htdocs/flutter/
 	rsync --delete --recursive /tmp/aserve/db/htdocs/synonyms.txt $(SERVER):/mnt/photos/htdocs/synonyms.txt
 
 run: generate

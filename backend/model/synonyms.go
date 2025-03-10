@@ -13,7 +13,7 @@ type Person struct {
 }
 
 func newPerson(full_names ...string) *Person {
-	log.Printf("New person: %v\n", full_names[0])
+	// log.Printf("New person: %v\n", full_names[0])
 	p := new(Person)
 	p.name_set = make(map[string]struct{}, len(full_names))
 	for _, n := range full_names {

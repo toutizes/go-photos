@@ -3,8 +3,12 @@ package main
 import (
 	"flag"
 	"log"
+	"mime"
 	"net/http"
+	"os"
+	"path/filepath"
 	"runtime"
+	"strings"
 	// "github.com/alexedwards/scs/v2"
 )
 
@@ -40,6 +44,88 @@ func AddCorsHeaders(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Origin")
+}
+
+// Add function to get content type
+func getContentType(path string) string {
+	ext := filepath.Ext(path)
+	switch ext {
+	case ".html":
+		return "text/html; charset=utf-8"
+	case ".css":
+		return "text/css; charset=utf-8"
+	case ".js":
+		return "application/javascript"
+	case ".json":
+		return "application/json"
+	case ".png":
+		return "image/png"
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".svg":
+		return "image/svg+xml"
+	case ".woff":
+		return "font/woff"
+	case ".woff2":
+		return "font/woff2"
+	case ".ttf":
+		return "font/ttf"
+	case ".ico":
+		return "image/x-icon"
+	default:
+		if ct := mime.TypeByExtension(ext); ct != "" {
+			return ct
+		}
+		return "application/octet-stream"
+	}
+}
+
+// Flutter web app handler
+func handleFlutterApp(w http.ResponseWriter, r *http.Request) {
+	// The path to your built Flutter web files
+	webRoot := *static_root + "/flutter"
+
+	log.Printf("handleFlutterApp: %s\n", webRoot)
+
+	// Get the requested path and remove /app/ prefix
+	path := strings.TrimPrefix(r.URL.Path, "/app/")
+	log.Printf("handleFlutterApp path after trim: %s\n", path)
+
+	if path == "" {
+		path = "index.html"
+	}
+
+	// Create the full file path
+	filePath := filepath.Join(webRoot, path)
+
+	log.Printf("handleFlutterApp filepath: %s\n", filePath)
+
+	// Prevent directory traversal
+	if !strings.HasPrefix(filepath.Clean(filePath), webRoot) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	// Check if file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		// For SPA routing, serve index.html for non-existent files
+		filePath = filepath.Join(webRoot, "index.html")
+	}
+
+	// Set content type and other headers
+	log.Printf("handleFlutterApp contentType: %s\n", getContentType(filePath))
+	w.Header().Set("Content-Type", getContentType(filePath))
+	AddCorsHeaders(w)
+
+	// Cache static assets but not index.html
+	if !strings.HasSuffix(filePath, "index.html") {
+		w.Header().Set("Cache-Control", "public, max-age=31536000")
+	} else {
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	}
+
+	log.Printf("handleFlutterApp serveFile: %s\n", filePath)
+	http.ServeFile(w, r, filePath)
 }
 
 func main() {
@@ -121,6 +207,13 @@ func main() {
 	mux.HandleFunc("/",
 		func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/db/pic.html", 301)
+		})
+
+	// Add the Flutter web app handler
+	mux.HandleFunc("/app/",
+		func(w http.ResponseWriter, r *http.Request) {
+			Log("/app", r)
+			handleFlutterApp(w, r)
 		})
 
 	// Always serve on http:8081, useful for access from localhost.
