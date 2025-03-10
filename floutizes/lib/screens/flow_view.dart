@@ -24,8 +24,18 @@ class FlowView extends StatefulWidget {
 
 class _FlowViewState extends State<FlowView> {
   Future<List<ImageModel>>? _imagesFuture;
+  List<ImageModel>? _sortedImages;
   bool _isLoading = false;
   final ScrollController _scrollController = ScrollController();
+
+  List<ImageModel> _sortImages(List<ImageModel> images) {
+    return List<ImageModel>.from(images)
+      ..sort((a, b) {
+        final timeCompare = a.itemTimestamp.compareTo(b.itemTimestamp);
+        if (timeCompare != 0) return timeCompare;
+        return a.imageName.compareTo(b.imageName);
+      });
+  }
 
   @override
   void initState() {
@@ -50,6 +60,7 @@ class _FlowViewState extends State<FlowView> {
   Future<void> _loadImages() async {
     setState(() {
       _isLoading = true;
+      _sortedImages = null;
       if (widget.searchQuery.isEmpty) {
         _imagesFuture = widget.apiService.searchImages('all:');
       } else {
@@ -63,8 +74,12 @@ class _FlowViewState extends State<FlowView> {
         final images = await _imagesFuture;
         if (images == null) return;
 
-        final index =
-            images.indexWhere((img) => img.id == widget.scrollToImageId);
+        final sortedImages = _sortImages(images);
+        setState(() {
+          _sortedImages = sortedImages;
+        });
+
+        final index = sortedImages.indexWhere((img) => img.id == widget.scrollToImageId);
         if (index != -1) {
           // Wait for the grid to be built
           WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -78,7 +93,7 @@ class _FlowViewState extends State<FlowView> {
             final width = MediaQuery.of(context).size.width;
             final height = MediaQuery.of(context).size.height;
             final itemWidth = (width - 32) / 3;  // Account for padding and spacing
-            final rowHeight = itemWidth;  // Square items
+            final rowHeight = itemWidth + 8;  // Square items + spacing
             final row = index ~/ 3;
             
             // Calculate target offset to center the item
@@ -166,13 +181,15 @@ class _FlowViewState extends State<FlowView> {
           );
         }
 
-        // Sort images by itemTimestamp (ascending) and imageName (ascending)
-        final sortedImages = List<ImageModel>.from(images)
-          ..sort((a, b) {
-            final timeCompare = a.itemTimestamp.compareTo(b.itemTimestamp);
-            if (timeCompare != 0) return timeCompare;
-            return a.imageName.compareTo(b.imageName);
-          });
+        // Use cached sorted images or sort if not available
+        final sortedImages = _sortedImages ?? _sortImages(images);
+        if (_sortedImages == null) {
+          // Cache the sorted list for future use
+          _sortedImages = sortedImages;
+        }
+
+        // Add two rows of padding items for better scrolling of last rows
+        final int paddingItemCount = 6; // 2 rows × 3 columns
 
         return GridView.builder(
           controller: _scrollController,
@@ -182,8 +199,13 @@ class _FlowViewState extends State<FlowView> {
             mainAxisSpacing: 8,
             crossAxisSpacing: 8,
           ),
-          itemCount: sortedImages.length,
+          itemCount: sortedImages.length + paddingItemCount,
           itemBuilder: (context, index) {
+            if (index >= sortedImages.length) {
+              // Return an empty, transparent container for padding items
+              return const SizedBox();
+            }
+
             final image = sortedImages[index];
             return GestureDetector(
               onTap: () {
