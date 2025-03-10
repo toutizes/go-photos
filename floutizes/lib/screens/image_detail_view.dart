@@ -83,9 +83,10 @@ class _ImageDetailViewState extends State<ImageDetailView> {
 
   @override
   Widget build(BuildContext context) {
+    final currentImage = widget.allImages[_currentIndex];
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.allImages[_currentIndex].imageName),
+        title: Text('${currentImage.albumDir}/${currentImage.imageName}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),
