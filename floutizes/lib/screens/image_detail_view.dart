@@ -37,6 +37,7 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     // Request focus when the view is created
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
+      _precacheNearbyImages(_currentIndex);
     });
   }
 
@@ -48,12 +49,25 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     super.dispose();
   }
 
+  void _precacheNearbyImages(int currentIndex) {
+    // Pre-cache 2 images before and after the current one
+    for (var i = -2; i <= 2; i++) {
+      final targetIndex = currentIndex + i;
+      if (targetIndex >= 0 && targetIndex < widget.allImages.length && i != 0) {
+        final imageUrl = widget.apiService.getImageUrl(widget.allImages[targetIndex].midiPath);
+        precacheImage(NetworkImage(imageUrl), context);
+      }
+    }
+  }
+
   void _onPageChanged() {
     final page = _pageController.page?.round() ?? widget.currentIndex;
     if (page != _currentIndex) {
       setState(() {
         _currentIndex = page;
       });
+      // Pre-cache images when page changes
+      _precacheNearbyImages(page);
     }
   }
 
