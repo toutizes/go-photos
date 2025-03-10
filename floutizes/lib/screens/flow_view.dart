@@ -187,7 +187,7 @@ class _FlowViewState extends State<FlowView> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => ImageDetailView(
-                      allImages: images,
+                      searchQuery: widget.searchQuery.isEmpty ? 'all:' : widget.searchQuery,
                       currentIndex: index,
                       onKeywordSearch: widget.onKeywordSearch,
                     ),
