@@ -91,6 +91,13 @@ class ApiService {
         final List<dynamic> jsonList = json.decode(response.body);
         final results = jsonList.map((json) => ImageModel.fromJson(json)).toList();
         
+        // Sort results by timestamp and name before caching
+        results.sort((a, b) {
+          final timeCompare = a.itemTimestamp.compareTo(b.itemTimestamp);
+          if (timeCompare != 0) return timeCompare;
+          return a.imageName.compareTo(b.imageName);
+        });
+        
         // Add results to cache
         _addToCache(query, results);
         
