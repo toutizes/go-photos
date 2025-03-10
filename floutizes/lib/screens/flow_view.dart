@@ -166,6 +166,14 @@ class _FlowViewState extends State<FlowView> {
           );
         }
 
+        // Sort images by itemTimestamp (ascending) and imageName (ascending)
+        final sortedImages = List<ImageModel>.from(images)
+          ..sort((a, b) {
+            final timeCompare = a.itemTimestamp.compareTo(b.itemTimestamp);
+            if (timeCompare != 0) return timeCompare;
+            return a.imageName.compareTo(b.imageName);
+          });
+
         return GridView.builder(
           controller: _scrollController,
           padding: const EdgeInsets.all(8),
@@ -174,9 +182,9 @@ class _FlowViewState extends State<FlowView> {
             mainAxisSpacing: 8,
             crossAxisSpacing: 8,
           ),
-          itemCount: images.length,
+          itemCount: sortedImages.length,
           itemBuilder: (context, index) {
-            final image = images[index];
+            final image = sortedImages[index];
             return GestureDetector(
               onTap: () {
                 Navigator.of(context).push(

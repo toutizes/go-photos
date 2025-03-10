@@ -92,6 +92,14 @@ class _AlbumsViewState extends State<AlbumsView> {
           return const Center(child: Text('No albums found'));
         }
 
+        // Sort albums by directoryTime (descending) and id (ascending)
+        final sortedAlbums = List<DirectoryModel>.from(albums)
+          ..sort((a, b) {
+            final timeCompare = b.directoryTime.compareTo(a.directoryTime);
+            if (timeCompare != 0) return timeCompare;
+            return a.id.compareTo(b.id);
+          });
+
         return GridView.builder(
           padding: const EdgeInsets.all(8),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -100,9 +108,9 @@ class _AlbumsViewState extends State<AlbumsView> {
             mainAxisSpacing: 8.0,
             crossAxisSpacing: 8.0,
           ),
-          itemCount: albums.length,
+          itemCount: sortedAlbums.length,
           itemBuilder: (context, index) {
-            final album = albums[index];
+            final album = sortedAlbums[index];
             return GestureDetector(
               onTap: () => widget.onAlbumSelected(album.id),
               child: Card(
