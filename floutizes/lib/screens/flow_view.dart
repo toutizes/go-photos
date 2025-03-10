@@ -6,8 +6,9 @@ import 'image_detail_view.dart';
 class FlowView extends StatefulWidget {
   final ApiService apiService;
   final String searchQuery;
-  final int? scrollToImageId;  // ID of the image to scroll to after loading
-  final Function(String, int)? onKeywordSearch;  // Callback for keyword search with current image ID
+  final int? scrollToImageId; // ID of the image to scroll to after loading
+  final Function(String, int)?
+      onKeywordSearch; // Callback for keyword search with current image ID
 
   const FlowView({
     super.key,
@@ -49,24 +50,28 @@ class _FlowViewState extends State<FlowView> {
   Future<void> _loadImages() async {
     setState(() {
       _isLoading = true;
-    });
-
-    try {
       if (widget.searchQuery.isEmpty) {
         _imagesFuture = widget.apiService.searchImages('all:');
       } else {
         _imagesFuture = widget.apiService.searchImages(widget.searchQuery);
       }
-      
-      // Wait for the images to load, then scroll if needed
-      final images = await _imagesFuture;
-      if (images == null) return;  // Don't attempt to scroll if images is null
-      
+    });
+
+    try {
       if (widget.scrollToImageId != null && mounted) {
-        final index = images.indexWhere((img) => img.id == widget.scrollToImageId);
+        // Wait for the future to complete before attempting to scroll
+        final images = await _imagesFuture;
+        if (images == null) return;
+
+        final index =
+            images.indexWhere((img) => img.id == widget.scrollToImageId);
         if (index != -1) {
           // Wait for the grid to be built
-          WidgetsBinding.instance.addPostFrameCallback((_) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (!mounted) return;
+
+            // Add a small delay to ensure the ScrollController is attached
+            await Future.delayed(const Duration(milliseconds: 100));
             if (!mounted) return;
             
             // Calculate the grid metrics
@@ -204,4 +209,4 @@ class _FlowViewState extends State<FlowView> {
       },
     );
   }
-} 
+}

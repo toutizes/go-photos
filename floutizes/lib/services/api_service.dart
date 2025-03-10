@@ -10,7 +10,7 @@ class ApiService {
   final http.Client _client;
 
   static void initLogging() {
-    Logger.root.level = Level.ALL;
+    Logger.root.level = Level.INFO;
     Logger.root.onRecord.listen((record) {
       print('${record.level.name}: ${record.time}: ${record.message}');
     });
