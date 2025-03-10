@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'services/api_service.dart';
+import 'models/view_type.dart';
 
 void main() {
   // Initialize logging
@@ -34,7 +35,10 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: HomeScreen(apiService: apiService),
+      home: HomeScreen(
+        apiService: apiService,
+        initialView: ViewType.albums,
+      ),
     );
   }
 } 

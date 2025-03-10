@@ -1,0 +1,4 @@
+enum ViewType {
+  albums,
+  images,
+} 

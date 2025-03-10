@@ -4,18 +4,26 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'flow_view.dart';
 import 'albums_view.dart';
 import '../services/api_service.dart';
+import '../models/view_type.dart';
 
 class HomeScreen extends StatefulWidget {
   final ApiService apiService;
+  final ViewType initialView;
+  final String? initialSearchString;
 
-  const HomeScreen({super.key, required this.apiService});
+  const HomeScreen({
+    super.key, 
+    required this.apiService,
+    required this.initialView,
+    this.initialSearchString,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
+  late ViewType _currentView;
   final TextEditingController _searchController = TextEditingController();
   String _currentSearch = '';
   int? _scrollToImageId;  // Add this to track which image to scroll to
@@ -24,6 +32,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _currentView = widget.initialView;
+    if (widget.initialSearchString != null) {
+      _currentSearch = widget.initialSearchString!;
+      _searchController.text = widget.initialSearchString!;
+    }
     _loadHelpContent();
   }
 
@@ -57,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _handleKeywordSearch(String keyword, int imageId) {
     setState(() {
-      _selectedIndex = 1;  // Switch to Images tab
+      _currentView = ViewType.images;  // Switch to Images tab
       _currentSearch = keyword;
       _searchController.text = keyword;
       _scrollToImageId = imageId;  // Set the image to scroll to
@@ -93,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: TextField(
           controller: _searchController,
           decoration: InputDecoration(
-            hintText: _selectedIndex == 0 ? 'Recherche albums...' : 'Recherche photos...',
+            hintText: _currentView == ViewType.albums ? 'Recherche albums...' : 'Recherche photos...',
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -119,14 +132,14 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       body: IndexedStack(
-        index: _selectedIndex,
+        index: _currentView == ViewType.albums ? 0 : 1,
         children: [
           AlbumsView(
             apiService: widget.apiService,
-            searchQuery: _selectedIndex == 0 ? _currentSearch : '',
+            searchQuery: _currentView == ViewType.albums ? _currentSearch : '',
             onAlbumSelected: (albumId) {
               setState(() {
-                _selectedIndex = 1;
+                _currentView = ViewType.images;
                 _currentSearch = 'album:$albumId';
                 _searchController.text = _currentSearch;
               });
@@ -134,17 +147,17 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           FlowView(
             apiService: widget.apiService,
-            searchQuery: _selectedIndex == 1 ? _currentSearch : '',
+            searchQuery: _currentView == ViewType.images ? _currentSearch : '',
             scrollToImageId: _scrollToImageId,
             onKeywordSearch: _handleKeywordSearch,
           ),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
+        currentIndex: _currentView == ViewType.albums ? 0 : 1,
         onTap: (index) {
           setState(() {
-            _selectedIndex = index;
+            _currentView = index == 0 ? ViewType.albums : ViewType.images;
             _currentSearch = '';
             _searchController.clear();
           });
