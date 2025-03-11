@@ -2,6 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../models/image.dart';
 import '../services/api_service.dart';
+import '../utils/layout_utils.dart';
+
+/// Calculates the optimal number of columns for a grid based on screen width and desired item width.
+/// 
+/// Parameters:
+/// - screenWidth: The available width of the screen
+/// - minItemWidth: The minimum desired width for each item
+/// - maxItemWidth: The maximum desired width for each item
+/// - maxAllowedColumns: The maximum number of columns allowed
+/// - padding: The total horizontal padding of the grid (default: 16.0)
+/// - spacing: The spacing between items (default: 8.0)
+int calculateOptimalColumns({
+  required double screenWidth,
+  required double minItemWidth,
+  required double maxItemWidth,
+  required int maxAllowedColumns,
+  double padding = 16.0,
+  double spacing = 8.0,
+}) {
+  // Calculate number of columns that would fit with minItemWidth
+  int maxColumns = ((screenWidth - padding) / (minItemWidth + spacing)).floor();
+  // Calculate number of columns that would fit with maxItemWidth
+  int minColumns = ((screenWidth - padding) / (maxItemWidth + spacing)).ceil();
+  
+  // Ensure minColumns doesn't exceed our maximum allowed columns
+  minColumns = minColumns.clamp(1, maxAllowedColumns);
+  // Ensure maxColumns is at least as large as minColumns
+  maxColumns = maxColumns.clamp(minColumns, maxAllowedColumns);
+  
+  return maxColumns;
+}
 
 class FlowView extends StatefulWidget {
   final String searchQuery;
@@ -134,14 +165,22 @@ class _FlowViewState extends State<FlowView> {
   }
 
   Widget _images(List<ImageModel> images) {
+    // Calculate optimal number of columns based on screen width
+    final numColumns = calculateOptimalColumns(
+      screenWidth: MediaQuery.of(context).size.width,
+      minItemWidth: 200.0,
+      maxItemWidth: 300.0,
+      maxAllowedColumns: 6,
+    );
+
     // Add two rows of padding items for better scrolling of last rows
-    const int paddingItemCount = 6; // 2 rows × 3 columns
+    final int paddingItemCount = numColumns * 2; // 2 rows × numColumns
 
     return GridView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(8),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: numColumns,
         mainAxisSpacing: 8,
         crossAxisSpacing: 8,
       ),

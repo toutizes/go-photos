@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/directory.dart';
 import '../services/api_service.dart';
+import '../utils/layout_utils.dart';
 
 class AlbumsView extends StatefulWidget {
   final String searchQuery;
@@ -56,10 +57,18 @@ class _AlbumsViewState extends State<AlbumsView> {
   }
 
   Widget _albumView(List<DirectoryModel> albums) {
+    // Calculate optimal number of columns based on screen width
+    final numColumns = calculateOptimalColumns(
+      screenWidth: MediaQuery.of(context).size.width,
+      minItemWidth: 200.0,
+      maxItemWidth: 300.0,
+      maxAllowedColumns: 6,
+    );
+
     return GridView.builder(
       padding: const EdgeInsets.all(8),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: numColumns,
         childAspectRatio: 1.0,
         mainAxisSpacing: 8.0,
         crossAxisSpacing: 8.0,
