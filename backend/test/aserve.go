@@ -199,11 +199,11 @@ func main() {
 	//   LogHandler(
 	//     "/ default",
 	//     http.FileServer(http.Dir(*static_root + "/"))))
-	mux.Handle(
-		"/db/",
-		LogHandler(
-			"/db files",
-			http.FileServer(http.Dir(*static_root))))
+	// mux.Handle(
+	// 	"/db/",
+	// 	LogHandler(
+	// 		"/db files",
+	// 		http.FileServer(http.Dir(*static_root))))
 	mux.HandleFunc("/",
 		func(w http.ResponseWriter, r *http.Request) {
 			// http.Redirect(w, r, "/db/pic.html", 301)
