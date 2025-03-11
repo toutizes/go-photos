@@ -225,4 +225,10 @@ class ApiService {
       rethrow;
     }
   }
+
+  String getMontageUrl(List<int> imageIds, {required int width, required int height}) {
+    final geometry = '${width}x$height';
+    final spec = '$geometry-${imageIds.join('-')}';
+    return '$baseUrl/db/montage/$spec';
+  }
 }

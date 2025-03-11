@@ -65,6 +65,37 @@ class _AlbumsViewState extends State<AlbumsView> {
       maxAllowedColumns: 6,
     );
 
+    // Calculate item size based on available width
+    final screenWidth = MediaQuery.of(context).size.width;
+    final itemWidth = (screenWidth - 16 - (numColumns - 1) * 8) / numColumns;
+    final itemHeight = itemWidth; // Square items
+
+    // Group albums into montage groups of 8, padding the last group if needed
+    const montageGroupSize = 8;
+    final List<List<int>> montageGroups = [];
+    
+    for (var i = 0; i < albums.length; i += montageGroupSize) {
+      final end = (i + montageGroupSize <= albums.length) ? i + montageGroupSize : albums.length;
+      final group = albums.sublist(i, end).map((album) => album.coverId).toList();
+      
+      // Pad the last group with repeated last cover ID if needed
+      if (group.length < montageGroupSize && group.isNotEmpty) {
+        final lastId = group.last;
+        while (group.length < montageGroupSize) {
+          group.add(lastId);
+        }
+      }
+      
+      montageGroups.add(group);
+    }
+
+    // Create montage URLs for each group
+    final montageUrls = montageGroups.map((group) => ApiService.instance.getMontageUrl(
+      group,
+      width: itemWidth.round(),
+      height: itemHeight.round(),
+    )).toList();
+
     return GridView.builder(
       padding: const EdgeInsets.all(8),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -76,6 +107,10 @@ class _AlbumsViewState extends State<AlbumsView> {
       itemCount: albums.length,
       itemBuilder: (context, index) {
         final album = albums[index];
+        final montageGroupIndex = index ~/ montageGroupSize;
+        final positionInGroup = index % montageGroupSize;
+        final montageUrl = montageUrls[montageGroupIndex];
+
         return GestureDetector(
           onTap: () => widget.onAlbumSelected(album.id),
           child: Card(
@@ -87,11 +122,21 @@ class _AlbumsViewState extends State<AlbumsView> {
                   child: Hero(
                     tag: 'album_${album.id}',
                     child: Image.network(
-                      ApiService.instance.getImageUrl(album.coverMidiPath),
-                      fit: BoxFit.cover,
+                      montageUrl,
+                      fit: BoxFit.none,
+                      alignment: Alignment(-1 + 2 * positionInGroup / (montageGroupSize - 1), 0),
+                      width: itemWidth,
+                      height: itemHeight,
                       errorBuilder: (context, error, stackTrace) {
-                        return const Center(
-                          child: Icon(Icons.error_outline),
+                        // Fallback to individual image if montage fails
+                        return Image.network(
+                          ApiService.instance.getImageUrl(album.coverMiniPath),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Center(
+                              child: Icon(Icons.error_outline),
+                            );
+                          },
                         );
                       },
                     ),

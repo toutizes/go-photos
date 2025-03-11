@@ -55,14 +55,21 @@ func HandleMontage2(w http.ResponseWriter, r *http.Request, db *Database) {
   for _, id := range ids {
     args = append(args, db.MiniPath(id))
   }
+  // First resize to fill the square while maintaining aspect ratio
   args = append(args, "-resize");
   args = append(args, geo + "^");
+  // Center the image
   args = append(args, "-gravity");
   args = append(args, "center");
+  // Crop to exact square size
   args = append(args, "-extent");
   args = append(args, geo);
+  // Ensure each image is treated independently
+  args = append(args, "+repage");
+  // Create a single row montage
   args = append(args, "-tile");
   args = append(args, "x1");
+  // No spacing between images
   args = append(args, "-geometry");
   args = append(args, geo + "+0+0");
   args = append(args, mont);

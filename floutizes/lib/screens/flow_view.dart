@@ -172,6 +172,37 @@ class _FlowViewState extends State<FlowView> {
       maxAllowedColumns: 6,
     );
 
+    // Calculate item size based on available width
+    final screenWidth = MediaQuery.of(context).size.width;
+    final itemWidth = (screenWidth - 16 - (numColumns - 1) * 8) / numColumns;
+    final itemHeight = itemWidth; // Square items
+
+    // Group images into montage groups of 8, padding the last group if needed
+    const montageGroupSize = 8;
+    final List<List<int>> montageGroups = [];
+    
+    for (var i = 0; i < images.length; i += montageGroupSize) {
+      final end = (i + montageGroupSize <= images.length) ? i + montageGroupSize : images.length;
+      final group = images.sublist(i, end).map((img) => img.id).toList();
+      
+      // Pad the last group with repeated last image ID if needed
+      if (group.length < montageGroupSize && group.isNotEmpty) {
+        final lastId = group.last;
+        while (group.length < montageGroupSize) {
+          group.add(lastId);
+        }
+      }
+      
+      montageGroups.add(group);
+    }
+
+    // Create montage URLs for each group
+    final montageUrls = montageGroups.map((group) => ApiService.instance.getMontageUrl(
+      group,
+      width: itemWidth.round(),
+      height: itemHeight.round(),
+    )).toList();
+
     // Add two rows of padding items for better scrolling of last rows
     final int paddingItemCount = numColumns * 2; // 2 rows × numColumns
 
@@ -191,6 +222,10 @@ class _FlowViewState extends State<FlowView> {
         }
 
         final image = images[index];
+        final montageGroupIndex = index ~/ montageGroupSize;
+        final positionInGroup = index % montageGroupSize;
+        final montageUrl = montageUrls[montageGroupIndex];
+
         return GestureDetector(
           onTap: () {
             context.go(
@@ -199,11 +234,21 @@ class _FlowViewState extends State<FlowView> {
           child: Hero(
             tag: 'image_${image.id}',
             child: Image.network(
-              ApiService.instance.getImageUrl(image.miniPath),
-              fit: BoxFit.cover,
+              montageUrl,
+              fit: BoxFit.none,
+              alignment: Alignment(-1 + 2 * positionInGroup / (montageGroupSize - 1), 0),
+              width: itemWidth,
+              height: itemHeight,
               errorBuilder: (context, error, stackTrace) {
-                return const Center(
-                  child: Icon(Icons.error_outline),
+                // Fallback to individual image if montage fails
+                return Image.network(
+                  ApiService.instance.getImageUrl(image.miniPath),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Icon(Icons.error_outline),
+                    );
+                  },
                 );
               },
             ),

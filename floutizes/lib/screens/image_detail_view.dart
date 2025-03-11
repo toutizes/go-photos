@@ -100,8 +100,9 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     if (images == null) {
       return;
     }
-    // Pre-cache 2 images before and after the current one
-    for (var i = -2; i <= 2; i++) {
+    // Pre-cache images before and after the current one
+    const int preCacheWidth = 3;
+    for (var i = -preCacheWidth; i <= preCacheWidth; i++) {
       final targetIndex = currentIndex + i;
       if (targetIndex >= 0 && targetIndex < images.length && i != 0) {
         final imageUrl =
@@ -248,7 +249,7 @@ class _ImageDetailViewState extends State<ImageDetailView> {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => PhotoView(
-              imageUrl: ApiService.instance.getImageUrl(image.maxiPath),
+              imageUrl: ApiService.instance.getImageUrl(image.midiPath),
             ),
           ),
         );
