@@ -55,6 +55,65 @@ class _AlbumsViewState extends State<AlbumsView> {
     }
   }
 
+  Widget _albumView(List<DirectoryModel> albums) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(8),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 1.0,
+        mainAxisSpacing: 8.0,
+        crossAxisSpacing: 8.0,
+      ),
+      itemCount: albums.length,
+      itemBuilder: (context, index) {
+        final album = albums[index];
+        return GestureDetector(
+          onTap: () => widget.onAlbumSelected(album.id),
+          child: Card(
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Hero(
+                    tag: 'album_${album.id}',
+                    child: Image.network(
+                      ApiService.instance.getImageUrl(album.coverMidiPath),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Center(
+                          child: Icon(Icons.error_outline),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        album.id,
+                        style: Theme.of(context).textTheme.titleMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        '${album.imageCount} ${album.imageCount == 1 ? 'photo' : 'photos'}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -88,71 +147,7 @@ class _AlbumsViewState extends State<AlbumsView> {
         if (albums.isEmpty) {
           return const Center(child: Text('Pas d\'albums'));
         }
-
-        // Sort albums by directoryTime (descending) and id (ascending)
-        final sortedAlbums = List<DirectoryModel>.from(albums)
-          ..sort((a, b) {
-            final timeCompare = b.directoryTime.compareTo(a.directoryTime);
-            if (timeCompare != 0) return timeCompare;
-            return a.id.compareTo(b.id);
-          });
-
-        return GridView.builder(
-          padding: const EdgeInsets.all(8),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 1.0,
-            mainAxisSpacing: 8.0,
-            crossAxisSpacing: 8.0,
-          ),
-          itemCount: sortedAlbums.length,
-          itemBuilder: (context, index) {
-            final album = sortedAlbums[index];
-            return GestureDetector(
-              onTap: () => widget.onAlbumSelected(album.id),
-              child: Card(
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: Hero(
-                        tag: 'album_${album.id}',
-                        child: Image.network(
-                          ApiService.instance.getImageUrl(album.coverMidiPath),
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Center(
-                              child: Icon(Icons.error_outline),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            album.id,
-                            style: Theme.of(context).textTheme.titleMedium,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            '${album.imageCount} ${album.imageCount == 1 ? 'photo' : 'photos'}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
+        return _albumView(albums);
       },
     );
   }

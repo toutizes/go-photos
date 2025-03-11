@@ -26,10 +26,14 @@ final _router = GoRouter(
           routes: [
             GoRoute(
               path: '/albums',
-              builder: (context, state) => HomeScreen(
-                initialView: ViewType.albums,
-                initialSearchString: state.uri.queryParameters['q'],
-              ),
+              builder: (context, state) {
+                final q = state.uri.queryParameters['q'];
+                return HomeScreen(
+                  key: ValueKey(q),
+                  initialView: ViewType.albums,
+                  initialSearchString: state.uri.queryParameters['q'],
+                );
+              },
             ),
           ],
         ),

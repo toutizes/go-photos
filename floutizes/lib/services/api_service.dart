@@ -71,6 +71,17 @@ class ApiService {
     }
   }
 
+  List<ImageModel> _toImages(String body) {
+    final List<dynamic> jsonList = json.decode(body);
+    final results = jsonList.map((json) => ImageModel.fromJson(json)).toList();
+    results.sort((a, b) {
+      final timeCompare = b.itemTimestamp.compareTo(a.itemTimestamp);
+      if (timeCompare != 0) return timeCompare;
+      return b.imageName.compareTo(a.imageName);
+    });
+    return results;
+  }
+
   Future<List<ImageModel>> searchImages(String query) async {
     // Check cache first
     if (_searchCache.containsKey(query)) {
@@ -92,20 +103,8 @@ class ApiService {
       _logResponse('GET', url, response);
 
       if (response.statusCode == 200) {
-        final List<dynamic> jsonList = json.decode(response.body);
-        final results =
-            jsonList.map((json) => ImageModel.fromJson(json)).toList();
-
-        // Sort results by timestamp and name before caching
-        results.sort((a, b) {
-          final timeCompare = b.itemTimestamp.compareTo(a.itemTimestamp);
-          if (timeCompare != 0) return timeCompare;
-          return b.imageName.compareTo(a.imageName);
-        });
-
-        // Add results to cache
+        final results = _toImages(response.body);
         _addToCache(query, results);
-
         return results;
       } else {
         final error = 'Failed to search images: ${response.statusCode}';
@@ -116,6 +115,24 @@ class ApiService {
       _logger.severe('Error searching images: $e');
       rethrow;
     }
+  }
+
+  String getImageUrl(String relativePath) {
+    final url = '$baseUrl$relativePath';
+    _logger.finer('Image URL: $url');
+    return url;
+  }
+
+  List<DirectoryModel> _toDirectories(String body) {
+    final List<dynamic> jsonList = json.decode(body);
+    final results =
+        jsonList.map((json) => DirectoryModel.fromJson(json)).toList();
+    results.sort((a, b) {
+      final timeCompare = b.directoryTime.compareTo(a.directoryTime);
+      if (timeCompare != 0) return timeCompare;
+      return a.id.compareTo(b.id);
+    });
+    return results;
   }
 
   Future<List<DirectoryModel>> getAlbums() async {
@@ -134,8 +151,7 @@ class ApiService {
       _logResponse('GET', url, response);
 
       if (response.statusCode == 200) {
-        final List<dynamic> jsonList = json.decode(response.body);
-        return jsonList.map((json) => DirectoryModel.fromJson(json)).toList();
+        return _toDirectories(response.body);
       } else {
         final error = 'Failed to fetch albums: ${response.statusCode}';
         _logResponse('GET', url, response, error);
@@ -143,6 +159,34 @@ class ApiService {
       }
     } catch (e) {
       _logger.severe('Error fetching albums: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<DirectoryModel>> searchAlbums(String query) async {
+    final url = '$baseUrl/db/q?q=in:${Uri.encodeComponent(query)}&kind=album';
+    final headers = {
+      'Accept': 'application/json',
+    };
+    _logRequest('GET', url, headers);
+
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: headers,
+      );
+
+      _logResponse('GET', url, response);
+
+      if (response.statusCode == 200) {
+        return _toDirectories(response.body);
+      } else {
+        final error = 'Failed to search albums: ${response.statusCode}';
+        _logResponse('GET', url, response, error);
+        throw Exception(error);
+      }
+    } catch (e) {
+      _logger.severe('Error searching albums: $e');
       rethrow;
     }
   }
@@ -180,40 +224,5 @@ class ApiService {
       _logger.severe('Error downloading album: $e');
       rethrow;
     }
-  }
-
-  Future<List<DirectoryModel>> searchAlbums(String query) async {
-    final url = '$baseUrl/db/q?q=in:${Uri.encodeComponent(query)}&kind=album';
-    final headers = {
-      'Accept': 'application/json',
-    };
-    _logRequest('GET', url, headers);
-
-    try {
-      final response = await _client.get(
-        Uri.parse(url),
-        headers: headers,
-      );
-
-      _logResponse('GET', url, response);
-
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonList = json.decode(response.body);
-        return jsonList.map((json) => DirectoryModel.fromJson(json)).toList();
-      } else {
-        final error = 'Failed to search albums: ${response.statusCode}';
-        _logResponse('GET', url, response, error);
-        throw Exception(error);
-      }
-    } catch (e) {
-      _logger.severe('Error searching albums: $e');
-      rethrow;
-    }
-  }
-
-  String getImageUrl(String relativePath) {
-    final url = '$baseUrl$relativePath';
-    _logger.finer('Image URL: $url');
-    return url;
   }
 }
