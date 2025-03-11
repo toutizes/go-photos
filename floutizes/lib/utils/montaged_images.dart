@@ -102,7 +102,7 @@ class MontagedImages<T> {
 
   Widget buildImage(T item) {
     final index = _items.indexWhere((i) => i.object == item);
-    
+
     if (index == -1) {
       throw ArgumentError('Item not found in montage collection');
     }
@@ -125,8 +125,8 @@ class MontagedImages<T> {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
-          child: frame != null 
-              ? child 
+          child: frame != null
+              ? child
               : Container(
                   width: _imageSize.toDouble(),
                   height: _imageSize.toDouble(),
@@ -146,12 +146,13 @@ class MontagedImages<T> {
             final isDark = Theme.of(context).brightness == Brightness.dark;
             return AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
-              child: frame != null 
-                  ? child 
+              child: frame != null
+                  ? child
                   : Container(
                       width: _imageSize.toDouble(),
                       height: _imageSize.toDouble(),
-                      color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+                      color:
+                          isDark ? Colors.grey.shade800 : Colors.grey.shade200,
                     ),
             );
           },
