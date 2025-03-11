@@ -117,13 +117,15 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.escape) {
         Navigator.of(context).pop();
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft &&
+      } else if ((event.logicalKey == LogicalKeyboardKey.arrowUp ||
+                  event.logicalKey == LogicalKeyboardKey.arrowLeft) &&
           _currentIndex > 0) {
         _pageController.previousPage(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowRight &&
+      } else if ((event.logicalKey == LogicalKeyboardKey.arrowDown ||
+                  event.logicalKey == LogicalKeyboardKey.arrowRight) &&
           _currentIndex < _images!.length - 1) {
         _pageController.nextPage(
           duration: const Duration(milliseconds: 300),
@@ -263,6 +265,7 @@ class _ImageDetailViewState extends State<ImageDetailView> {
 
     return PageView.builder(
       controller: _pageController,
+      scrollDirection: isLandscape ? Axis.vertical : Axis.horizontal,
       itemCount: images.length,
       itemBuilder: (context, index) {
         final image = images[index];
@@ -318,57 +321,115 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   Widget _pageNav(List<ImageModel> images) {
     bool hasPrev = _hasPrev();
     bool hasNext = _hasNext(images);
-    return Positioned.fill(
-      child: Row(
-        children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: hasPrev
-                  ? () => _pageController.previousPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      )
-                  : null,
-              child: SizedBox(
-                width: 60,
-                child: Opacity(
-                  opacity: hasPrev ? 0.7 : 0,
-                  child: const Icon(
-                    Icons.chevron_left,
-                    size: 40,
-                    color: Colors.white,
+    final isLandscape = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+
+    if (isLandscape) {
+      // Vertical navigation for landscape mode
+      return Positioned.fill(
+        child: Column(
+          children: [
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: hasPrev
+                    ? () => _pageController.previousPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        )
+                    : null,
+                child: SizedBox(
+                  height: 60,
+                  child: Opacity(
+                    opacity: hasPrev ? 0.7 : 0,
+                    child: const Icon(
+                      Icons.keyboard_arrow_up,
+                      size: 40,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          const Spacer(),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: hasNext
-                  ? () => _pageController.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      )
-                  : null,
-              child: SizedBox(
-                width: 60,
-                child: Opacity(
-                  opacity: hasNext ? 0.7 : 0,
-                  child: const Icon(
-                    Icons.chevron_right,
-                    size: 40,
-                    color: Colors.white,
+            const Spacer(),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: hasNext
+                    ? () => _pageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        )
+                    : null,
+                child: SizedBox(
+                  height: 60,
+                  child: Opacity(
+                    opacity: hasNext ? 0.7 : 0,
+                    child: const Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 40,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    } else {
+      // Horizontal navigation for portrait mode
+      return Positioned.fill(
+        child: Row(
+          children: [
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: hasPrev
+                    ? () => _pageController.previousPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        )
+                    : null,
+                child: SizedBox(
+                  width: 60,
+                  child: Opacity(
+                    opacity: hasPrev ? 0.7 : 0,
+                    child: const Icon(
+                      Icons.chevron_left,
+                      size: 40,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const Spacer(),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: hasNext
+                    ? () => _pageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        )
+                    : null,
+                child: SizedBox(
+                  width: 60,
+                  child: Opacity(
+                    opacity: hasNext ? 0.7 : 0,
+                    child: const Icon(
+                      Icons.chevron_right,
+                      size: 40,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Widget _currentImageView() {

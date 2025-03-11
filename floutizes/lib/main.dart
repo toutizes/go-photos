@@ -14,7 +14,7 @@ void main() {
 }
 
 final _router = GoRouter(
-  debugLogDiagnostics: true,
+  // debugLogDiagnostics: true,
   initialLocation: '/albums',
   routes: [
     StatefulShellRoute.indexedStack(
