@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:intl/intl.dart';
 import '../models/image.dart';
 import '../services/api_service.dart';
@@ -32,6 +33,9 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   @override
   void initState() {
     super.initState();
+    // Initialize the controller immediately with page 0
+    _pageController = PageController(initialPage: 0);
+    _pageController.addListener(_onPageChanged);
     _loadImages();
     // Request focus when the view is created
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -52,9 +56,17 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     } else {
       _currentIndex = initialIndex;
     }
-    _pageController = PageController(initialPage: _currentIndex);
-    _pageController.addListener(_onPageChanged);
+
     setState(() {}); // Trigger rebuild with initialized controller
+
+    // Wait for the PageView to be built and controller to be attached
+    if (_currentIndex > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _pageController.hasClients) {
+          _pageController.jumpToPage(_currentIndex);
+        }
+      });
+    }
   }
 
   @override
@@ -118,14 +130,14 @@ class _ImageDetailViewState extends State<ImageDetailView> {
       if (event.logicalKey == LogicalKeyboardKey.escape) {
         Navigator.of(context).pop();
       } else if ((event.logicalKey == LogicalKeyboardKey.arrowUp ||
-                  event.logicalKey == LogicalKeyboardKey.arrowLeft) &&
+              event.logicalKey == LogicalKeyboardKey.arrowLeft) &&
           _currentIndex > 0) {
         _pageController.previousPage(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
       } else if ((event.logicalKey == LogicalKeyboardKey.arrowDown ||
-                  event.logicalKey == LogicalKeyboardKey.arrowRight) &&
+              event.logicalKey == LogicalKeyboardKey.arrowRight) &&
           _currentIndex < _images!.length - 1) {
         _pageController.nextPage(
           duration: const Duration(milliseconds: 300),
@@ -260,12 +272,15 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   }
 
   Widget _pageView(List<ImageModel> images) {
-    // Check if we're in landscape mode (width > height)
-    final isLandscape = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    // On web, always scroll horizontally.
+    // On mobile, scroll based on orientation
+    final isLandscape =
+        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
 
     return PageView.builder(
       controller: _pageController,
-      scrollDirection: isLandscape ? Axis.vertical : Axis.horizontal,
+      scrollDirection:
+          (isLandscape && !kIsWeb) ? Axis.vertical : Axis.horizontal,
       itemCount: images.length,
       itemBuilder: (context, index) {
         final image = images[index];
@@ -305,42 +320,83 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   }
 
   bool _hasPrev() {
-    if (!_pageController.hasClients) return false;
-    var pos = _pageController.page?.round();
-    if (pos == null) return false;
-    return pos > 0;
+    // If controller is attached, use it
+    if (_pageController.hasClients) {
+      var pos = _pageController.page?.round();
+      if (pos != null) return pos > 0;
+    }
+    // Otherwise use our known state
+    return _currentIndex > 0;
   }
 
   bool _hasNext(List<ImageModel> images) {
-    if (!_pageController.hasClients) return false;
-    var pos = _pageController.page?.round();
-    if (pos == null) return false;
-    return pos < images.length - 1;
+    // If controller is attached, use it
+    if (_pageController.hasClients) {
+      var pos = _pageController.page?.round();
+      if (pos != null) return pos < images.length - 1;
+    }
+    // Otherwise use our known state
+    return _currentIndex < images.length - 1;
+  }
+
+  void _prevPage() {
+    if (_currentIndex > 0) {
+      if (_pageController.hasClients) {
+        _pageController.previousPage(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        setState(() {
+          _currentIndex--;
+          _pageController.jumpToPage(_currentIndex);
+        });
+      }
+    }
+  }
+
+  void _nextPage() {
+    if (_images != null && _currentIndex < _images!.length - 1) {
+      if (_pageController.hasClients) {
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        setState(() {
+          _currentIndex++;
+          _pageController.jumpToPage(_currentIndex);
+        });
+      }
+    }
   }
 
   Widget _pageNav(List<ImageModel> images) {
     bool hasPrev = _hasPrev();
     bool hasNext = _hasNext(images);
-    final isLandscape = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    // On web, always use horizontal navigation
+    // On mobile, use navigation based on orientation
+    final isLandscape = !kIsWeb &&
+        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+
+    // On web, arrows are always visible if navigation is possible
+    // On mobile, arrows fade in/out
+    final prevOpacity = kIsWeb ? (hasPrev ? 1.0 : 0.3) : (hasPrev ? 0.7 : 0.0);
+    final nextOpacity = kIsWeb ? (hasNext ? 1.0 : 0.3) : (hasNext ? 0.7 : 0.0);
 
     if (isLandscape) {
-      // Vertical navigation for landscape mode
+      // Vertical navigation for landscape mode on mobile
       return Positioned.fill(
         child: Column(
           children: [
             Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: hasPrev
-                    ? () => _pageController.previousPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        )
-                    : null,
+                onTap: hasPrev ? _prevPage : null,
                 child: SizedBox(
                   height: 60,
                   child: Opacity(
-                    opacity: hasPrev ? 0.7 : 0,
+                    opacity: prevOpacity,
                     child: const Icon(
                       Icons.keyboard_arrow_up,
                       size: 40,
@@ -354,16 +410,11 @@ class _ImageDetailViewState extends State<ImageDetailView> {
             Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: hasNext
-                    ? () => _pageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        )
-                    : null,
+                onTap: hasNext ? _nextPage : null,
                 child: SizedBox(
                   height: 60,
                   child: Opacity(
-                    opacity: hasNext ? 0.7 : 0,
+                    opacity: nextOpacity,
                     child: const Icon(
                       Icons.keyboard_arrow_down,
                       size: 40,
@@ -377,23 +428,18 @@ class _ImageDetailViewState extends State<ImageDetailView> {
         ),
       );
     } else {
-      // Horizontal navigation for portrait mode
+      // Horizontal navigation for portrait mode and web
       return Positioned.fill(
         child: Row(
           children: [
             Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: hasPrev
-                    ? () => _pageController.previousPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        )
-                    : null,
+                onTap: hasPrev ? _prevPage : null,
                 child: SizedBox(
                   width: 60,
                   child: Opacity(
-                    opacity: hasPrev ? 0.7 : 0,
+                    opacity: prevOpacity,
                     child: const Icon(
                       Icons.chevron_left,
                       size: 40,
@@ -407,16 +453,11 @@ class _ImageDetailViewState extends State<ImageDetailView> {
             Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: hasNext
-                    ? () => _pageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        )
-                    : null,
+                onTap: hasNext ? _nextPage : null,
                 child: SizedBox(
                   width: 60,
                   child: Opacity(
-                    opacity: hasNext ? 0.7 : 0,
+                    opacity: nextOpacity,
                     child: const Icon(
                       Icons.chevron_right,
                       size: 40,
