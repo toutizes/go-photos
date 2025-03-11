@@ -17,7 +17,7 @@ class ApiService {
 
   ApiService._({required this.baseUrl}) : _client = http.Client();
 
-  static void initLogging() {
+  static void _initLogging() {
     Logger.root.level = Level.INFO;
     Logger.root.onRecord.listen((record) {
       print('${record.level.name}: ${record.time}: ${record.message}');
@@ -25,19 +25,22 @@ class ApiService {
   }
 
   static void initialize({required String baseUrl}) {
+    _initLogging();
     _instance = ApiService._(baseUrl: baseUrl);
   }
 
   static ApiService get instance {
     if (_instance == null) {
-      throw StateError('ApiService has not been initialized. Call initialize() first.');
+      throw StateError(
+          'ApiService has not been initialized. Call initialize() first.');
     }
     return _instance!;
   }
 
   void _addToCache(String query, List<ImageModel> results) {
     // Remove oldest entry if cache is full
-    if (_cacheOrder.length >= _maxCacheSize && !_searchCache.containsKey(query)) {
+    if (_cacheOrder.length >= _maxCacheSize &&
+        !_searchCache.containsKey(query)) {
       final oldestQuery = _cacheOrder.removeAt(0);
       _searchCache.remove(oldestQuery);
     }
@@ -47,7 +50,8 @@ class ApiService {
       _cacheOrder.add(query);
     }
     _searchCache[query] = results;
-    _logger.fine('Cache updated for query: $query (cache size: ${_searchCache.length})');
+    _logger.fine(
+        'Cache updated for query: $query (cache size: ${_searchCache.length})');
   }
 
   void _logRequest(String method, String url, Map<String, String> headers) {
@@ -89,18 +93,19 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = json.decode(response.body);
-        final results = jsonList.map((json) => ImageModel.fromJson(json)).toList();
-        
+        final results =
+            jsonList.map((json) => ImageModel.fromJson(json)).toList();
+
         // Sort results by timestamp and name before caching
         results.sort((a, b) {
-          final timeCompare = a.itemTimestamp.compareTo(b.itemTimestamp);
+          final timeCompare = b.itemTimestamp.compareTo(a.itemTimestamp);
           if (timeCompare != 0) return timeCompare;
-          return a.imageName.compareTo(b.imageName);
+          return b.imageName.compareTo(a.imageName);
         });
-        
+
         // Add results to cache
         _addToCache(query, results);
-        
+
         return results;
       } else {
         final error = 'Failed to search images: ${response.statusCode}';
@@ -142,12 +147,10 @@ class ApiService {
     }
   }
 
-  Future<List<ImageModel>> getAlbumImages(String albumPath) async {
-    return searchImages('album:$albumPath');
-  }
-
-  Future<void> downloadAlbum(String albumPath,
-      {bool highQuality = false}) async {
+  Future<void> downloadAlbum(
+    String albumPath, {
+    bool highQuality = false,
+  }) async {
     final url =
         '$baseUrl/db/viewer?command=download&q=${Uri.encodeComponent(albumPath)}&s=${highQuality ? "O" : "M"}';
     final headers = {

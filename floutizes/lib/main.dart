@@ -6,10 +6,6 @@ import 'models/view_type.dart';
 import 'screens/image_detail_view.dart';
 
 void main() {
-  // Initialize logging
-  ApiService.initLogging();
-
-  // Initialize ApiService singleton
   const backendUrl =
       String.fromEnvironment('BACKEND', defaultValue: 'http://localhost:8080');
   ApiService.initialize(baseUrl: backendUrl);

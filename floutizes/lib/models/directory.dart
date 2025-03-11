@@ -1,10 +1,16 @@
 class DirectoryModel {
-  final String id;           // Album path (rel_pat in backend)
-  final DateTime albumTime;  // Timestamp of first image in album (ats in backend)
-  final DateTime directoryTime; // Timestamp of album directory (dts in backend)
-  final int imageCount;     // Number of images in album (nimgs in backend)
-  final int coverId;        // Cover image id (cov in backend)
-  final String coverName;    // Cover image name (CovName in backend)
+  // Album path (rel_pat in backend)
+  final String id;
+  // Timestamp of first image in album (ats in backend)
+  final DateTime albumTime;
+  // Timestamp of album directory (dts in backend)
+  final DateTime directoryTime;
+  // Number of images in album (nimgs in backend)
+  final int imageCount;
+  // Cover image id (cov in backend)
+  final int coverId;
+  // Cover image name (CovName in backend)
+  final String coverName;
 
   DirectoryModel({
     required this.id,
@@ -35,4 +41,4 @@ class DirectoryModel {
   String get coverMiniPath => '$miniPath/$coverName';
   String get coverMidiPath => '$midiPath/$coverName';
   String get coverMaxiPath => '$maxiPath/$coverName';
-} 
+}

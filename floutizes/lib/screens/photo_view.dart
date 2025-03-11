@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../services/api_service.dart';
 
 class PhotoView extends StatefulWidget {
   final String imageUrl;
@@ -39,7 +38,8 @@ class _PhotoViewState extends State<PhotoView> {
       body: KeyboardListener(
         focusNode: _focusNode,
         onKeyEvent: (event) {
-          if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.escape) {
+          if (event is KeyDownEvent &&
+              event.logicalKey == LogicalKeyboardKey.escape) {
             Navigator.of(context).pop();
           }
         },
@@ -56,7 +56,8 @@ class _PhotoViewState extends State<PhotoView> {
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) {
                       return const Center(
-                        child: Icon(Icons.error_outline, size: 48, color: Colors.white),
+                        child: Icon(Icons.error_outline,
+                            size: 48, color: Colors.white),
                       );
                     },
                   ),
@@ -79,4 +80,4 @@ class _PhotoViewState extends State<PhotoView> {
       ),
     );
   }
-} 
+}

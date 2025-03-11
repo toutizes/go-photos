@@ -1,9 +1,9 @@
 class ImageModel {
-  final int id;           // Image id
-  final String albumDir;  // Album directory
+  final int id; // Image id
+  final String albumDir; // Album directory
   final String imageName; // Image filename in the album dir
-  final DateTime itemTimestamp;  // Image taken timestamp
-  final DateTime fileTimestamp;  // Image file timestamp
+  final DateTime itemTimestamp; // Image taken timestamp
+  final DateTime fileTimestamp; // Image file timestamp
   final int height;
   final int width;
   final List<String> keywords;
@@ -35,7 +35,8 @@ class ImageModel {
       height: json['H'] as int,
       width: json['W'] as int,
       keywords: List<String>.from(json['Kwd'] ?? []),
-      stereo: json['Stereo'] != null ? StereoInfo.fromJson(json['Stereo']) : null,
+      stereo:
+          json['Stereo'] != null ? StereoInfo.fromJson(json['Stereo']) : null,
     );
   }
 }
@@ -61,4 +62,4 @@ class StereoInfo {
       anaDy: (json['AnaDy'] as num).toDouble(),
     );
   }
-} 
+}
