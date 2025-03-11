@@ -164,6 +164,25 @@ class _FlowViewState extends State<FlowView> {
     );
   }
 
+  PreferredSizeWidget _buildAppBar(List<ImageModel>? images) {
+    return AppBar(
+      title: Row(
+        children: [
+          if (widget.searchQuery.isNotEmpty) ...[
+            Expanded(
+              child: Text(widget.searchQuery),
+            ),
+            if (images != null)
+              Text(
+                '${images.length} ${images.length == 1 ? 'photo' : 'photos'}',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _images(List<ImageModel> images) {
     // Calculate optimal number of columns based on screen width
     final numColumns = calculateOptimalColumns(
@@ -244,7 +263,10 @@ class _FlowViewState extends State<FlowView> {
         }
 
         final images = snapshot.data!;
-        return images.isEmpty ? _noImages() : _images(images);
+        return Scaffold(
+          appBar: _buildAppBar(images),
+          body: images.isEmpty ? _noImages() : _images(images),
+        );
       },
     );
   }

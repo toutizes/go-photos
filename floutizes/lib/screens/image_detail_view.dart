@@ -103,7 +103,7 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
-            'Utilisez les flèches ou faites glisser de gauche à droite pour voir les images.'),
+            'Utilisez les flèches ou faites glisser de gauche à droite ou de haut en bas pour voir les images.'),
         duration: Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
@@ -451,7 +451,18 @@ class _ImageDetailViewState extends State<ImageDetailView> {
 
   AppBar _appBar() {
     return AppBar(
-      title: Text(widget.searchQuery),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(widget.searchQuery),
+          ),
+          if (_images != null)
+            Text(
+              '${_currentIndex + 1}/${_images!.length}',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+        ],
+      ),
       actions: [
         IconButton(
           icon: const Icon(Icons.help_outline),
