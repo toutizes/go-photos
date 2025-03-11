@@ -54,18 +54,17 @@ final _router = GoRouter(
               },
               routes: [
                 GoRoute(
-                  path: 'details/:index',
+                  path: 'details/:imageId',
                   builder: (context, state) {
-                    final index =
-                        int.tryParse(state.pathParameters['index'] ?? '');
-                    if (index == null) {
-                      return const Center(child: Text('Invalid index'));
+                    final imageId = int.tryParse(state.pathParameters['imageId'] ?? '');
+                    if (imageId == null) {
+                      return const Center(child: Text('Invalid image ID'));
                     }
                     final q = state.uri.queryParameters['q'];
                     return ImageDetailView(
                       key: ValueKey(q),
                       searchQuery: state.uri.queryParameters['q'] ?? '',
-                      currentIndex: index,
+                      imageId: imageId,
                       onKeywordSearch: (query, imageId) {
                         context.go(
                             '/images?q=${Uri.encodeComponent(query)}&imageId=$imageId');

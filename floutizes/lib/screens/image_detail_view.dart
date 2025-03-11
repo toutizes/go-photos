@@ -7,13 +7,13 @@ import 'photo_view.dart';
 
 class ImageDetailView extends StatefulWidget {
   final String searchQuery;
-  final int currentIndex;
+  final int imageId;
   final Function(String, int)? onKeywordSearch;
 
   const ImageDetailView({
     super.key,
     required this.searchQuery,
-    required this.currentIndex,
+    required this.imageId,
     this.onKeywordSearch,
   });
 
@@ -31,9 +31,6 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.currentIndex;
-    _pageController = PageController(initialPage: widget.currentIndex);
-    _pageController.addListener(_onPageChanged);
     _loadImages();
     // Request focus when the view is created
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -41,8 +38,22 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     });
   }
 
-  void _loadImages() {
+  void _loadImages() async {
     _imagesFuture = ApiService.instance.searchImages(widget.searchQuery);
+    // Initialize the page controller once we have the images
+    final images = await _imagesFuture;
+    if (!mounted || images == null) return;
+
+    final initialIndex = images.indexWhere((img) => img.id == widget.imageId);
+    if (initialIndex == -1) {
+      // Defaults to first image
+      _currentIndex = 0;
+    } else {
+      _currentIndex = initialIndex;
+    }
+    _pageController = PageController(initialPage: _currentIndex);
+    _pageController.addListener(_onPageChanged);
+    setState(() {}); // Trigger rebuild with initialized controller
   }
 
   @override
@@ -266,14 +277,17 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   }
 
   bool _hasPrev() {
-    return _pageController.hasClients &&
-        (_pageController.page?.round() ?? widget.currentIndex) > 0;
+    if (!_pageController.hasClients) return false;
+    var pos = _pageController.page?.round();
+    if (pos == null) return false;
+    return pos > 0;
   }
 
   bool _hasNext(List<ImageModel> images) {
-    return _pageController.hasClients &&
-        (_pageController.page?.round() ?? widget.currentIndex) <
-            images.length - 1;
+    if (!_pageController.hasClients) return false;
+    var pos = _pageController.page?.round();
+    if (pos == null) return false;
+    return pos < images.length - 1;
   }
 
   Widget _pageNav(List<ImageModel> images) {

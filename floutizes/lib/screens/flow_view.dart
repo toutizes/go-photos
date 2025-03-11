@@ -156,7 +156,7 @@ class _FlowViewState extends State<FlowView> {
         return GestureDetector(
           onTap: () {
             context.go(
-                '/images/details/$index?q=${Uri.encodeComponent(widget.searchQuery)}');
+                '/images/details/${image.id}?q=${Uri.encodeComponent(widget.searchQuery)}');
           },
           child: Hero(
             tag: 'image_${image.id}',
