@@ -71,11 +71,14 @@ class _ImageDetailViewState extends State<ImageDetailView> {
         _currentIndex = _pageController.page?.round() ?? _currentIndex;
       });
       _precacheNearbyImages(_currentIndex);
-      
+
       // Update the browser URL without triggering navigation
-      if (_images != null && _currentIndex >= 0 && _currentIndex < _images!.length) {
+      if (_images != null &&
+          _currentIndex >= 0 &&
+          _currentIndex < _images!.length) {
         final currentImage = _images![_currentIndex];
-        context.go('/images/details/${currentImage.id}?q=${Uri.encodeComponent(widget.searchQuery)}');
+        context.go(
+            '/images/details/${currentImage.id}?q=${Uri.encodeComponent(widget.searchQuery)}');
       }
     }
   }
@@ -136,18 +139,7 @@ class _ImageDetailViewState extends State<ImageDetailView> {
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Text('${image.width} × ${image.height}'),
-              const SizedBox(width: 8),
-              SelectableText(
-                'ID: ${image.id}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
-              ),
-            ],
-          ),
+          Text('${image.width} × ${image.height}'),
           GestureDetector(
             onTap: () {
               if (widget.onKeywordSearch != null) {
@@ -237,30 +229,28 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   }
 
   Widget _photo(ImageModel image) {
-    return Expanded(
-      child: GestureDetector(
-        onDoubleTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => PhotoView(
-                imageUrl: ApiService.instance.getImageUrl(image.maxiPath),
-              ),
+    return GestureDetector(
+      onDoubleTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => PhotoView(
+              imageUrl: ApiService.instance.getImageUrl(image.maxiPath),
             ),
-          );
-        },
-        child: InteractiveViewer(
-          maxScale: 5.0,
-          child: Hero(
-            tag: 'image_${image.id}',
-            child: Image.network(
-              ApiService.instance.getImageUrl(image.midiPath),
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return const Center(
-                  child: Icon(Icons.error_outline, size: 48),
-                );
-              },
-            ),
+          ),
+        );
+      },
+      child: InteractiveViewer(
+        maxScale: 5.0,
+        child: Hero(
+          tag: 'image_${image.id}',
+          child: Image.network(
+            ApiService.instance.getImageUrl(image.midiPath),
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              return const Center(
+                child: Icon(Icons.error_outline, size: 48),
+              );
+            },
           ),
         ),
       ),
@@ -268,17 +258,45 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   }
 
   Widget _pageView(List<ImageModel> images) {
+    // Check if we're in landscape mode (width > height)
+    final isLandscape = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+
     return PageView.builder(
       controller: _pageController,
       itemCount: images.length,
       itemBuilder: (context, index) {
         final image = images[index];
-        return Column(
-          children: [
-            _photo(image),
-            _keywords(image),
-          ],
-        );
+
+        if (isLandscape) {
+          // Landscape layout: image on the left, info on the right
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Image takes 70% of the width in landscape
+              Expanded(
+                flex: 7, // 70% of the space
+                child: _photo(image),
+              ),
+              // Keywords and info take 30% of the width
+              Expanded(
+                flex: 3, // 30% of the space
+                child: SingleChildScrollView(
+                  child: _keywords(image),
+                ),
+              ),
+            ],
+          );
+        } else {
+          // Portrait layout: image on top, info below
+          return Column(
+            children: [
+              Expanded(
+                child: _photo(image),
+              ),
+              _keywords(image),
+            ],
+          );
+        }
       },
     );
   }
