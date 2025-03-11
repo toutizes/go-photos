@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 /// Calculates the optimal number of columns for a grid based on screen width and desired item width.
 /// 
 /// Parameters:
