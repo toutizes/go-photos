@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/image.dart';
 import '../services/api_service.dart';
 import 'photo_view.dart';
+import 'package:go_router/go_router.dart';
 
 class ImageDetailView extends StatefulWidget {
   final String searchQuery;
@@ -70,6 +71,12 @@ class _ImageDetailViewState extends State<ImageDetailView> {
         _currentIndex = _pageController.page?.round() ?? _currentIndex;
       });
       _precacheNearbyImages(_currentIndex);
+      
+      // Update the browser URL without triggering navigation
+      if (_images != null && _currentIndex >= 0 && _currentIndex < _images!.length) {
+        final currentImage = _images![_currentIndex];
+        context.go('/images/details/${currentImage.id}?q=${Uri.encodeComponent(widget.searchQuery)}');
+      }
     }
   }
 
