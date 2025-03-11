@@ -102,7 +102,7 @@ class MontagedImages<T> {
 
   Widget buildImage(T item) {
     final index = _items.indexWhere((i) => i.object == item);
-
+    
     if (index == -1) {
       throw ArgumentError('Item not found in montage collection');
     }
@@ -118,11 +118,43 @@ class MontagedImages<T> {
       alignment: Alignment(-1 + 2 * positionInGroup / (groupSize - 1), 0),
       width: _imageSize.toDouble(),
       height: _imageSize.toDouble(),
+      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+        if (wasSynchronouslyLoaded) {
+          return child;
+        }
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: frame != null 
+              ? child 
+              : Container(
+                  width: _imageSize.toDouble(),
+                  height: _imageSize.toDouble(),
+                  color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+                ),
+        );
+      },
       errorBuilder: (context, error, stackTrace) {
         // Fallback to individual image if montage fails
         return Image.network(
           ApiService.instance.getImageUrl(adaptedItem.fallbackPath),
           fit: BoxFit.cover,
+          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+            if (wasSynchronouslyLoaded) {
+              return child;
+            }
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: frame != null 
+                  ? child 
+                  : Container(
+                      width: _imageSize.toDouble(),
+                      height: _imageSize.toDouble(),
+                      color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+                    ),
+            );
+          },
           errorBuilder: (context, error, stackTrace) {
             return const Center(
               child: Icon(Icons.error_outline),

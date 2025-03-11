@@ -250,6 +250,8 @@ class _ImageDetailViewState extends State<ImageDetailView> {
           MaterialPageRoute(
             builder: (context) => PhotoView(
               imageUrl: ApiService.instance.getImageUrl(image.midiPath),
+              width: image.width,
+              height: image.height,
             ),
           ),
         );
@@ -261,6 +263,41 @@ class _ImageDetailViewState extends State<ImageDetailView> {
           child: Image.network(
             ApiService.instance.getImageUrl(image.midiPath),
             fit: BoxFit.contain,
+            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+              if (wasSynchronouslyLoaded) {
+                return child;
+              }
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              return AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: frame != null 
+                    ? child 
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          final aspectRatio = image.width / image.height;
+                          double width, height;
+                          
+                          if (constraints.maxWidth / constraints.maxHeight > aspectRatio) {
+                            // Height constrained
+                            height = constraints.maxHeight;
+                            width = height * aspectRatio;
+                          } else {
+                            // Width constrained
+                            width = constraints.maxWidth;
+                            height = width / aspectRatio;
+                          }
+                          
+                          return Center(
+                            child: Container(
+                              width: width,
+                              height: height,
+                              color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+                            ),
+                          );
+                        },
+                      ),
+              );
+            },
             errorBuilder: (context, error, stackTrace) {
               return const Center(
                 child: Icon(Icons.error_outline, size: 48),
