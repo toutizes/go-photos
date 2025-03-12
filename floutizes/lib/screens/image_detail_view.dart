@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:intl/intl.dart';
 import '../models/image.dart';
 import '../services/api_service.dart';
+import '../utils/image_download.dart';
 import 'photo_view.dart';
 import 'package:go_router/go_router.dart';
 
@@ -49,15 +50,16 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     final images = await _imagesFuture;
     if (!mounted || images == null) return;
 
-    final initialIndex = images.indexWhere((img) => img.id == widget.imageId);
-    if (initialIndex == -1) {
-      // Defaults to first image
-      _currentIndex = 0;
-    } else {
-      _currentIndex = initialIndex;
-    }
-
-    setState(() {}); // Trigger rebuild with initialized controller
+    setState(() {
+      _images = images;
+      final initialIndex = images.indexWhere((img) => img.id == widget.imageId);
+      if (initialIndex == -1) {
+        // Defaults to first image
+        _currentIndex = 0;
+      } else {
+        _currentIndex = initialIndex;
+      }
+    });
 
     // Wait for the PageView to be built and controller to be attached
     if (_currentIndex > 0) {
@@ -528,7 +530,69 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     );
   }
 
+  Widget _buildDownloadButton(ImageModel? image) {
+    final bool isEnabled = image != null;
+    
+    return PopupMenuButton<String>(
+      icon: Icon(
+        Icons.download,
+        color: isEnabled ? null : Theme.of(context).disabledColor,
+      ),
+      tooltip: 'Télécharger',
+      enabled: isEnabled,
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'current_high',
+          child: Text('Cette image (haute qualité)'),
+        ),
+        const PopupMenuItem(
+          value: 'all_medium',
+          child: Text('Toutes les images (qualité moyenne)'),
+        ),
+        const PopupMenuItem(
+          value: 'all_high',
+          child: Text('Toutes les images (haute qualité)'),
+        ),
+      ],
+      onSelected: (value) {
+        if (image == null) return;
+        
+        switch (value) {
+          case 'current_high':
+            // Download current image in high quality
+            final url = ApiService.instance.getImageUrl(image.maxiPath);
+            final filename = '${image.albumDir}_${image.id}.jpg'.replaceAll('/', '_');
+            ImageDownload.downloadSingleImage(
+              url: url,
+              filename: filename,
+            );
+            break;
+          case 'all_medium':
+            // Download all images in medium quality
+            ImageDownload.start(
+              context,
+              widget.searchQuery,
+              DownloadQuality.medium,
+            );
+            break;
+          case 'all_high':
+            // Download all images in high quality
+            ImageDownload.start(
+              context,
+              widget.searchQuery,
+              DownloadQuality.high,
+            );
+            break;
+        }
+      },
+    );
+  }
+
   AppBar _appBar() {
+    final currentImage = _images != null && _currentIndex >= 0 && _currentIndex < _images!.length 
+        ? _images![_currentIndex]
+        : null;
+
     return AppBar(
       title: Row(
         children: [
@@ -543,15 +607,10 @@ class _ImageDetailViewState extends State<ImageDetailView> {
         ],
       ),
       actions: [
+        _buildDownloadButton(currentImage),
         IconButton(
           icon: const Icon(Icons.help_outline),
           onPressed: _showNavigationButtons,
-        ),
-        IconButton(
-          icon: const Icon(Icons.download),
-          onPressed: () {
-            // TODO: Implement download functionality
-          },
         ),
       ],
     );

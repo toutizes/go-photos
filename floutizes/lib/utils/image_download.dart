@@ -26,6 +26,42 @@ class ImageDownload {
       ),
     );
   }
+
+  /// Downloads a single image directly to disk
+  static Future<void> downloadSingleImage({
+    required String url,
+    required String filename,
+  }) async {
+    final xhr = html.HttpRequest();
+    xhr.open('GET', url);
+    xhr.responseType = 'blob';
+
+    final completer = Completer<void>();
+
+    xhr.onLoad.listen((event) {
+      final blob = xhr.response as html.Blob;
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      
+      final anchor = html.AnchorElement(href: url)
+        ..download = filename
+        ..style.display = 'none';
+      html.document.body!.children.add(anchor);
+      anchor.click();
+      
+      // Cleanup
+      html.document.body!.children.remove(anchor);
+      html.Url.revokeObjectUrl(url);
+      
+      completer.complete();
+    });
+
+    xhr.onError.listen((event) {
+      completer.completeError('Failed to download image');
+    });
+
+    xhr.send();
+    return completer.future;
+  }
 }
 
 class _DownloadDialog extends StatefulWidget {
