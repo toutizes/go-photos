@@ -1,14 +1,21 @@
 import 'dart:async';
 import 'dart:html' as html;
+import '../services/api_service.dart';
 
 class ImageDownloadPlatform {
   static Future<void> downloadSingleImage({
     required String url,
     required String filename,
   }) async {
+    final headers = await ApiService.instance.getImageHeaders();
     final xhr = html.HttpRequest();
     xhr.open('GET', url);
     xhr.responseType = 'blob';
+    
+    // Add authentication headers
+    headers.forEach((key, value) {
+      xhr.setRequestHeader(key, value);
+    });
 
     final completer = Completer<void>();
 
@@ -41,9 +48,15 @@ class ImageDownloadPlatform {
     required String url,
     required void Function(int loaded) onProgress,
   }) async {
+    final headers = await ApiService.instance.getImageHeaders();
     final xhr = html.HttpRequest();
     xhr.open('GET', url);
     xhr.responseType = 'blob';
+
+    // Add authentication headers
+    headers.forEach((key, value) {
+      xhr.setRequestHeader(key, value);
+    });
 
     final completer = Completer<void>();
     
