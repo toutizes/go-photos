@@ -61,6 +61,9 @@ class _ImageDetailViewState extends State<ImageDetailView> {
       }
     });
 
+    // Start pre-caching immediately
+    _precacheNearbyImages(_currentIndex);
+
     // Wait for the PageView to be built and controller to be attached
     if (_currentIndex > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
