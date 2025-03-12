@@ -607,7 +607,7 @@ class _ImageDetailViewState extends State<ImageDetailView> {
         ],
       ),
       actions: [
-        _buildDownloadButton(currentImage),
+        if (kIsWeb) _buildDownloadButton(currentImage),
         IconButton(
           icon: const Icon(Icons.help_outline),
           onPressed: _showNavigationButtons,

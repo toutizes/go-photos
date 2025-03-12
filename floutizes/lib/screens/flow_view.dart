@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/image.dart';
 import '../services/api_service.dart';
 import '../utils/layout_utils.dart';
@@ -166,7 +167,7 @@ class _FlowViewState extends State<FlowView> {
         ],
       ),
       actions: [
-        if (images != null && images.isNotEmpty)
+        if (images != null && images.isNotEmpty && kIsWeb)
           PopupMenuButton<String>(
             icon: const Icon(Icons.download),
             tooltip: 'Télécharger les images',

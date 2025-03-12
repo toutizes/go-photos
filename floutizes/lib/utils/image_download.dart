@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import 'dart:html' as html;
-import 'dart:async';
-import 'package:http/http.dart' as http;
-import 'dart:typed_data';
-import 'dart:js' as js;
+import 'image_download_stub.dart'
+    if (dart.library.html) 'image_download_web.dart';
 
 enum DownloadQuality {
   medium,
@@ -31,36 +28,11 @@ class ImageDownload {
   static Future<void> downloadSingleImage({
     required String url,
     required String filename,
-  }) async {
-    final xhr = html.HttpRequest();
-    xhr.open('GET', url);
-    xhr.responseType = 'blob';
-
-    final completer = Completer<void>();
-
-    xhr.onLoad.listen((event) {
-      final blob = xhr.response as html.Blob;
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      
-      final anchor = html.AnchorElement(href: url)
-        ..download = filename
-        ..style.display = 'none';
-      html.document.body!.children.add(anchor);
-      anchor.click();
-      
-      // Cleanup
-      html.document.body!.children.remove(anchor);
-      html.Url.revokeObjectUrl(url);
-      
-      completer.complete();
-    });
-
-    xhr.onError.listen((event) {
-      completer.completeError('Failed to download image');
-    });
-
-    xhr.send();
-    return completer.future;
+  }) {
+    return ImageDownloadPlatform.downloadSingleImage(
+      url: url,
+      filename: filename,
+    );
   }
 }
 
@@ -97,64 +69,28 @@ class _DownloadDialogState extends State<_DownloadDialog> {
     );
 
     try {
-      final client = http.Client();
-      try {
-        final xhr = html.HttpRequest();
-        xhr.open('GET', downloadUrl);
-        xhr.responseType = 'blob';
-
-        final completer = Completer<void>();
-        
-        xhr.onLoad.listen((event) {
-          final blob = xhr.response as html.Blob;
-          final url = html.Url.createObjectUrlFromBlob(blob);
-          
-          // Create and trigger download
-          final anchor = html.AnchorElement(href: url)
-            ..download = 'images.zip'
-            ..style.display = 'none';
-          html.document.body!.children.add(anchor);
-          anchor.click();
-
-          // Cleanup
-          html.document.body!.children.remove(anchor);
-          html.Url.revokeObjectUrl(url);
-          
-          completer.complete();
-        });
-
-        xhr.onProgress.listen((event) {
+      await ImageDownloadPlatform.downloadZipFile(
+        url: downloadUrl,
+        onProgress: (loaded) {
           if (mounted) {
             setState(() {
-              _downloaded = event.loaded ?? 0;
+              _downloaded = loaded;
               _progress = _downloaded / (1024 * 1024); // Convert to MB
             });
           }
-        });
+        },
+      );
 
-        xhr.onError.listen((event) {
-          completer.completeError('XHR download failed');
-        });
+      if (!mounted) return;
+      setState(() {
+        _isDownloading = false;
+        _downloadComplete = true;
+      });
 
-        // Start the download
-        xhr.send();
-
-        // Wait for download to complete
-        await completer.future;
-
-        if (!mounted) return;
-        setState(() {
-          _isDownloading = false;
-          _downloadComplete = true;
-        });
-
-        // Show success state briefly before closing
-        await Future.delayed(const Duration(milliseconds: 800));
-        if (!mounted) return;
-        Navigator.of(context).pop();
-      } finally {
-        client.close();
-      }
+      // Show success state briefly before closing
+      await Future.delayed(const Duration(milliseconds: 800));
+      if (!mounted) return;
+      Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
       setState(() {
