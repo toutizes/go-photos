@@ -192,12 +192,6 @@ class _FlowViewState extends State<FlowView> {
               ),
             ],
           ),
-        IconButton(
-          icon: const Icon(Icons.logout),
-          onPressed: () {
-            context.read<AuthService>().signOut();
-          },
-        ),
       ],
     );
   }

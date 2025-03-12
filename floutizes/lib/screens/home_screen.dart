@@ -131,19 +131,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: () => _showSearchHelp(context),
                   tooltip: 'Aide recherche',
                 ),
+                IconButton(
+                  icon: Icon(
+                    Icons.logout,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                  onPressed: _handleLogout,
+                  tooltip: 'Déconnexion',
+                ),
               ],
             ),
             border: InputBorder.none,
           ),
           onSubmitted: _performSearch,
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _handleLogout,
-            tooltip: 'Déconnexion',
-          ),
-        ],
       ),
       body: IndexedStack(
         index: _currentView == ViewType.albums ? 0 : 1,
