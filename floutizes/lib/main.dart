@@ -164,9 +164,14 @@ class ScaffoldWithNestedNavigation extends StatelessWidget {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: navigationShell.currentIndex,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.album), label: 'Albums'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.photo_library), label: 'Photos'),
+            icon: Icon(Icons.photo_album),
+            label: 'Albums',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.photo_library),
+            label: 'Photos',
+          ),
         ],
         onTap: (index) => navigationShell.goBranch(
           index,
