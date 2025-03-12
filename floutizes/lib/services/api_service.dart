@@ -19,7 +19,7 @@ class ApiService {
   ApiService._({required this.baseUrl}) : _client = http.Client();
 
   static void _initLogging() {
-    Logger.root.level = Level.FINE;
+    Logger.root.level = Level.INFO;
     Logger.root.onRecord.listen((record) {
       print('${record.level.name}: ${record.time}: ${record.message}');
     });
@@ -239,14 +239,8 @@ class ApiService {
 
   /// Signs out the current user and clears the authentication state
   Future<void> signOut() async {
-    try {
-      _logger.info('Signing out user');
-      await FirebaseAuth.instance.signOut();
-      _logger.info('User signed out successfully');
-    } catch (e) {
-      _logger.severe('Error signing out: $e');
-      rethrow;
-    }
+    await FirebaseAuth.instance.signOut();
+    _logger.info('User signed out successfully');
   }
 
   Future<Map<String, String>> getImageHeaders() async {

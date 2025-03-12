@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:go_router/go_router.dart';
+import '../services/api_service.dart';
 import 'flow_view.dart';
 import 'albums_view.dart';
 import '../models/view_type.dart';
@@ -88,6 +89,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _handleLogout() async {
+    try {
+      await ApiService.instance.signOut();
+      if (mounted) {
+        context.go('/login');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la déconnexion: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,6 +137,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           onSubmitted: _performSearch,
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _handleLogout,
+            tooltip: 'Déconnexion',
+          ),
+        ],
       ),
       body: IndexedStack(
         index: _currentView == ViewType.albums ? 0 : 1,

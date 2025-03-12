@@ -10,11 +10,20 @@ import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'screens/login_screen.dart';
 
+late final AuthService authService;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize and wait for AuthService
+  authService = AuthService();
+  await authService.initializationDone;
+
   const backendUrl =
       String.fromEnvironment('BACKEND', defaultValue: 'http://localhost:8080');
   ApiService.initialize(baseUrl: backendUrl);
@@ -25,7 +34,27 @@ void main() async {
 final _router = GoRouter(
   // debugLogDiagnostics: true,
   initialLocation: '/albums',
+  redirect: (context, state) {
+    final auth = Provider.of<AuthService>(context, listen: false);
+    final isLoginRoute = state.matchedLocation == '/login';
+
+    // If not authenticated and not on login page, redirect to login
+    if (!auth.isAuthenticated && !isLoginRoute) {
+      return '/login';
+    }
+
+    // If authenticated and on login page, redirect to home
+    if (auth.isAuthenticated && isLoginRoute) {
+      return '/albums';
+    }
+
+    return null;
+  },
   routes: [
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => const LoginScreen(),
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
         return ScaffoldWithNestedNavigation(navigationShell: navigationShell);
@@ -65,7 +94,8 @@ final _router = GoRouter(
                 GoRoute(
                   path: 'details/:imageId',
                   builder: (context, state) {
-                    final imageId = int.tryParse(state.pathParameters['imageId'] ?? '');
+                    final imageId =
+                        int.tryParse(state.pathParameters['imageId'] ?? '');
                     if (imageId == null) {
                       return const Center(child: Text('Invalid image ID'));
                     }
@@ -95,10 +125,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthService(),
-      child: MaterialApp(
-        title: 'Floutizes',
+    return ChangeNotifierProvider.value(
+      value: authService,
+      child: MaterialApp.router(
+        title: 'Toutizes Photos',
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(
@@ -113,43 +143,7 @@ class MyApp extends StatelessWidget {
             brightness: Brightness.dark,
           ),
         ),
-        home: Consumer<AuthService>(
-          builder: (context, auth, _) {
-            // Show splash screen while Firebase initializes
-            if (!auth.initialized) {
-              return const Scaffold(
-                body: Center(
-                  child: CircularProgressIndicator(),
-                ),
-              );
-            }
-
-            // Show login screen if not authenticated
-            if (!auth.isAuthenticated) {
-              return const LoginScreen();
-            }
-
-            // Show main app if authenticated
-            return MaterialApp.router(
-              title: 'Toutizes Photos',
-              theme: ThemeData(
-                useMaterial3: true,
-                colorScheme: ColorScheme.fromSeed(
-                  seedColor: Colors.blue,
-                  brightness: Brightness.light,
-                ),
-              ),
-              darkTheme: ThemeData(
-                useMaterial3: true,
-                colorScheme: ColorScheme.fromSeed(
-                  seedColor: Colors.blue,
-                  brightness: Brightness.dark,
-                ),
-              ),
-              routerConfig: _router,
-            );
-          },
-        ),
+        routerConfig: _router,
       ),
     );
   }

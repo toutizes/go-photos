@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:go_router/go_router.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,9 +22,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       // Initialize Google Sign In with web client id
-      final GoogleSignIn googleSignIn = kIsWeb 
+      final GoogleSignIn googleSignIn = kIsWeb
           ? GoogleSignIn(
-              clientId: '347191427262-hbqb3r32te4vct21qujvgjit0m16t4gb.apps.googleusercontent.com',  // Replace with your client ID
+              clientId:
+                  '347191427262-hbqb3r32te4vct21qujvgjit0m16t4gb.apps.googleusercontent.com',
             )
           : GoogleSignIn();
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
@@ -34,7 +36,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       // Obtain auth details from request
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       // Create a new credential
       final credential = GoogleAuthProvider.credential(
@@ -44,6 +47,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Sign in to Firebase with the Google credential
       await FirebaseAuth.instance.signInWithCredential(credential);
+      
+      // Navigate to albums page after successful sign in
+      if (mounted) {
+        context.go('/albums');
+      }
     } catch (e) {
       // Show error message
       print('Erreur de connexion: ${e.toString()}');
@@ -103,4 +111,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-} 
+}
