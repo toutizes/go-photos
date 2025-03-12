@@ -13,7 +13,6 @@ class AuthService extends ChangeNotifier {
 
     // Set up continuous auth state monitoring
     _auth.authStateChanges().listen((User? user) {
-      print("TT AuthService. user changed: $_user");
       _user = user;
       notifyListeners();
     });
@@ -24,7 +23,6 @@ class AuthService extends ChangeNotifier {
     await _auth.authStateChanges().first;
     _initialized = true;
     _user = _auth.currentUser;
-    print("TT AuthService._initialize: $_user");
     notifyListeners();
   }
 

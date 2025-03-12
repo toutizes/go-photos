@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "347191427262-5klf3puov1c19n8k9a4c972271rasse6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.floutizes",
+            "certificate_hash": "26513d9f7eb62b426e4ef1d3b78685404eeea638"
+          }
+        },
+        {
           "client_id": "347191427262-ndintuimt0uvhijo7qtl4t4vr60r92k2.apps.googleusercontent.com",
           "client_type": 3
         }
