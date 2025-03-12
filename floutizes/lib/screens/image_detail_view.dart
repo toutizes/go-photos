@@ -225,10 +225,7 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                 ...image.keywords.map((keyword) => GestureDetector(
                       onTap: () {
                         if (widget.onKeywordSearch != null) {
-                          // Quote keywords containing spaces
-                          final searchQuery =
-                              keyword.contains(' ') ? '"$keyword"' : keyword;
-                          widget.onKeywordSearch!(searchQuery, image.id);
+                          widget.onKeywordSearch!(keyword, image.id);
                           Navigator.of(context).pop();
                         }
                       },

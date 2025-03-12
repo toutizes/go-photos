@@ -150,8 +150,11 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           AlbumsView(
             searchQuery: _currentView == ViewType.albums ? _currentSearch : '',
-            onAlbumSelected: (albumId) =>
-                context.go('/images?q=album%3A${Uri.encodeComponent(albumId)}'),
+            onAlbumSelected: (albumId) {
+              // Quote keywords containing spaces
+              var query = albumId.contains(' ') ? '"album:$albumId"' : "album:$albumId";
+              context.go('/images?q=${Uri.encodeComponent(query)}');
+            },
           ),
           FlowView(
             searchQuery: _currentView == ViewType.images ? _currentSearch : '',
