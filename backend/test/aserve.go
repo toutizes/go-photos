@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"log"
-	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,6 +13,7 @@ import (
 	"firebase.google.com/go/v4/auth"
 	"google.golang.org/api/option"
 	// "github.com/alexedwards/scs/v2"
+	"time"
 )
 
 import (
@@ -74,40 +74,6 @@ func AddCorsHeaders(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 }
 
-// Add function to get content type
-func getContentType(path string) string {
-	ext := filepath.Ext(path)
-	switch ext {
-	case ".html":
-		return "text/html; charset=utf-8"
-	case ".css":
-		return "text/css; charset=utf-8"
-	case ".js":
-		return "application/javascript"
-	case ".json":
-		return "application/json"
-	case ".png":
-		return "image/png"
-	case ".jpg", ".jpeg":
-		return "image/jpeg"
-	case ".svg":
-		return "image/svg+xml"
-	case ".woff":
-		return "font/woff"
-	case ".woff2":
-		return "font/woff2"
-	case ".ttf":
-		return "font/ttf"
-	case ".ico":
-		return "image/x-icon"
-	default:
-		if ct := mime.TypeByExtension(ext); ct != "" {
-			return ct
-		}
-		return "application/octet-stream"
-	}
-}
-
 // Flutter web app handler
 func handleFlutterApp(w http.ResponseWriter, r *http.Request) {
 	// The path to your built Flutter web files
@@ -135,7 +101,7 @@ func handleFlutterApp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set content type and other headers
-	w.Header().Set("Content-Type", getContentType(filePath))
+	w.Header().Set("Content-Type", model.GetContentType(filePath))
 	AddCorsHeaders(w, r)
 
 	// Cache static assets but not index.html
@@ -193,6 +159,7 @@ func main() {
 	if *num_cpu == 0 {
 		*num_cpu = runtime.NumCPU()
 	}
+	runtime.GOMAXPROCS(*num_cpu)
 	log.Printf("Cpus: %d\n", runtime.GOMAXPROCS(*num_cpu))
 
 	if *static_root == "" {
@@ -302,8 +269,40 @@ func main() {
 			handleFlutterApp(w, r)
 		})
 
+	// Create custom server with optimized settings
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: mux,
+		// Increase max header size for larger tokens
+		MaxHeaderBytes: 1 << 20, // 1MB
+		// Add timeouts to prevent hanging connections
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   30 * time.Second, // Longer for image transfers
+		IdleTimeout:    120 * time.Second,
+	}
+
+	// Create a custom transport for the file server
+	// transport := &http.Transport{
+	// 	MaxIdleConns:        100,
+	// 	MaxIdleConnsPerHost: 100,
+	// 	IdleConnTimeout:     90 * time.Second,
+	// 	// Enable TCP keep-alives
+	// 	DisableKeepAlives: false,
+	// }
+	
+	// Create a custom client for file serving
+	// client := &http.Client{
+	// 	Transport: transport,
+	// }
+
 	// Always serve on http:8081, useful for access from localhost.
-	go http.ListenAndServe(":8081", mux)
+	go func() {
+		localServer := *server
+		localServer.Addr = ":8081"
+		if err := localServer.ListenAndServe(); err != nil {
+			log.Printf("Local server error: %s\n", err)
+		}
+	}()
 
 	// Serve images on https:8443/http:8080 (redirect)
 	if *use_https {
@@ -313,16 +312,30 @@ func main() {
 			func(w http.ResponseWriter, r *http.Request) {
 				http.Redirect(w, r, "https://toutizes.com"+r.RequestURI, 301)
 			})
-		go http.ListenAndServe(":8080", http_mux)
+		
+		redirectServer := &http.Server{
+			Addr:         ":8080",
+			Handler:      http_mux,
+			ReadTimeout:  5 * time.Second,  // Short timeout for redirects
+			WriteTimeout: 5 * time.Second,
+		}
+		go redirectServer.ListenAndServe()
 
-		// Listen on HTTPS.
-		err := http.ListenAndServeTLS(":8443",
+		// Listen on HTTPS with optimized settings
+		tlsServer := &http.Server{
+			Addr:         ":8443",
+			Handler:      mux,
+			ReadTimeout:  10 * time.Second,
+			WriteTimeout: 30 * time.Second,
+			IdleTimeout:  120 * time.Second,
+		}
+		
+		err := tlsServer.ListenAndServeTLS(
 			"/etc/letsencrypt/live/toutizes.com/fullchain.pem",
-			"/etc/letsencrypt/live/toutizes.com/privkey.pem",
-			mux)
+			"/etc/letsencrypt/live/toutizes.com/privkey.pem")
 		log.Printf("Web server error: %s\n", err)
 	} else {
-		err := http.ListenAndServe(":8080", mux)
+		err := server.ListenAndServe()
 		log.Printf("Web server error: %s\n", err)
 	}
 }

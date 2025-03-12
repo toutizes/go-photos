@@ -19,7 +19,7 @@ class ApiService {
   ApiService._({required this.baseUrl}) : _client = http.Client();
 
   static void _initLogging() {
-    Logger.root.level = Level.INFO;
+    Logger.root.level = Level.OFF;
     Logger.root.onRecord.listen((record) {
       print('${record.level.name}: ${record.time}: ${record.message}');
     });
