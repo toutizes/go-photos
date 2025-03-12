@@ -79,7 +79,14 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // App logo or title
+            // App logo
+            Image.asset(
+              'assets/logo.png',
+              width: 120,
+              height: 120,
+            ),
+            const SizedBox(height: 24),
+            // App title
             const Text(
               'Photos Toutizes',
               style: TextStyle(
