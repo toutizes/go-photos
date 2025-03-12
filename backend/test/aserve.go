@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"mime"
@@ -9,6 +10,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	firebase "firebase.google.com/go/v4"
+	"firebase.google.com/go/v4/auth"
+	"google.golang.org/api/option"
 	// "github.com/alexedwards/scs/v2"
 )
 
@@ -24,6 +28,9 @@ var num_cpu = flag.Int("num_cpu", 0, "Number of CPUs to use.  0 means MAXPROC.")
 var update_db = flag.Bool("update_db", true, "If true update the database files.")
 var force_reload = flag.Bool("force_reload", false, "If true force a reload of images.")
 var use_https = flag.Bool("use_https", false, "If true listen for HTTPS in 443.")
+var firebase_creds = flag.String("firebase_creds", "", "Path to the Firebase service account credentials JSON file")
+
+var authClient *auth.Client
 
 // var sessionManager *scs.SessionManager
 // var cookieSalt = "da89HIuneDMBa8eThg-9VYcDScApDUKIXaiFXcbvMys"
@@ -40,10 +47,31 @@ func LogHandler(n string, handler http.Handler) http.Handler {
 }
 
 // Add CORS headers to all responses
-func AddCorsHeaders(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+func AddCorsHeaders(w http.ResponseWriter, r *http.Request) {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		// If no Origin header, fall back to the Referer
+		origin = r.Header.Get("Referer")
+	}
+	
+	// Allow both localhost and toutizes.com
+	allowedOrigins := []string{
+		"http://localhost",
+		"http://localhost:3000",
+		"https://toutizes.com",
+	}
+	
+	// Check if the origin is allowed
+	for _, allowed := range allowedOrigins {
+		if strings.HasPrefix(origin, allowed) {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			break
+		}
+	}
+	
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Origin")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Origin, Authorization")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 }
 
 // Add function to get content type
@@ -84,12 +112,8 @@ func getContentType(path string) string {
 func handleFlutterApp(w http.ResponseWriter, r *http.Request) {
 	// The path to your built Flutter web files
 	webRoot := *static_root + "/flutter"
-
-	log.Printf("handleFlutterApp: %s\n", webRoot)
-
 	// Get the requested path and remove /app/ prefix
 	path := strings.TrimPrefix(r.URL.Path, "/app/")
-	log.Printf("handleFlutterApp path after trim: %s\n", path)
 
 	if path == "" {
 		path = "index.html"
@@ -97,8 +121,6 @@ func handleFlutterApp(w http.ResponseWriter, r *http.Request) {
 
 	// Create the full file path
 	filePath := filepath.Join(webRoot, path)
-
-	log.Printf("handleFlutterApp filepath: %s\n", filePath)
 
 	// Prevent directory traversal
 	if !strings.HasPrefix(filepath.Clean(filePath), webRoot) {
@@ -113,9 +135,8 @@ func handleFlutterApp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set content type and other headers
-	log.Printf("handleFlutterApp contentType: %s\n", getContentType(filePath))
 	w.Header().Set("Content-Type", getContentType(filePath))
-	AddCorsHeaders(w)
+	AddCorsHeaders(w, r)
 
 	// Cache static assets but not index.html
 	if !strings.HasSuffix(filePath, "index.html") {
@@ -124,8 +145,46 @@ func handleFlutterApp(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	}
 
-	log.Printf("handleFlutterApp serveFile: %s\n", filePath)
 	http.ServeFile(w, r, filePath)
+}
+
+// AuthMiddleware verifies the Firebase ID token
+func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Handle CORS preflight requests
+		if r.Method == "OPTIONS" {
+			AddCorsHeaders(w, r)
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Get token from Authorization header
+		authHeader := r.Header.Get("Authorization")
+		log.Printf("Auth header received: %s", authHeader)
+		if authHeader == "" {
+			log.Printf("No authorization header found. All headers: %v", r.Header)
+			http.Error(w, "No authorization token provided", http.StatusUnauthorized)
+			return
+		}
+
+		// Remove "Bearer " prefix if present
+		idToken := strings.TrimPrefix(authHeader, "Bearer ")
+
+		// Verify the Firebase ID token
+		token, err := authClient.VerifyIDToken(r.Context(), idToken)
+		if err != nil {
+			log.Printf("Error verifying ID token: %v", err)
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		// Add user info to request context
+		ctx := context.WithValue(r.Context(), "user_email", token.Claims["email"])
+		r = r.WithContext(ctx)
+
+		// Call the next handler
+		next(w, r)
+	}
 }
 
 func main() {
@@ -145,6 +204,23 @@ func main() {
 	if *root == "" {
 		log.Fatal("Must pass --root")
 	}
+	if *firebase_creds == "" {
+		log.Fatal("Must pass --firebase_creds")
+	}
+
+	// Initialize Firebase Admin SDK
+	opt := option.WithCredentialsFile(*firebase_creds)
+	app, err := firebase.NewApp(context.Background(), nil, opt)
+	if err != nil {
+		log.Fatalf("Error initializing Firebase app: %v", err)
+	}
+
+	// Initialize Firebase Auth client
+	authClient, err = app.Auth(context.Background())
+	if err != nil {
+		log.Fatalf("Error initializing Firebase Auth client: %v", err)
+	}
+
 	db := model.NewDatabase2(*orig_root, *root, *static_root)
 	db.Load(*update_db, *update_db, *force_reload)
 	log.Printf("Serving...")
@@ -154,46 +230,55 @@ func main() {
 	// sessionManager.Store = scs.NewCookieStore([]byte(cookieSalt))
 
 	var mux = http.NewServeMux()
+	
+	// Wrap API endpoints with AuthMiddleware
 	mux.HandleFunc(*url_prefix+"/q",
 		func(w http.ResponseWriter, r *http.Request) {
-			Log("/q", r)
-			// Handle OPTIONS request for CORS
-			if r.Method == "OPTIONS" {
-				AddCorsHeaders(w)
-				return
-			}
-			AddCorsHeaders(w)
-			model.HandleQuery(w, r, db)
+			Log("TT db/q", r)
+			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+				AddCorsHeaders(w, r)
+				model.HandleQuery(w, r, db)
+			})(w, r)
 		})
 	mux.HandleFunc(*url_prefix+"/montage/",
 		func(w http.ResponseWriter, r *http.Request) {
 			Log("/montage", r)
-			AddCorsHeaders(w)
-			model.HandleMontage2(w, r, db)
+			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+				AddCorsHeaders(w, r)
+				model.HandleMontage2(w, r, db)
+			})(w, r)
 		})
 	mux.HandleFunc(*url_prefix+"/viewer",
 		func(w http.ResponseWriter, r *http.Request) {
 			Log("/viewer", r)
-			AddCorsHeaders(w)
-			model.HandleCommands(w, r, db)
+			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+				AddCorsHeaders(w, r)
+				model.HandleCommands(w, r, db)
+			})(w, r)
 		})
 	mux.HandleFunc(*url_prefix+"/mini/",
 		func(w http.ResponseWriter, r *http.Request) {
 			Log("/mini", r)
-			AddCorsHeaders(w)
-			model.HandleFile(w, r, *url_prefix, *root)
+			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+				AddCorsHeaders(w, r)
+				model.HandleFile(w, r, *url_prefix, *root)
+			})(w, r)
 		})
 	mux.HandleFunc(*url_prefix+"/midi/",
 		func(w http.ResponseWriter, r *http.Request) {
 			Log("/midi", r)
-			AddCorsHeaders(w)
-			model.HandleFile(w, r, *url_prefix, *root)
+			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+				AddCorsHeaders(w, r)
+				model.HandleFile(w, r, *url_prefix, *root)
+			})(w, r)
 		})
 	mux.HandleFunc(*url_prefix+"/maxi/",
 		func(w http.ResponseWriter, r *http.Request) {
 			Log("/maxi", r)
-			AddCorsHeaders(w)
-			model.HandleFile(w, r, *url_prefix+"/maxi/", *orig_root)
+			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+				AddCorsHeaders(w, r)
+				model.HandleFile(w, r, *url_prefix+"/maxi/", *orig_root)
+			})(w, r)
 		})
 	// mux.Handle("/",
 	//   LogHandler(

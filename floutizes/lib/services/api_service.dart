@@ -3,7 +3,7 @@ import 'package:logging/logging.dart';
 import 'package:http/http.dart' as http;
 import '../models/image.dart';
 import '../models/directory.dart';
-import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ApiService {
   static ApiService? _instance;
@@ -19,7 +19,7 @@ class ApiService {
   ApiService._({required this.baseUrl}) : _client = http.Client();
 
   static void _initLogging() {
-    Logger.root.level = Level.INFO;
+    Logger.root.level = Level.FINE;
     Logger.root.onRecord.listen((record) {
       print('${record.level.name}: ${record.time}: ${record.message}');
     });
@@ -90,10 +90,8 @@ class ApiService {
       return _searchCache[query]!;
     }
 
+    final headers = await _getHeaders();
     final url = '$baseUrl/db/q?q=${Uri.encodeComponent(query)}';
-    final headers = {
-      'Accept': 'application/json',
-    };
     _logRequest('GET', url, headers);
 
     try {
@@ -138,9 +136,7 @@ class ApiService {
 
   Future<List<DirectoryModel>> getAlbums() async {
     final url = '$baseUrl/db/q?q=albums:&kind=album';
-    final headers = {
-      'Accept': 'application/json',
-    };
+    final headers = await _getHeaders();
     _logRequest('GET', url, headers);
 
     try {
@@ -166,9 +162,7 @@ class ApiService {
 
   Future<List<DirectoryModel>> searchAlbums(String query) async {
     final url = '$baseUrl/db/q?q=in:${Uri.encodeComponent(query)}&kind=album';
-    final headers = {
-      'Accept': 'application/json',
-    };
+    final headers = await _getHeaders();
     _logRequest('GET', url, headers);
 
     try {
@@ -199,9 +193,66 @@ class ApiService {
     return '$baseUrl/db/viewer?command=download&q=${Uri.encodeComponent(albumPath)}&s=${highQuality ? "O" : "M"}';
   }
 
-  String getMontageUrl(List<int> imageIds, {required int width, required int height}) {
+  String getMontageUrl(List<int> imageIds,
+      {required int width, required int height}) {
     final geometry = '${width}x$height';
     final spec = '$geometry-${imageIds.join('-')}';
     return '$baseUrl/db/montage/$spec';
+  }
+
+  // Helper method to get the current user's ID token
+  Future<String?> _getIdToken() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _logger.warning('No user is currently signed in');
+      return null;
+    }
+    try {
+      // Get current token without forcing refresh
+      final token = await user.getIdToken(false);
+      _logger.fine('Got ID token');
+      return token;
+    } catch (e) {
+      _logger.warning('Error getting current token, trying refresh: $e');
+      try {
+        // If current token failed, try forcing a refresh
+        final token = await user.getIdToken(true);
+        _logger.info('Got fresh token after refresh');
+        return token;
+      } catch (e) {
+        _logger.severe('Error getting ID token even after refresh: $e');
+        return null;
+      }
+    }
+  }
+
+  // Helper method to create authenticated headers
+  Future<Map<String, String>> _getHeaders() async {
+    final token = await _getIdToken();
+    final headers = {
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+    _logger.fine('Generated headers with token: ${token != null}');
+    return headers;
+  }
+
+  /// Signs out the current user and clears the authentication state
+  Future<void> signOut() async {
+    try {
+      _logger.info('Signing out user');
+      await FirebaseAuth.instance.signOut();
+      _logger.info('User signed out successfully');
+    } catch (e) {
+      _logger.severe('Error signing out: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, String>> getImageHeaders() async {
+    final token = await _getIdToken();
+    return {
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
   }
 }

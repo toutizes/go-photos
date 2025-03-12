@@ -1,8 +1,10 @@
 build: FORCE
 	flutter build web
 
+#  --base-href /app/ not needed as /app/ is hardcoded.
 build-web-release:
-	flutter build web --release --base-href /app/ --dart-define BACKEND=https://toutizes.com
+	flutter build web --release --dart-define BACKEND=https://toutizes.com
+
 
 run-web:
 	flutter run -d chrome --web-port 3000

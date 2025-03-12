@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../services/api_service.dart';
 
 class PhotoView extends StatefulWidget {
   final String imageUrl;
@@ -55,48 +56,62 @@ class _PhotoViewState extends State<PhotoView> {
               child: InteractiveViewer(
                 maxScale: 10.0, // Allow more zoom than in detail view
                 child: Center(
-                  child: Image.network(
-                    widget.imageUrl,
-                    fit: BoxFit.contain,
-                    frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                      if (wasSynchronouslyLoaded) {
-                        return child;
-                      }
-                      final isDark = Theme.of(context).brightness == Brightness.dark;
-                      return AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: frame != null 
-                            ? child 
-                            : LayoutBuilder(
-                                builder: (context, constraints) {
-                                  final aspectRatio = widget.width / widget.height;
-                                  double width, height;
-                                  
-                                  if (constraints.maxWidth / constraints.maxHeight > aspectRatio) {
-                                    // Height constrained
-                                    height = constraints.maxHeight;
-                                    width = height * aspectRatio;
-                                  } else {
-                                    // Width constrained
-                                    width = constraints.maxWidth;
-                                    height = width / aspectRatio;
-                                  }
-                                  
-                                  return Center(
-                                    child: Container(
-                                      width: width,
-                                      height: height,
-                                      color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
-                                    ),
-                                  );
-                                },
-                              ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Icon(Icons.error_outline,
-                            size: 48, color: Colors.white),
+                  child: FutureBuilder<Map<String, String>>(
+                    future: ApiService.instance.getImageHeaders(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData)
+                        return const CircularProgressIndicator();
+                      return Image.network(
+                        widget.imageUrl,
+                        headers: snapshot.data,
+                        fit: BoxFit.contain,
+                        frameBuilder:
+                            (context, child, frame, wasSynchronouslyLoaded) {
+                          if (wasSynchronouslyLoaded) {
+                            return child;
+                          }
+                          final isDark =
+                              Theme.of(context).brightness == Brightness.dark;
+                          return AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: frame != null
+                                ? child
+                                : LayoutBuilder(
+                                    builder: (context, constraints) {
+                                      final aspectRatio =
+                                          widget.width / widget.height;
+                                      double width, height;
+
+                                      if (constraints.maxWidth /
+                                              constraints.maxHeight >
+                                          aspectRatio) {
+                                        // Height constrained
+                                        height = constraints.maxHeight;
+                                        width = height * aspectRatio;
+                                      } else {
+                                        // Width constrained
+                                        width = constraints.maxWidth;
+                                        height = width / aspectRatio;
+                                      }
+                                      return Center(
+                                        child: Container(
+                                          width: width,
+                                          height: height,
+                                          color: isDark
+                                              ? Colors.grey.shade800
+                                              : Colors.grey.shade200,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Icon(Icons.error_outline,
+                                size: 48, color: Colors.white),
+                          );
+                        },
                       );
                     },
                   ),

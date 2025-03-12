@@ -18,7 +18,7 @@ void main() async {
   const backendUrl =
       String.fromEnvironment('BACKEND', defaultValue: 'http://localhost:8080');
   ApiService.initialize(baseUrl: backendUrl);
-
+  // await ApiService.instance.signOut();
   runApp(const MyApp());
 }
 

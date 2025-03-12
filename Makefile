@@ -5,7 +5,8 @@ LR_ACTIONS="$(HOME)/Library/Application Support/Adobe/Lightroom/Export Actions"
 # serve_small needs to have run install_html.
 # http://localhost:8080
 serve_small: generate install_flutter
-	go run backend/test/aserve.go --bin_root=/opt/homebrew/bin/ --use_https=false --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/aserve/db-full --static_root=/tmp/aserve/db/htdocs
+	cp ~/Google\ Drive/My\ Drive/Floutizes/floutizes-firebase-adminsdk-fbsvc-584c308c82.json /tmp/aserve/db/
+	go run backend/test/aserve.go --bin_root=/opt/homebrew/bin/ --use_https=false --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/aserve/db-full --static_root=/tmp/aserve/db/htdocs --firebase_creds=/tmp/aserve/db/floutizes-firebase-adminsdk-fbsvc-584c308c82.json
 
 install_html:
 	cmd/install-ttpic.sh
@@ -25,6 +26,7 @@ push_html: install_html
 push_flutter: 
 	rsync --delete --recursive floutizes/build/web/* $(SERVER):/mnt/photos/htdocs/flutter/
 	rsync --delete --recursive /tmp/aserve/db/htdocs/synonyms.txt $(SERVER):/mnt/photos/htdocs/synonyms.txt
+	rsync ~/Google\ Drive/My\ Drive/Floutizes/floutizes-firebase-adminsdk-fbsvc-584c308c82.json $(SERVER):/mnt/photos/
 
 run: generate
 	go run backend/test/run.go --orig_root /Volumes/GoogleDrive/Mon\ Drive/Photos/1997

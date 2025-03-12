@@ -97,19 +97,21 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     }
   }
 
-  void _precacheNearbyImages(int currentIndex) {
+  void _precacheNearbyImages(int currentIndex) async {
     var images = _images;
     if (images == null) {
       return;
     }
-    // Pre-cache images before and after the current one
-    const int preCacheWidth = 3;
-    for (var i = -preCacheWidth; i <= preCacheWidth; i++) {
+    var headers = await ApiService.instance.getImageHeaders();
+    if (!mounted) return;
+
+    const int preCacheWidth = 2;
+    for (var i = preCacheWidth; i >= -preCacheWidth; i--) {
       final targetIndex = currentIndex + i;
       if (targetIndex >= 0 && targetIndex < images.length && i != 0) {
         final imageUrl =
             ApiService.instance.getImageUrl(images[targetIndex].midiPath);
-        precacheImage(NetworkImage(imageUrl), context);
+        precacheImage(NetworkImage(imageUrl, headers: headers), context);
       }
     }
   }
@@ -262,47 +264,58 @@ class _ImageDetailViewState extends State<ImageDetailView> {
         maxScale: 5.0,
         child: Hero(
           tag: 'image_${image.id}',
-          child: Image.network(
-            ApiService.instance.getImageUrl(image.midiPath),
-            fit: BoxFit.contain,
-            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-              if (wasSynchronouslyLoaded) {
-                return child;
-              }
-              final isDark = Theme.of(context).brightness == Brightness.dark;
-              return AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: frame != null 
-                    ? child 
-                    : LayoutBuilder(
-                        builder: (context, constraints) {
-                          final aspectRatio = image.width / image.height;
-                          double width, height;
-                          
-                          if (constraints.maxWidth / constraints.maxHeight > aspectRatio) {
-                            // Height constrained
-                            height = constraints.maxHeight;
-                            width = height * aspectRatio;
-                          } else {
-                            // Width constrained
-                            width = constraints.maxWidth;
-                            height = width / aspectRatio;
-                          }
-                          
-                          return Center(
-                            child: Container(
-                              width: width,
-                              height: height,
-                              color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
-                            ),
-                          );
-                        },
-                      ),
-              );
-            },
-            errorBuilder: (context, error, stackTrace) {
-              return const Center(
-                child: Icon(Icons.error_outline, size: 48),
+          child: FutureBuilder<Map<String, String>>(
+            future: ApiService.instance.getImageHeaders(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const CircularProgressIndicator();
+              return Image.network(
+                ApiService.instance.getImageUrl(image.midiPath),
+                headers: snapshot.data,
+                fit: BoxFit.contain,
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  if (wasSynchronouslyLoaded) {
+                    return child;
+                  }
+                  final isDark =
+                      Theme.of(context).brightness == Brightness.dark;
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: frame != null
+                        ? child
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              final aspectRatio = image.width / image.height;
+                              double width, height;
+
+                              if (constraints.maxWidth / constraints.maxHeight >
+                                  aspectRatio) {
+                                // Height constrained
+                                height = constraints.maxHeight;
+                                width = height * aspectRatio;
+                              } else {
+                                // Width constrained
+                                width = constraints.maxWidth;
+                                height = width / aspectRatio;
+                              }
+
+                              return Center(
+                                child: Container(
+                                  width: width,
+                                  height: height,
+                                  color: isDark
+                                      ? Colors.grey.shade800
+                                      : Colors.grey.shade200,
+                                ),
+                              );
+                            },
+                          ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Icon(Icons.error_outline, size: 48),
+                  );
+                },
               );
             },
           ),
@@ -532,7 +545,7 @@ class _ImageDetailViewState extends State<ImageDetailView> {
 
   Widget _buildDownloadButton(ImageModel? image) {
     final bool isEnabled = image != null;
-    
+
     return PopupMenuButton<String>(
       icon: Icon(
         Icons.download,
@@ -556,12 +569,13 @@ class _ImageDetailViewState extends State<ImageDetailView> {
       ],
       onSelected: (value) {
         if (image == null) return;
-        
+
         switch (value) {
           case 'current_high':
             // Download current image in high quality
             final url = ApiService.instance.getImageUrl(image.maxiPath);
-            final filename = '${image.albumDir}_${image.id}.jpg'.replaceAll('/', '_');
+            final filename =
+                '${image.albumDir}_${image.id}.jpg'.replaceAll('/', '_');
             ImageDownload.downloadSingleImage(
               url: url,
               filename: filename,
@@ -589,9 +603,10 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   }
 
   AppBar _appBar() {
-    final currentImage = _images != null && _currentIndex >= 0 && _currentIndex < _images!.length 
-        ? _images![_currentIndex]
-        : null;
+    final currentImage =
+        _images != null && _currentIndex >= 0 && _currentIndex < _images!.length
+            ? _images![_currentIndex]
+            : null;
 
     return AppBar(
       title: Row(
