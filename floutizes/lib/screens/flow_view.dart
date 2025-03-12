@@ -6,6 +6,8 @@ import '../services/api_service.dart';
 import '../utils/layout_utils.dart';
 import '../utils/montaged_images.dart';
 import '../utils/image_download.dart';
+import '../services/auth_service.dart';
+import 'package:provider/provider.dart';
 
 class FlowView extends StatefulWidget {
   final String searchQuery;
@@ -190,6 +192,12 @@ class _FlowViewState extends State<FlowView> {
               ),
             ],
           ),
+        IconButton(
+          icon: const Icon(Icons.logout),
+          onPressed: () {
+            context.read<AuthService>().signOut();
+          },
+        ),
       ],
     );
   }

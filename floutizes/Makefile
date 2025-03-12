@@ -5,10 +5,10 @@ build-web-release:
 	flutter build web --release --base-href /app/ --dart-define BACKEND=https://toutizes.com
 
 run-web:
-	flutter run -d chrome --web-port 33337
+	flutter run -d chrome --web-port 3000
 
 run-web-tt:
-	flutter run -d chrome --web-port 33337 --dart-define BACKEND=https://toutizes.com
+	flutter run -d chrome --web-port 3000 --dart-define BACKEND=https://toutizes.com
 
 run-ios-simulator-pro15:
 	flutter run -d "iPhone 15 Pro Max"

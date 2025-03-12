@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "347191427262",
+    "project_id": "floutizes",
+    "storage_bucket": "floutizes.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:347191427262:android:cabff8be970fbc85a39eef",
+        "android_client_info": {
+          "package_name": "com.example.floutizes"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "347191427262-ndintuimt0uvhijo7qtl4t4vr60r92k2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmoCKYKZ8NFE5mPCDr_rptoAdE5haVNa8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "347191427262-hbqb3r32te4vct21qujvgjit0m16t4gb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "347191427262-1i2b0dhk74duqt9oaib6prs6fv6q9jds.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.floutizes"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

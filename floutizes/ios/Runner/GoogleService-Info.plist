@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>347191427262-1i2b0dhk74duqt9oaib6prs6fv6q9jds.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.347191427262-1i2b0dhk74duqt9oaib6prs6fv6q9jds</string>
+	<key>API_KEY</key>
+	<string>AIzaSyAyh2pC_shf2MtoUcc7URwAm0LppWQTF2U</string>
+	<key>GCM_SENDER_ID</key>
+	<string>347191427262</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.floutizes</string>
+	<key>PROJECT_ID</key>
+	<string>floutizes</string>
+	<key>STORAGE_BUCKET</key>
+	<string>floutizes.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:347191427262:ios:35f81388b849e00fa39eef</string>
+</dict>
+</plist>
