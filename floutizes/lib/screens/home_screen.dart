@@ -121,10 +121,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   IconButton(
                     icon: const Icon(Icons.clear),
                     onPressed: _clearSearch,
+                    tooltip: 'Effacer la recherche',
                   ),
                 IconButton(
                   icon: const Icon(Icons.search),
                   onPressed: () => _performSearch(_searchController.text),
+                  tooltip: 'Rechercher',
                 ),
                 IconButton(
                   icon: const Icon(Icons.help_outline),
@@ -132,10 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   tooltip: 'Aide recherche',
                 ),
                 IconButton(
-                  icon: Icon(
-                    Icons.logout,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                  icon: const Icon(Icons.logout),
                   onPressed: _handleLogout,
                   tooltip: 'Déconnexion',
                 ),

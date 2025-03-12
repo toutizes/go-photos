@@ -158,7 +158,7 @@ class _FlowViewState extends State<FlowView> {
         children: [
           if (widget.searchQuery.isNotEmpty) ...[
             Expanded(
-              child: Text(widget.searchQuery),
+              child: Container(),
             ),
             if (images != null)
               Text(

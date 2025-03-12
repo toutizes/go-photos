@@ -94,6 +94,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+            const SizedBox(height: 16),
+            const Text(
+              'Il faut maintenant s\'authentifier pour voir les photos',
+              style: TextStyle(
+                fontSize: 18,
+              ),
+            ),
             const SizedBox(height: 48),
             // Sign in button
             if (_isLoading)
