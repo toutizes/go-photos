@@ -3,6 +3,7 @@ import 'package:logging/logging.dart';
 import 'package:http/http.dart' as http;
 import '../models/image.dart';
 import '../models/directory.dart';
+import 'package:flutter/foundation.dart';
 
 class ApiService {
   static ApiService? _instance;
@@ -191,39 +192,11 @@ class ApiService {
     }
   }
 
-  Future<void> downloadAlbum(
+  String getDownloadUrl(
     String albumPath, {
     bool highQuality = false,
-  }) async {
-    final url =
-        '$baseUrl/db/viewer?command=download&q=${Uri.encodeComponent(albumPath)}&s=${highQuality ? "O" : "M"}';
-    final headers = {
-      'Accept': 'application/octet-stream',
-      'Origin': baseUrl,
-    };
-    _logRequest('GET', url, headers);
-
-    try {
-      final response = await _client.get(
-        Uri.parse(url),
-        headers: headers,
-      );
-
-      _logResponse('GET', url, response);
-
-      if (response.statusCode != 200) {
-        final error = 'Failed to download album: ${response.statusCode}';
-        _logResponse('GET', url, response, error);
-        throw Exception(error);
-      }
-
-      // TODO: Handle the downloaded ZIP file
-      // For web: Create a download link
-      // For mobile: Save to device storage
-    } catch (e) {
-      _logger.severe('Error downloading album: $e');
-      rethrow;
-    }
+  }) {
+    return '$baseUrl/db/viewer?command=download&q=${Uri.encodeComponent(albumPath)}&s=${highQuality ? "O" : "M"}';
   }
 
   String getMontageUrl(List<int> imageIds, {required int width, required int height}) {

@@ -4,6 +4,7 @@ import '../models/image.dart';
 import '../services/api_service.dart';
 import '../utils/layout_utils.dart';
 import '../utils/montaged_images.dart';
+import '../utils/image_download.dart';
 
 class FlowView extends StatefulWidget {
   final String searchQuery;
@@ -65,7 +66,7 @@ class _FlowViewState extends State<FlowView> {
     // Calculate the grid metrics
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
-    
+
     // Calculate number of columns using the same logic as in _images
     final numColumns = calculateOptimalColumns(
       screenWidth: width,
@@ -75,8 +76,11 @@ class _FlowViewState extends State<FlowView> {
     );
 
     // Calculate item width and height
-    final itemWidth = (width - 16) / numColumns; // Account for padding (8 on each side)
-    final rowHeight = itemWidth + 8; // Square items + spacing
+
+    // Account for padding (8 on each side)
+    final itemWidth = (width - 16) / numColumns;
+    // Square items + spacing
+    final rowHeight = itemWidth + 8;
     final row = index ~/ numColumns;
 
     // Calculate target offset to center the item
@@ -161,6 +165,31 @@ class _FlowViewState extends State<FlowView> {
           ],
         ],
       ),
+      actions: [
+        if (images != null && images.isNotEmpty)
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.download),
+            tooltip: 'Télécharger les images',
+            onSelected: (value) async {
+              if (!mounted) return;
+              await ImageDownload.start(
+                context,
+                widget.searchQuery,
+                value == 'high' ? DownloadQuality.high : DownloadQuality.medium,
+              );
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'medium',
+                child: Text('Qualité moyenne'),
+              ),
+              const PopupMenuItem(
+                value: 'high',
+                child: Text('Haute qualité'),
+              ),
+            ],
+          ),
+      ],
     );
   }
 
