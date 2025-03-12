@@ -76,7 +76,7 @@ func LoadSynonyms(root string) {
 func KeywordSynonymsQuery(db *Database, kwd string) Query {
 	for _, p := range known_people {
 		if hasName(p, kwd) {
-			log.Printf("Found a known person: %v", p)
+			// log.Printf("Found a known person: %v", p)
 			return personQuery(db, p)
 		}
 	}

@@ -160,9 +160,9 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		// Get token from Authorization header
 		authHeader := r.Header.Get("Authorization")
-		log.Printf("Auth header received: %s", authHeader)
+		// log.Printf("Auth header received: %s", authHeader)
 		if authHeader == "" {
-			log.Printf("No authorization header found. All headers: %v", r.Header)
+			// log.Printf("No authorization header found. All headers: %v", r.Header)
 			http.Error(w, "No authorization token provided", http.StatusUnauthorized)
 			return
 		}
@@ -173,17 +173,17 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		// Verify the Firebase ID token
 		token, err := authClient.VerifyIDToken(r.Context(), idToken)
 		if err != nil {
-			log.Printf("Error verifying ID token: %v", err)
+			// log.Printf("Error verifying ID token: %v", err)
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
 
-		// Add user info to request context
-		ctx := context.WithValue(r.Context(), "user_email", token.Claims["email"])
-		r = r.WithContext(ctx)
-
-		// Call the next handler
-		next(w, r)
+		// Add user email to context
+		userEmail := token.Claims["email"].(string)
+		ctx := context.WithValue(r.Context(), "userEmail", userEmail)
+		
+		// Call next handler with updated context
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }
 
@@ -234,7 +234,7 @@ func main() {
 	// Wrap API endpoints with AuthMiddleware
 	mux.HandleFunc(*url_prefix+"/q",
 		func(w http.ResponseWriter, r *http.Request) {
-			Log("TT db/q", r)
+			// Log("TT db/q", r)
 			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 				AddCorsHeaders(w, r)
 				model.HandleQuery(w, r, db)
@@ -242,7 +242,7 @@ func main() {
 		})
 	mux.HandleFunc(*url_prefix+"/montage/",
 		func(w http.ResponseWriter, r *http.Request) {
-			Log("/montage", r)
+			// Log("/montage", r)
 			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 				AddCorsHeaders(w, r)
 				model.HandleMontage2(w, r, db)
@@ -266,7 +266,7 @@ func main() {
 		})
 	mux.HandleFunc(*url_prefix+"/midi/",
 		func(w http.ResponseWriter, r *http.Request) {
-			Log("/midi", r)
+			// Log("/midi", r)
 			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 				AddCorsHeaders(w, r)
 				model.HandleFile(w, r, *url_prefix, *root)

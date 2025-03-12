@@ -2,7 +2,7 @@ package model
 
 import (
   "fmt"
-	"log"
+	// "log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -368,7 +368,7 @@ func tokenize_comma(s string) []string {
 }
 
 func tokenize_space(s string) []string {
-	log.Printf("Query: %v\n", s)
+	// log.Printf("Query: %v\n", s)
 	state := in_space
 	var tokens []string
 	from := 0
@@ -452,7 +452,7 @@ func ParseQuery(s string, db *Database) Query {
 		return KeywordSynonymsQuery(db, lower_s)
 	}
 	tokens := tokenize(s)
-	log.Printf("Query tokens: %#v\n", tokens)
+	// log.Printf("Query tokens: %#v\n", tokens)
 	qs := make([]Query, len(tokens))
 	for i, t := range tokens {
 		lower_t := strings.ToLower(t)

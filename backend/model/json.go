@@ -6,6 +6,7 @@ import (
   "fmt"
   "net/http"
   "strconv"
+  "log"
 )
 
 type ImageResults struct {
@@ -60,6 +61,11 @@ func returnDirectories(w http.ResponseWriter, imgs []*Image) {
 func HandleQuery(w http.ResponseWriter, r *http.Request, db *Database) {
   q := r.FormValue("q")
   kind := r.FormValue("kind")
+  
+  // Get user email from context
+  userEmail := r.Context().Value("userEmail").(string)
+  log.Printf("Query from %s: %q (kind: %s)", userEmail, q, kind)
+  
   imgs := queryImages(q, db)
   switch {
   case kind == "album":
