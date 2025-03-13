@@ -158,27 +158,31 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   List<Widget> _legend(ImageModel image) {
     return [
       const SizedBox(height: 16),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('${image.width} × ${image.height}'),
-          GestureDetector(
-            onTap: () {
-              if (widget.onKeywordSearch != null) {
-                final date = _formatDate(image.itemTimestamp);
-                widget.onKeywordSearch!(date, image.id);
-                Navigator.of(context).pop();
-              }
-            },
-            child: Text(
-              _formatDate(image.itemTimestamp),
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                decoration: TextDecoration.underline,
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('${image.width} × ${image.height}'),
+            const SizedBox(width: 16),
+            GestureDetector(
+              onTap: () {
+                if (widget.onKeywordSearch != null) {
+                  final date = _formatDate(image.itemTimestamp);
+                  widget.onKeywordSearch!(date, image.id);
+                  Navigator.of(context).pop();
+                }
+              },
+              child: Text(
+                _formatDate(image.itemTimestamp),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  decoration: TextDecoration.underline,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       if (image.stereo != null) ...[
         const SizedBox(height: 8),
@@ -364,7 +368,14 @@ class _ImageDetailViewState extends State<ImageDetailView> {
               Expanded(
                 child: _photo(image),
               ),
-              _keywords(image),
+              Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.2,
+                ),
+                child: SingleChildScrollView(
+                  child: _keywords(image),
+                ),
+              ),
             ],
           );
         }
