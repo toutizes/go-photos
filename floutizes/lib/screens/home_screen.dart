@@ -37,6 +37,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (widget.initialSearchString != null) {
       _currentSearch = widget.initialSearchString!;
       _searchController.text = widget.initialSearchString!;
+    } else if (_currentView == ViewType.images) {
+      _currentSearch = 'grimace';
+      _searchController.text = 'grimace';
     }
     _scrollToImageId = widget.initialImageId;
     _loadHelpContent();

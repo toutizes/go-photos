@@ -102,7 +102,7 @@ class _FlowViewState extends State<FlowView> {
     setState(() {
       _isLoading = true;
       if (widget.searchQuery.isEmpty) {
-        _imagesFuture = ApiService.instance.searchImages('all:');
+        _imagesFuture = Future.value(<ImageModel>[]);
       } else {
         _imagesFuture = ApiService.instance.searchImages(widget.searchQuery);
       }
