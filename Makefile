@@ -1,5 +1,6 @@
 SERVER=ce1
 LR_ACTIONS="$(HOME)/Library/Application Support/Adobe/Lightroom/Export Actions"
+SYN_TXT=backend/model/synonyms.txt
 
 # Toutizes.
 # serve_small needs to have run install_html.
@@ -13,7 +14,7 @@ install_html:
 
 install_flutter: 
 	rsync --delete --recursive floutizes/build/web/* /tmp/aserve/db/htdocs/flutter
-	rsync --delete --recursive /tmp/aserve/db/htdocs/synonyms.txt $(SERVER):/mnt/photos/htdocs/synonyms.txt
+	rsync --delete --recursive $(SYN_TXT) $(SERVER):/mnt/photos/htdocs/synonyms.txt
 
 push_serve: generate 
 	GOOS=linux GOARCH=amd64 go build -o bin_linux/aserve backend/test/aserve.go
@@ -21,11 +22,11 @@ push_serve: generate
 
 push_html: install_html
 	rsync --delete --recursive /tmp/aserve/db/htdocs/db/ $(SERVER):/mnt/photos/htdocs/db/
-	rsync --delete --recursive /tmp/aserve/db/htdocs/synonyms.txt $(SERVER):/mnt/photos/htdocs/synonyms.txt
+	rsync --delete --recursive $(SYN_TXT) $(SERVER):/mnt/photos/htdocs/synonyms.txt
 
 push_flutter: 
 	rsync --delete --recursive floutizes/build/web/* $(SERVER):/mnt/photos/htdocs/flutter/
-	rsync --delete --recursive /tmp/aserve/db/htdocs/synonyms.txt $(SERVER):/mnt/photos/htdocs/synonyms.txt
+	rsync --delete --recursive $(SYN_TXT) $(SERVER):/mnt/photos/htdocs/synonyms.txt
 	rsync ~/Google\ Drive/My\ Drive/Floutizes/floutizes-firebase-adminsdk-fbsvc-584c308c82.json $(SERVER):/mnt/photos/
 
 run: generate
