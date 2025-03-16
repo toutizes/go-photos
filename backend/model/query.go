@@ -1,7 +1,7 @@
 package model
 
 import (
-  "fmt"
+	"fmt"
 	// "log"
 	"regexp"
 	"strconv"
@@ -22,6 +22,12 @@ func KeywordQuery(db *Database, kwd string) Query {
 		}
 	}(q, db.Indexer())
 
+	return q
+}
+
+func EmptyQuery(_ *Database) Query {
+	q := make(chan *Image)
+	close(q)
 	return q
 }
 
@@ -301,12 +307,12 @@ func parseMonthDay(monthDayString string) ([2]int, error) {
 }
 
 func MonthDayQuery(db *Database, month_day string) Query {
-  dateArray, err := parseMonthDay(month_day)
+	dateArray, err := parseMonthDay(month_day)
 	if err != nil {
 		return KeywordQuery(db, month_day)
 	}
 	filter := func(img *Image) bool {
-    return img.ItemTime().Month() == time.Month(dateArray[0]) && img.ItemTime().Day() == dateArray[1]
+		return img.ItemTime().Month() == time.Month(dateArray[0]) && img.ItemTime().Day() == dateArray[1]
 	}
 	return FilteredQuery(db, filter)
 }
@@ -419,7 +425,7 @@ const (
 	month_re      = "^[12][0-9][0-9][0-9]-[0-9][0-9]$"
 	day_re        = "^[12][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$"
 	year_range_re = "^[12][0-9][0-9][0-9]--[12][0-9][0-9][0-9]$"
-  month_day_re  = "^[0-1]?[0-9]-[0-3]?[0-9]$"
+	month_day_re  = "^[0-1]?[0-9]-[0-3]?[0-9]$"
 )
 
 func matches(pattern string, token string) bool {
@@ -431,7 +437,7 @@ func keywordMatchQuery(db *Database, s string) Query {
 	kwds := db.Indexer().MatchingKeywords(s)
 	n := len(kwds)
 	if n == 0 {
-		return KeywordQuery(db, "grimace")
+		return EmptyQuery(db)
 	}
 	// Limit to 10 * len(s) matches to avoid issues with single letter matches.
 	if n > 10*len(s) {

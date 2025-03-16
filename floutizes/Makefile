@@ -5,7 +5,7 @@ build: FORCE
 build-web-release:
 	flutter build web --release --dart-define BACKEND=https://toutizes.com
 
-push-web-release:
+push-web-release: build-web-release
 	(cd ..; make push_flutter)
 
 run-web:
