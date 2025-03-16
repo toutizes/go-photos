@@ -151,7 +151,23 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class ScaffoldWithNestedNavigation extends StatelessWidget {
+class ImmersiveModeNotifier extends ValueNotifier<bool> {
+  ImmersiveModeNotifier() : super(false);
+}
+
+class ImmersiveModeScope extends InheritedNotifier<ImmersiveModeNotifier> {
+  const ImmersiveModeScope({
+    super.key,
+    required ImmersiveModeNotifier notifier,
+    required super.child,
+  }) : super(notifier: notifier);
+
+  static ImmersiveModeNotifier of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<ImmersiveModeScope>()!.notifier!;
+  }
+}
+
+class ScaffoldWithNestedNavigation extends StatefulWidget {
   const ScaffoldWithNestedNavigation({
     super.key,
     required this.navigationShell,
@@ -160,25 +176,46 @@ class ScaffoldWithNestedNavigation extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
   @override
+  State<ScaffoldWithNestedNavigation> createState() => _ScaffoldWithNestedNavigationState();
+}
+
+class _ScaffoldWithNestedNavigationState extends State<ScaffoldWithNestedNavigation> {
+  final _immersiveModeNotifier = ImmersiveModeNotifier();
+
+  @override
+  void dispose() {
+    _immersiveModeNotifier.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: navigationShell.currentIndex,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.photo_album),
-            label: 'Albums',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.photo_library),
-            label: 'Photos',
-          ),
-        ],
-        onTap: (index) => navigationShell.goBranch(
-          index,
-          initialLocation: index == navigationShell.currentIndex,
-        ),
+    return ImmersiveModeScope(
+      notifier: _immersiveModeNotifier,
+      child: ValueListenableBuilder<bool>(
+        valueListenable: _immersiveModeNotifier,
+        builder: (context, isImmersive, child) {
+          return Scaffold(
+            body: widget.navigationShell,
+            bottomNavigationBar: isImmersive ? null : BottomNavigationBar(
+              currentIndex: widget.navigationShell.currentIndex,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.photo_album),
+                  label: 'Albums',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.photo_library),
+                  label: 'Photos',
+                ),
+              ],
+              onTap: (index) => widget.navigationShell.goBranch(
+                index,
+                initialLocation: index == widget.navigationShell.currentIndex,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
