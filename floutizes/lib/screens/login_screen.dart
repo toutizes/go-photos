@@ -53,16 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // Sign in to Firebase with the Google credential
       await FirebaseAuth.instance.signInWithCredential(credential);
       
-      // Navigate to the original page or albums page after successful sign in
-      if (mounted) {
-        if (widget.from != null) {
-          final decodedPath = Uri.decodeComponent(widget.from!);
-          final uri = Uri.parse(decodedPath);
-          context.go('${uri.path}${uri.query.isEmpty ? '' : '?${uri.query}'}');
-        } else {
-          context.go('/albums');
-        }
-      }
+      // The router will handle navigation after auth state changes
     } catch (e) {
       // Show error message
       print('Erreur de connexion: ${e.toString()}');

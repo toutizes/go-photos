@@ -34,6 +34,7 @@ void main() async {
 final _router = GoRouter(
   // debugLogDiagnostics: true,
   initialLocation: '/albums',
+  refreshListenable: authService,
   redirect: (context, state) {
     final auth = Provider.of<AuthService>(context, listen: false);
     final isLoginRoute = state.matchedLocation == '/login';
