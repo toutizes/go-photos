@@ -6,7 +6,12 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:go_router/go_router.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final String? from;
+
+  const LoginScreen({
+    super.key,
+    this.from,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -48,9 +53,15 @@ class _LoginScreenState extends State<LoginScreen> {
       // Sign in to Firebase with the Google credential
       await FirebaseAuth.instance.signInWithCredential(credential);
       
-      // Navigate to albums page after successful sign in
+      // Navigate to the original page or albums page after successful sign in
       if (mounted) {
-        context.go('/albums');
+        if (widget.from != null) {
+          final decodedPath = Uri.decodeComponent(widget.from!);
+          final uri = Uri.parse(decodedPath);
+          context.go('${uri.path}${uri.query.isEmpty ? '' : '?${uri.query}'}');
+        } else {
+          context.go('/albums');
+        }
       }
     } catch (e) {
       // Show error message

@@ -40,11 +40,19 @@ final _router = GoRouter(
 
     // If not authenticated and not on login page, redirect to login
     if (!auth.isAuthenticated && !isLoginRoute) {
-      return '/login';
+      // Store the attempted location in the query parameters
+      return '/login?from=${Uri.encodeComponent(state.uri.toString())}';
     }
 
-    // If authenticated and on login page, redirect to home
+    // If authenticated and on login page, redirect to stored location or default
     if (auth.isAuthenticated && isLoginRoute) {
+      final from = state.uri.queryParameters['from'];
+      if (from != null) {
+        final decodedPath = Uri.decodeComponent(from);
+        // Extract the path and query from the full URL
+        final uri = Uri.parse(decodedPath);
+        return '${uri.path}${uri.query.isEmpty ? '' : '?${uri.query}'}';
+      }
       return '/albums';
     }
 
@@ -53,7 +61,9 @@ final _router = GoRouter(
   routes: [
     GoRoute(
       path: '/login',
-      builder: (context, state) => const LoginScreen(),
+      builder: (context, state) => LoginScreen(
+        from: state.uri.queryParameters['from'],
+      ),
     ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
