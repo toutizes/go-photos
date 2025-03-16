@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import '../models/image.dart';
 import '../services/api_service.dart';
 import '../utils/image_download.dart';
-import 'photo_view.dart';
 import 'package:go_router/go_router.dart';
 import '../main.dart';  // Import ImmersiveModeScope from main.dart
 
@@ -337,15 +336,9 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   }
 
   Widget _pageView(List<ImageModel> images) {
-    // On web, always scroll horizontally.
-    // On mobile, scroll based on orientation
-    final isLandscape =
-        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
-
     return PageView.builder(
       controller: _pageController,
-      scrollDirection:
-          (isLandscape && !kIsWeb) ? Axis.vertical : Axis.horizontal,
+      scrollDirection: Axis.horizontal,  // Always horizontal scrolling
       itemCount: images.length,
       itemBuilder: (context, index) {
         final image = images[index];
@@ -354,7 +347,7 @@ class _ImageDetailViewState extends State<ImageDetailView> {
           return _photo(image);
         }
 
-        if (isLandscape) {
+        if (MediaQuery.of(context).size.width > MediaQuery.of(context).size.height) {
           // Landscape layout: image on the left, info on the right
           return AnimatedContainer(
             duration: const Duration(milliseconds: 300),
@@ -466,103 +459,52 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   Widget _pageNav(List<ImageModel> images) {
     bool hasPrev = _hasPrev();
     bool hasNext = _hasNext(images);
-    // On web, always use horizontal navigation
-    // On mobile, use navigation based on orientation
-    final isLandscape = !kIsWeb &&
-        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
 
-    // On web, arrows are always visible if navigation is possible
-    // On mobile, arrows fade in/out
-    final prevOpacity = kIsWeb ? (hasPrev ? 1.0 : 0.3) : (hasPrev ? 0.7 : 0.0);
-    final nextOpacity = kIsWeb ? (hasNext ? 1.0 : 0.3) : (hasNext ? 0.7 : 0.0);
+    // Arrows are always visible if navigation is possible, semi-transparent if disabled
+    final prevOpacity = hasPrev ? 1.0 : 0.3;
+    final nextOpacity = hasNext ? 1.0 : 0.3;
 
-    if (isLandscape) {
-      // Vertical navigation for landscape mode on mobile
-      return Positioned.fill(
-        child: Column(
-          children: [
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: hasPrev ? _prevPage : null,
-                child: SizedBox(
-                  height: 60,
-                  child: Opacity(
-                    opacity: prevOpacity,
-                    child: const Icon(
-                      Icons.keyboard_arrow_up,
-                      size: 40,
-                      color: Colors.white,
-                    ),
+    return Positioned.fill(
+      child: Row(
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: hasPrev ? _prevPage : null,
+              child: SizedBox(
+                width: 60,
+                child: Opacity(
+                  opacity: prevOpacity,
+                  child: const Icon(
+                    Icons.chevron_left,
+                    size: 40,
+                    color: Colors.white,
                   ),
                 ),
               ),
             ),
-            const Spacer(),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: hasNext ? _nextPage : null,
-                child: SizedBox(
-                  height: 60,
-                  child: Opacity(
-                    opacity: nextOpacity,
-                    child: const Icon(
-                      Icons.keyboard_arrow_down,
-                      size: 40,
-                      color: Colors.white,
-                    ),
+          ),
+          const Spacer(),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: hasNext ? _nextPage : null,
+              child: SizedBox(
+                width: 60,
+                child: Opacity(
+                  opacity: nextOpacity,
+                  child: const Icon(
+                    Icons.chevron_right,
+                    size: 40,
+                    color: Colors.white,
                   ),
                 ),
               ),
             ),
-          ],
-        ),
-      );
-    } else {
-      // Horizontal navigation for portrait mode and web
-      return Positioned.fill(
-        child: Row(
-          children: [
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: hasPrev ? _prevPage : null,
-                child: SizedBox(
-                  width: 60,
-                  child: Opacity(
-                    opacity: prevOpacity,
-                    child: const Icon(
-                      Icons.chevron_left,
-                      size: 40,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const Spacer(),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: hasNext ? _nextPage : null,
-                child: SizedBox(
-                  width: 60,
-                  child: Opacity(
-                    opacity: nextOpacity,
-                    child: const Icon(
-                      Icons.chevron_right,
-                      size: 40,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _currentImageView() {
