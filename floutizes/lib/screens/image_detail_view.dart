@@ -267,10 +267,19 @@ class _ImageDetailViewState extends State<ImageDetailView> {
       onTap: _isImmersiveMode ? () {
         _setImmersiveMode(false);
       } : null,
-      child: AnimatedContainer(
+      child: TweenAnimationBuilder(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        padding: EdgeInsets.zero,
+        tween: Tween<double>(
+          begin: _isImmersiveMode ? 0.9 : 1.0,
+          end: _isImmersiveMode ? 1.0 : 0.9,
+        ),
+        builder: (context, double value, child) {
+          return Transform.scale(
+            scale: value,
+            child: child,
+          );
+        },
         child: InteractiveViewer(
           maxScale: 5.0,
           child: Hero(
@@ -279,51 +288,52 @@ class _ImageDetailViewState extends State<ImageDetailView> {
               future: ApiService.instance.getImageHeaders(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return const CircularProgressIndicator();
-                return Image.network(
-                  ApiService.instance.getImageUrl(image.midiPath),
-                  headers: snapshot.data,
-                  fit: BoxFit.contain,
-                  frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                    if (wasSynchronouslyLoaded) {
-                      return child;
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final aspectRatio = image.width / image.height;
+                    double width, height;
+
+                    if (constraints.maxWidth / constraints.maxHeight > aspectRatio) {
+                      // Height constrained
+                      height = constraints.maxHeight;
+                      width = height * aspectRatio;
+                    } else {
+                      // Width constrained
+                      width = constraints.maxWidth;
+                      height = width / aspectRatio;
                     }
-                    final isDark = Theme.of(context).brightness == Brightness.dark;
-                    return AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: frame != null
-                          ? child
-                          : LayoutBuilder(
-                              builder: (context, constraints) {
-                                final aspectRatio = image.width / image.height;
-                                double width, height;
 
-                                if (constraints.maxWidth / constraints.maxHeight >
-                                    aspectRatio) {
-                                  // Height constrained
-                                  height = constraints.maxHeight;
-                                  width = height * aspectRatio;
-                                } else {
-                                  // Width constrained
-                                  width = constraints.maxWidth;
-                                  height = width / aspectRatio;
-                                }
-
-                                return Center(
-                                  child: Container(
+                    return Container(
+                      width: width,
+                      height: height,
+                      child: Image.network(
+                        ApiService.instance.getImageUrl(image.midiPath),
+                        headers: snapshot.data,
+                        fit: BoxFit.contain,
+                        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                          if (wasSynchronouslyLoaded) {
+                            return child;
+                          }
+                          final isDark = Theme.of(context).brightness == Brightness.dark;
+                          return AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: frame != null
+                                ? child
+                                : Container(
                                     width: width,
                                     height: height,
                                     color: isDark
                                         ? Colors.grey.shade800
                                         : Colors.grey.shade200,
                                   ),
-                                );
-                              },
-                            ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                      child: Icon(Icons.error_outline, size: 48),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Icon(Icons.error_outline, size: 48),
+                          );
+                        },
+                      ),
                     );
                   },
                 );
@@ -336,68 +346,88 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   }
 
   Widget _pageView(List<ImageModel> images) {
+    final mediaQuery = MediaQuery.of(context);
+    final isLandscape = mediaQuery.size.width > mediaQuery.size.height;
+    final topPadding = mediaQuery.padding.top;
+    final bottomPadding = mediaQuery.padding.bottom;
+
     return PageView.builder(
       controller: _pageController,
-      scrollDirection: Axis.horizontal,  // Always horizontal scrolling
+      scrollDirection: Axis.horizontal,
       itemCount: images.length,
       itemBuilder: (context, index) {
         final image = images[index];
 
         if (_isImmersiveMode) {
-          return _photo(image);
+          return Stack(
+            children: [
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: _photo(image),
+              ),
+            ],
+          );
         }
 
-        if (MediaQuery.of(context).size.width > MediaQuery.of(context).size.height) {
-          // Landscape layout: image on the left, info on the right
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Image takes 70% of the width in landscape
-                Expanded(
-                  flex: 7, // 70% of the space
+        if (isLandscape) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 7,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: kToolbarHeight + topPadding,
+                    bottom: kBottomNavigationBarHeight + bottomPadding,
+                  ),
                   child: _photo(image),
                 ),
-                // Keywords and info take 30% of the width
-                Expanded(
-                  flex: 3, // 30% of the space
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 300),
-                    opacity: _isImmersiveMode ? 0.0 : 1.0,
-                    child: SingleChildScrollView(
-                      child: _keywords(image),
-                    ),
+              ),
+              if (!_isImmersiveMode) Expanded(
+                flex: 3,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: kToolbarHeight + topPadding,
+                    bottom: kBottomNavigationBarHeight + bottomPadding,
+                  ),
+                  child: SingleChildScrollView(
+                    child: _keywords(image),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           );
         } else {
-          // Portrait layout: image on top, info below
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            child: Column(
-              children: [
-                Expanded(
+          return Column(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: kToolbarHeight + topPadding,
+                    bottom: kBottomNavigationBarHeight + bottomPadding,
+                  ),
                   child: _photo(image),
                 ),
-                AnimatedOpacity(
+              ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                child: AnimatedOpacity(
                   duration: const Duration(milliseconds: 300),
                   opacity: _isImmersiveMode ? 0.0 : 1.0,
                   child: Container(
-                    constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height * 0.2,
-                    ),
+                    height: _isImmersiveMode ? 0 : MediaQuery.of(context).size.height * 0.2,
                     child: SingleChildScrollView(
                       child: _keywords(image),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           );
         }
       },
@@ -585,54 +615,103 @@ class _ImageDetailViewState extends State<ImageDetailView> {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final topPadding = mediaQuery.padding.top;
+    final bottomPadding = mediaQuery.padding.bottom;
+
     return Scaffold(
-      appBar: _isImmersiveMode ? null : AppBar(
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(widget.searchQuery),
+      body: Stack(
+        children: [
+          // Main content
+          Positioned.fill(
+            child: FutureBuilder<List<ImageModel>>(
+              future: _imagesFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Error loading images: ${snapshot.error}'),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadImages,
+                          child: const Text('Réessayer'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                _images = snapshot.data!;
+                return _currentImageView();
+              },
             ),
-            if (_images != null)
-              Text(
-                '${_currentIndex + 1}/${_images!.length}',
-                style: Theme.of(context).textTheme.titleMedium,
+          ),
+
+          // AppBar
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            top: _isImmersiveMode ? -kToolbarHeight - topPadding : 0,
+            left: 0,
+            right: 0,
+            height: kToolbarHeight + topPadding,
+            child: Material(
+              elevation: 4,
+              child: Container(
+                padding: EdgeInsets.only(top: topPadding),
+                color: Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).colorScheme.surface,
+                child: AppBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(widget.searchQuery),
+                      ),
+                      if (_images != null)
+                        Text(
+                          '${_currentIndex + 1}/${_images!.length}',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                    ],
+                  ),
+                  actions: [
+                    if (kIsWeb) _buildDownloadButton(_images?[_currentIndex]),
+                    IconButton(
+                      icon: const Icon(Icons.help_outline),
+                      onPressed: _showNavigationButtons,
+                    ),
+                  ],
+                ),
               ),
-          ],
-        ),
-        actions: [
-          if (kIsWeb) _buildDownloadButton(_images?[_currentIndex]),
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            onPressed: _showNavigationButtons,
+            ),
+          ),
+
+          // Bottom Navigation Bar from parent
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            bottom: _isImmersiveMode ? -kBottomNavigationBarHeight - bottomPadding : 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              color: Theme.of(context).bottomNavigationBarTheme.backgroundColor ?? Theme.of(context).colorScheme.surface,
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  height: kBottomNavigationBarHeight,
+                  child: const SizedBox.shrink(),  // Placeholder for bottom nav
+                ),
+              ),
+            ),
           ),
         ],
-      ),
-      body: FutureBuilder<List<ImageModel>>(
-        future: _imagesFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Error loading images: ${snapshot.error}'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _loadImages,
-                    child: const Text('Réessayer'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          _images = snapshot.data!;
-          return _currentImageView();
-        },
       ),
     );
   }
