@@ -6,7 +6,7 @@ import '../models/image.dart';
 import '../services/api_service.dart';
 import '../utils/image_download.dart';
 import 'package:go_router/go_router.dart';
-import '../main.dart';  // Import ImmersiveModeScope from main.dart
+import '../main.dart'; // Import ImmersiveModeScope from main.dart
 
 class ImageDetailView extends StatefulWidget {
   final String searchQuery;
@@ -27,18 +27,19 @@ class ImageDetailView extends StatefulWidget {
 /// Custom clipper to show only half of the image
 class _HalfImageClipper extends CustomClipper<Rect> {
   final Rect clipRect;
-  
+
   _HalfImageClipper(this.clipRect);
-  
+
   @override
   Rect getClip(Size size) => clipRect;
-  
+
   @override
-  bool shouldReclip(_HalfImageClipper oldClipper) => 
+  bool shouldReclip(_HalfImageClipper oldClipper) =>
       oldClipper.clipRect != clipRect;
 }
 
-class _ImageDetailViewState extends State<ImageDetailView> {
+class _ImageDetailViewState extends State<ImageDetailView>
+    with SingleTickerProviderStateMixin {
   late PageController _pageController;
   late int _currentIndex;
   final FocusNode _focusNode = FocusNode();
@@ -49,12 +50,35 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   // Track the user's preferred stereo view mode
   StereoViewMode _preferredStereoViewMode = StereoViewMode.parallel;
 
+  // For stereo animation
+  AnimationController? _stereoAnimationController;
+  bool _showLeftImage = true;
+
   @override
   void initState() {
     super.initState();
     // Initialize the controller immediately with page 0
     _pageController = PageController(initialPage: 0);
     _pageController.addListener(_onPageChanged);
+
+    // Initialize the animation controller for animated stereo mode
+    _stereoAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _stereoAnimationController!.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        if (_stereoViewMode == StereoViewMode.animated && mounted) {
+          setState(() {
+            _showLeftImage = !_showLeftImage;
+          });
+          _stereoAnimationController!.reset();
+          _stereoAnimationController!.forward();
+        }
+      }
+    });
+
     _loadImages();
     // Request focus when the view is created
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -77,13 +101,23 @@ class _ImageDetailViewState extends State<ImageDetailView> {
       } else {
         _currentIndex = initialIndex;
       }
-      
+
       // Check if the current image has the stereo attribute
-      if (_currentIndex >= 0 && 
+      if (_currentIndex >= 0 &&
           _currentIndex < images.length &&
           images[_currentIndex].stereo != null) {
         // Use the preferred stereo view mode (default is parallel)
         _stereoViewMode = _preferredStereoViewMode;
+
+        // Start animation if stereo mode is animated
+        if (_stereoViewMode == StereoViewMode.animated) {
+          _showLeftImage = true;
+          _stereoAnimationController?.reset();
+          _stereoAnimationController?.forward();
+        }
+      } else {
+        // Make sure animation is stopped for non-stereo images
+        _stereoAnimationController?.stop();
       }
     });
 
@@ -102,6 +136,7 @@ class _ImageDetailViewState extends State<ImageDetailView> {
 
   @override
   void dispose() {
+    _stereoAnimationController?.dispose();
     _pageController.removeListener(_onPageChanged);
     _pageController.dispose();
     _focusNode.dispose();
@@ -112,17 +147,25 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     if (_currentIndex != _pageController.page?.round()) {
       setState(() {
         _currentIndex = _pageController.page?.round() ?? _currentIndex;
-        
+
         // Check if the current image has the stereo attribute
-        if (_images != null && 
-            _currentIndex >= 0 && 
+        if (_images != null &&
+            _currentIndex >= 0 &&
             _currentIndex < _images!.length &&
             _images![_currentIndex].stereo != null) {
           // Use the preferred stereo view mode
           _stereoViewMode = _preferredStereoViewMode;
+
+          // Restart animation if mode is animated
+          if (_stereoViewMode == StereoViewMode.animated) {
+            _showLeftImage = true;
+            _stereoAnimationController?.reset();
+            _stereoAnimationController?.forward();
+          }
         } else {
           // Reset stereo view mode for non-stereo images
           _stereoViewMode = StereoViewMode.none;
+          _stereoAnimationController?.stop();
         }
       });
       _precacheNearbyImages(_currentIndex);
@@ -296,14 +339,36 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     ImmersiveModeScope.of(context).value = value;
   }
 
+  void _setStereoViewMode(StereoViewMode mode) {
+    setState(() {
+      if (_stereoViewMode == mode) {
+        _stereoViewMode = StereoViewMode.none;
+        _stereoAnimationController?.stop();
+      } else {
+        _stereoViewMode = mode;
+        _preferredStereoViewMode = mode;
+
+        if (mode == StereoViewMode.animated) {
+          _showLeftImage = true;
+          _stereoAnimationController?.reset();
+          _stereoAnimationController?.forward();
+        } else {
+          _stereoAnimationController?.stop();
+        }
+      }
+    });
+  }
+
   Widget _photo(ImageModel image) {
     return GestureDetector(
       onDoubleTap: () {
         _setImmersiveMode(true);
       },
-      onTap: _isImmersiveMode ? () {
-        _setImmersiveMode(false);
-      } : null,
+      onTap: _isImmersiveMode
+          ? () {
+              _setImmersiveMode(false);
+            }
+          : null,
       child: TweenAnimationBuilder(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -319,8 +384,7 @@ class _ImageDetailViewState extends State<ImageDetailView> {
         },
         child: Column(
           children: [
-            if (image.stereo != null)
-              _buildStereoControls(image),
+            if (image.stereo != null) _buildStereoControls(image),
             Expanded(
               child: InteractiveViewer(
                 maxScale: 5.0,
@@ -329,13 +393,15 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                   child: FutureBuilder<Map<String, String>>(
                     future: ApiService.instance.getImageHeaders(),
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const CircularProgressIndicator();
+                      if (!snapshot.hasData)
+                        return const CircularProgressIndicator();
                       return LayoutBuilder(
                         builder: (context, constraints) {
                           final aspectRatio = image.width / image.height;
                           double width, height;
 
-                          if (constraints.maxWidth / constraints.maxHeight > aspectRatio) {
+                          if (constraints.maxWidth / constraints.maxHeight >
+                              aspectRatio) {
                             // Height constrained
                             height = constraints.maxHeight;
                             width = height * aspectRatio;
@@ -346,7 +412,8 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                           }
 
                           // Check if this is a stereo image with an active stereo view mode
-                          if (image.stereo != null && _stereoViewMode != StereoViewMode.none) {
+                          if (image.stereo != null &&
+                              _stereoViewMode != StereoViewMode.none) {
                             // For stereo images, display the image based on the selected view mode
                             return _buildStereoImageView(
                               image: image,
@@ -363,11 +430,13 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                               ApiService.instance.getImageUrl(image.midiPath),
                               headers: snapshot.data,
                               fit: BoxFit.contain,
-                              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                              frameBuilder: (context, child, frame,
+                                  wasSynchronouslyLoaded) {
                                 if (wasSynchronouslyLoaded) {
                                   return child;
                                 }
-                                final isDark = Theme.of(context).brightness == Brightness.dark;
+                                final isDark = Theme.of(context).brightness ==
+                                    Brightness.dark;
                                 return AnimatedSwitcher(
                                   duration: const Duration(milliseconds: 200),
                                   child: frame != null
@@ -401,6 +470,29 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     );
   }
 
+  /// Utility method to create an image that shows either left or right half
+  Widget _imageHalf({
+    required String imageUrl,
+    required double width,
+    required double height,
+    required Map<String, String>? headers,
+    required bool showLeftSide,
+  }) {
+    return SizedBox(
+      width: width,
+      height: height,
+      // We make the image double the width to show only half of the image in the sizedbox
+      child: Image.network(
+        imageUrl,
+        headers: headers,
+        fit: BoxFit.cover,
+        alignment: showLeftSide ? Alignment.centerLeft : Alignment.centerRight,
+        width: width * 2,
+        height: height,
+      ),
+    );
+  }
+
   Widget _buildStereoImageView({
     required ImageModel image,
     required double width,
@@ -408,63 +500,70 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     required Map<String, String>? headers,
   }) {
     final imageUrl = ApiService.instance.getImageUrl(image.midiPath);
-    
-    // Load the image twice side by side for stereo viewing
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Left eye image
-        _buildStereoPairHalf(
-          imageUrl: imageUrl,
-          width: width / 2,
-          height: height,
-          headers: headers,
-          isLeftEye: true,
-        ),
-        // Right eye image
-        _buildStereoPairHalf(
-          imageUrl: imageUrl,
-          width: width / 2,
-          height: height,
-          headers: headers,
-          isLeftEye: false,
-        ),
-      ],
-    );
-  }
 
-  /// Builds one half of a stereo image pair (either left or right eye)
-  Widget _buildStereoPairHalf({
-    required String imageUrl,
-    required double width,
-    required double height,
-    required Map<String, String>? headers,
-    required bool isLeftEye,
-  }) {
-    // Calculate which half of the stereo image to show
-    final showLeftHalf = (_stereoViewMode == StereoViewMode.parallel && isLeftEye) ||
-                         (_stereoViewMode == StereoViewMode.crossEyed && !isLeftEye);
-    
-    // Get the actual image width (the stereo image has left and right halves side by side)
-    final imageWidth = width * 2;
-    final halfWidth = width;
-    
+    // For animated mode in fullscreen, we use a slightly different approach
+    if (_stereoViewMode == StereoViewMode.animated) {
+      // Display either left half or right half based on animation state
+      return SizedBox(
+        width: width / 2,
+        child: _imageHalf(
+          imageUrl: imageUrl,
+          width: width,
+          height: height,
+          headers: headers,
+          showLeftSide: _showLeftImage,
+        ),
+      );
+    }
+
+    // For parallel and cross-eyed modes, determine which side goes where
+    bool leftSideOnLeft, rightSideOnRight;
+    if (_stereoViewMode == StereoViewMode.parallel) {
+      leftSideOnLeft = true; // Left eye sees left half
+      rightSideOnRight = true; // Right eye sees right half
+    } else {
+      // StereoViewMode.crossEyed
+      leftSideOnLeft = false; // Left eye sees right half
+      rightSideOnRight = false; // Right eye sees left half
+    }
+
+    // For other modes, we load the image twice side by side
+    // Use a fixed size container to prevent overflow
     return SizedBox(
       width: width,
       height: height,
-      child: Image.network(
-        imageUrl,
-        headers: headers,
-        fit: BoxFit.cover,
-        alignment: showLeftHalf ? Alignment.centerLeft : Alignment.centerRight,
-        // Adjust the width to show only the appropriate half
-        width: imageWidth,
-        height: height,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Left eye image (always on the left side of screen)
+          SizedBox(
+            width: width / 2,
+            child: _imageHalf(
+              imageUrl: imageUrl,
+              width: width / 2,
+              height: height,
+              headers: headers,
+              showLeftSide: leftSideOnLeft, // Determined by view mode
+            ),
+          ),
+          // Right eye image (always on the right side of screen)
+          SizedBox(
+            width: width / 2,
+            child: _imageHalf(
+              imageUrl: imageUrl,
+              width: width / 2,
+              height: height,
+              headers: headers,
+              showLeftSide: !rightSideOnRight, // Determined by view mode
+            ),
+          ),
+        ],
       ),
     );
   }
-  
-  /// Builds the stereo control buttons for switching between parallel and cross-eyed viewing modes
+
+  /// Builds the stereo control buttons for switching between parallel and
+  /// cross-eyed viewing modes
   Widget _buildStereoControls(ImageModel image) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
@@ -472,7 +571,8 @@ class _ImageDetailViewState extends State<ImageDetailView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Tooltip(
-            message: 'Pour image stéréo - regardez avec les yeux parallèles (fixez l\'horizon)',
+            message:
+                'Pour image stéréo - regardez avec les yeux parallèles (fixez l\'horizon)',
             child: ElevatedButton.icon(
               icon: const Icon(Icons.arrow_upward_rounded),
               label: const Text('Vue Parallèle'),
@@ -485,20 +585,14 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                     : null,
               ),
               onPressed: () {
-                setState(() {
-                  if (_stereoViewMode == StereoViewMode.parallel) {
-                    _stereoViewMode = StereoViewMode.none;
-                  } else {
-                    _stereoViewMode = StereoViewMode.parallel;
-                    _preferredStereoViewMode = StereoViewMode.parallel;
-                  }
-                });
+                _setStereoViewMode(StereoViewMode.parallel);
               },
             ),
           ),
           const SizedBox(width: 16),
           Tooltip(
-            message: 'Pour image stéréo - utilisez la technique des yeux croisés (focus devant l\'image)',
+            message:
+                'Pour image stéréo - utilisez la technique des yeux croisés (focus devant l\'image)',
             child: ElevatedButton.icon(
               icon: const Icon(Icons.compare_arrows_rounded),
               label: const Text('Vue Croisée'),
@@ -511,14 +605,27 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                     : null,
               ),
               onPressed: () {
-                setState(() {
-                  if (_stereoViewMode == StereoViewMode.crossEyed) {
-                    _stereoViewMode = StereoViewMode.none;
-                  } else {
-                    _stereoViewMode = StereoViewMode.crossEyed;
-                    _preferredStereoViewMode = StereoViewMode.crossEyed;
-                  }
-                });
+                _setStereoViewMode(StereoViewMode.crossEyed);
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Tooltip(
+            message:
+                'Pour image stéréo - alternance automatique des vues gauche et droite',
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.animation_rounded),
+              label: const Text('Vue Animée'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _stereoViewMode == StereoViewMode.animated
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : null,
+                foregroundColor: _stereoViewMode == StereoViewMode.animated
+                    ? Theme.of(context).colorScheme.onPrimaryContainer
+                    : null,
+              ),
+              onPressed: () {
+                _setStereoViewMode(StereoViewMode.animated);
               },
             ),
           ),
@@ -570,18 +677,19 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                   child: _photo(image),
                 ),
               ),
-              if (!_isImmersiveMode) Expanded(
-                flex: 3,
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    top: kToolbarHeight + topPadding,
-                    bottom: kBottomNavigationBarHeight + bottomPadding,
-                  ),
-                  child: SingleChildScrollView(
-                    child: _keywords(image),
+              if (!_isImmersiveMode)
+                Expanded(
+                  flex: 3,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      top: kToolbarHeight + topPadding,
+                      bottom: kBottomNavigationBarHeight + bottomPadding,
+                    ),
+                    child: SingleChildScrollView(
+                      child: _keywords(image),
+                    ),
                   ),
                 ),
-              ),
             ],
           );
         } else {
@@ -602,7 +710,9 @@ class _ImageDetailViewState extends State<ImageDetailView> {
                   duration: const Duration(milliseconds: 300),
                   opacity: _isImmersiveMode ? 0.0 : 1.0,
                   child: Container(
-                    height: _isImmersiveMode ? 0 : MediaQuery.of(context).size.height * 0.2,
+                    height: _isImmersiveMode
+                        ? 0
+                        : MediaQuery.of(context).size.height * 0.2,
                     child: SingleChildScrollView(
                       child: _keywords(image),
                     ),
@@ -847,7 +957,8 @@ class _ImageDetailViewState extends State<ImageDetailView> {
               elevation: 4,
               child: Container(
                 padding: EdgeInsets.only(top: topPadding),
-                color: Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).colorScheme.surface,
+                color: Theme.of(context).appBarTheme.backgroundColor ??
+                    Theme.of(context).colorScheme.surface,
                 child: AppBar(
                   backgroundColor: Colors.transparent,
                   elevation: 0,
@@ -879,16 +990,20 @@ class _ImageDetailViewState extends State<ImageDetailView> {
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            bottom: _isImmersiveMode ? -kBottomNavigationBarHeight - bottomPadding : 0,
+            bottom: _isImmersiveMode
+                ? -kBottomNavigationBarHeight - bottomPadding
+                : 0,
             left: 0,
             right: 0,
             child: Container(
-              color: Theme.of(context).bottomNavigationBarTheme.backgroundColor ?? Theme.of(context).colorScheme.surface,
+              color:
+                  Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
+                      Theme.of(context).colorScheme.surface,
               child: SafeArea(
                 top: false,
                 child: SizedBox(
                   height: kBottomNavigationBarHeight,
-                  child: const SizedBox.shrink(),  // Placeholder for bottom nav
+                  child: const SizedBox.shrink(), // Placeholder for bottom nav
                 ),
               ),
             ),
@@ -907,4 +1022,5 @@ enum StereoViewMode {
   none,
   parallel,
   crossEyed,
+  animated,
 }
