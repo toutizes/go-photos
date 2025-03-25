@@ -393,8 +393,9 @@ class _ImageDetailViewState extends State<ImageDetailView>
                   child: FutureBuilder<Map<String, String>>(
                     future: ApiService.instance.getImageHeaders(),
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData)
+                      if (!snapshot.hasData) {
                         return const CircularProgressIndicator();
+                      }
                       return LayoutBuilder(
                         builder: (context, constraints) {
                           final aspectRatio = image.width / image.height;
@@ -472,23 +473,27 @@ class _ImageDetailViewState extends State<ImageDetailView>
 
   /// Utility method to create an image that shows either left or right half
   Widget _imageHalf({
-    required String imageUrl,
+    required ImageModel image,
     required double width,
     required double height,
     required Map<String, String>? headers,
     required bool showLeftSide,
-    double horizontalOffset = 0, // Horizontal offset for fine-tuning image alignment
-    double verticalOffset = 0, // Vertical offset for fine-tuning image alignment
   }) {
+    final imageUrl = ApiService.instance.getImageUrl(image.midiPath);
+    double horizontalOffset = _showLeftImage ? (image.stereo?.dx ?? 0) : 0;
+    double verticalOffset = _showLeftImage ? (image.stereo?.dy ?? 0) : 0;
+
     // Calculate the alignment based on side and offset
     // Alignment is in range -1 to 1, where -1 is far left, 1 is far right
     // Convert offset to alignment scale (divide by width to get a value between -1 and 1)
     final double offsetAlignment = horizontalOffset / width;
-    final double baseAlignment = showLeftSide ? -1.0 : 1.0; // Left or right edge
-    final Alignment alignment = Alignment(baseAlignment + offsetAlignment, verticalOffset / height);
-    
+    final double baseAlignment =
+        showLeftSide ? -1.0 : 1.0; // Left or right edge
+    final Alignment alignment =
+        Alignment(baseAlignment + offsetAlignment, verticalOffset / height);
+
     return SizedBox(
-      width: width,
+      width: width / 2,
       height: height,
       // We make the image double the width to show only half of the image in the sizedbox
       child: Image.network(
@@ -502,90 +507,59 @@ class _ImageDetailViewState extends State<ImageDetailView>
     );
   }
 
-  Widget _buildStereoImageView({
+  Widget _animatedView({
     required ImageModel image,
     required double width,
     required double height,
     required Map<String, String>? headers,
   }) {
-    final imageUrl = ApiService.instance.getImageUrl(image.midiPath);
+    return _imageHalf(
+      image: image,
+      width: width,
+      height: height,
+      headers: headers,
+      showLeftSide: _showLeftImage,
+    );
+  }
 
-    // For animated mode in fullscreen, we use a slightly different approach
-    if (_stereoViewMode == StereoViewMode.animated) {
-      return Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: SizedBox(
-                width: width / 2,
-                child: _imageHalf(
-                  imageUrl: imageUrl,
-                  width: width,
-                  height: height,
-                  headers: headers,
-                  showLeftSide: _showLeftImage,
-                  horizontalOffset: _showLeftImage ? (image.stereo?.dx ?? 0) : 0, // Use stereo.dx for left image
-                  verticalOffset: _showLeftImage ? (image.stereo?.dy ?? 0) : 0, // Use stereo.dy for left image
-                ),
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
-    // For align mode, stack the images on top of each other
-    if (_stereoViewMode == StereoViewMode.align) {
-      return Stack(
-        children: [
-          // Right image (bottom layer)
-          SizedBox(
-            width: width / 2,
+  Widget _alignView({
+    required ImageModel image,
+    required double width,
+    required double height,
+    required Map<String, String>? headers,
+  }) {
+    return Stack(
+      children: [
+        // Right image (bottom layer)
+        _imageHalf(
+          image: image,
+          width: width,
+          height: height,
+          headers: headers,
+          showLeftSide: false,
+        ),
+        // Left image (top layer with 50% opacity)
+        Opacity(
+          opacity: 0.5,
+          child: _imageHalf(
+            image: image,
+            width: width,
             height: height,
-            child: _imageHalf(
-              imageUrl: imageUrl,
-              width: width,
-              height: height,
-              headers: headers,
-              showLeftSide: false,
-              horizontalOffset: 0,
-              verticalOffset: 0,
-            ),
+            headers: headers,
+            showLeftSide: true,
           ),
-          // Left image (top layer with 50% opacity)
-          Opacity(
-            opacity: 0.5,
-            child: SizedBox(
-              width: width / 2,
-              height: height,
-              child: _imageHalf(
-                imageUrl: imageUrl,
-                width: width,
-                height: height,
-                headers: headers,
-                showLeftSide: true,
-                horizontalOffset: image.stereo?.dx ?? 0,
-                verticalOffset: image.stereo?.dy ?? 0,
-              ),
-            ),
-          ),
-        ],
-      );
-    }
+        ),
+      ],
+    );
+  }
 
-    // For parallel and cross-eyed modes, determine which side goes where
-    bool leftSideOnLeft, rightSideOnRight;
-    if (_stereoViewMode == StereoViewMode.parallel) {
-      leftSideOnLeft = true; // Left eye sees left half
-      rightSideOnRight = true; // Right eye sees right half
-    } else {
-      // StereoViewMode.crossEyed
-      leftSideOnLeft = false; // Left eye sees right half
-      rightSideOnRight = false; // Right eye sees left half
-    }
-
-    // For other modes, we load the image twice side by side
-    // Use a fixed size container to prevent overflow
+  Widget _twoEyesView({
+    required ImageModel image,
+    required double width,
+    required double height,
+    required Map<String, String>? headers,
+    required bool parallel,
+  }) {
     return SizedBox(
       width: width,
       height: height,
@@ -593,34 +567,65 @@ class _ImageDetailViewState extends State<ImageDetailView>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Left eye image (always on the left side of screen)
-          SizedBox(
-            width: width / 2,
-            child: _imageHalf(
-              imageUrl: imageUrl,
-              width: width / 2,
-              height: height,
-              headers: headers,
-              showLeftSide: leftSideOnLeft, // Determined by view mode
-              horizontalOffset: 0, // No offset for parallel/cross-eyed modes
-              verticalOffset: 0, // No vertical offset for parallel/cross-eyed modes
-            ),
+          _imageHalf(
+            image: image,
+            width: width,
+            height: height,
+            headers: headers,
+            showLeftSide: parallel,
           ),
           // Right eye image (always on the right side of screen)
-          SizedBox(
-            width: width / 2,
-            child: _imageHalf(
-              imageUrl: imageUrl,
-              width: width / 2,
-              height: height,
-              headers: headers,
-              showLeftSide: !rightSideOnRight, // Determined by view mode
-              horizontalOffset: 0, // No offset for parallel/cross-eyed modes
-              verticalOffset: 0, // No vertical offset for parallel/cross-eyed modes
-            ),
+          _imageHalf(
+            image: image,
+            width: width,
+            height: height,
+            headers: headers,
+            showLeftSide: !parallel,
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildStereoImageView({
+    required ImageModel image,
+    required double width,
+    required double height,
+    required Map<String, String>? headers,
+  }) {
+    switch (_stereoViewMode) {
+      case StereoViewMode.align:
+        return _alignView(
+          image: image,
+          width: width,
+          height: height,
+          headers: headers,
+        );
+      case StereoViewMode.crossEyed:
+        return _twoEyesView(
+          image: image,
+          width: width,
+          height: height,
+          headers: headers,
+          parallel: false,
+        );
+      case StereoViewMode.animated:
+        return _animatedView(
+          image: image,
+          width: width,
+          height: height,
+          headers: headers,
+        );
+      case StereoViewMode.parallel:
+      default:
+        return _twoEyesView(
+          image: image,
+          width: width,
+          height: height,
+          headers: headers,
+          parallel: true,
+        );
+    }
   }
 
   /// Builds the stereo control buttons for switching between parallel and
