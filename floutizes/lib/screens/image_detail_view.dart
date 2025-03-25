@@ -517,15 +517,19 @@ class _ImageDetailViewState extends State<ImageDetailView>
       // Display either left half or right half based on animation state
       return Column(
         children: [
-          SizedBox(
-            width: width / 2,
-            child: _imageHalf(
-              imageUrl: imageUrl,
-              width: width,
-              height: height * 0.9, // Make room for slider
-              headers: headers,
-              showLeftSide: _showLeftImage,
-              horizontalOffset: _showLeftImage ? 0 : _stereoHorizontalOffset, // Apply offset only to right image
+          Expanded(
+            child: Center(
+              child: SizedBox(
+                width: width / 2,
+                child: _imageHalf(
+                  imageUrl: imageUrl,
+                  width: width,
+                  height: height,
+                  headers: headers,
+                  showLeftSide: _showLeftImage,
+                  horizontalOffset: _showLeftImage ? 0 : _stereoHorizontalOffset, // Apply offset only to right image
+                ),
+              ),
             ),
           ),
           // Add a slider to control the horizontal offset
