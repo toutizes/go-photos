@@ -13,6 +13,7 @@ install_html:
 	cmd/install-ttpic.sh
 
 install_flutter: 
+	mkdir -p /tmp/aserve/db/htdocs/flutter
 	rsync --delete --recursive floutizes/build/web/* /tmp/aserve/db/htdocs/flutter
 	rsync --delete --recursive $(SYN_TXT) $(SERVER):/mnt/photos/htdocs/synonyms.txt
 

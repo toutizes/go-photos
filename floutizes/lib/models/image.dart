@@ -7,7 +7,7 @@ class ImageModel {
   final int height;
   final int width;
   final List<String> keywords;
-  final StereoInfo? stereo;
+  StereoInfo? stereo;
 
   ImageModel({
     required this.id,
@@ -19,7 +19,11 @@ class ImageModel {
     required this.width,
     required this.keywords,
     this.stereo,
-  });
+  }) {
+    if (keywords.contains('stereo') && stereo == null) {
+      stereo = StereoInfo(dx: 0, dy: 0, anaDx: 0, anaDy: 0);
+    }
+  }
 
   String get miniPath => '/db/mini/$albumDir/$imageName';
   String get midiPath => '/db/midi/$albumDir/$imageName';

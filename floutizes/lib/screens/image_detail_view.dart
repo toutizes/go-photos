@@ -24,6 +24,20 @@ class ImageDetailView extends StatefulWidget {
   State<ImageDetailView> createState() => _ImageDetailViewState();
 }
 
+/// Custom clipper to show only half of the image
+class _HalfImageClipper extends CustomClipper<Rect> {
+  final Rect clipRect;
+  
+  _HalfImageClipper(this.clipRect);
+  
+  @override
+  Rect getClip(Size size) => clipRect;
+  
+  @override
+  bool shouldReclip(_HalfImageClipper oldClipper) => 
+      oldClipper.clipRect != clipRect;
+}
+
 class _ImageDetailViewState extends State<ImageDetailView> {
   late PageController _pageController;
   late int _currentIndex;
@@ -31,6 +45,9 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   Future<List<ImageModel>>? _imagesFuture;
   List<ImageModel>? _images;
   bool _isImmersiveMode = false;
+  StereoViewMode _stereoViewMode = StereoViewMode.none;
+  // Track the user's preferred stereo view mode
+  StereoViewMode _preferredStereoViewMode = StereoViewMode.parallel;
 
   @override
   void initState() {
@@ -60,6 +77,14 @@ class _ImageDetailViewState extends State<ImageDetailView> {
       } else {
         _currentIndex = initialIndex;
       }
+      
+      // Check if the current image has the stereo attribute
+      if (_currentIndex >= 0 && 
+          _currentIndex < images.length &&
+          images[_currentIndex].stereo != null) {
+        // Use the preferred stereo view mode (default is parallel)
+        _stereoViewMode = _preferredStereoViewMode;
+      }
     });
 
     // Start pre-caching immediately
@@ -87,6 +112,18 @@ class _ImageDetailViewState extends State<ImageDetailView> {
     if (_currentIndex != _pageController.page?.round()) {
       setState(() {
         _currentIndex = _pageController.page?.round() ?? _currentIndex;
+        
+        // Check if the current image has the stereo attribute
+        if (_images != null && 
+            _currentIndex >= 0 && 
+            _currentIndex < _images!.length &&
+            _images![_currentIndex].stereo != null) {
+          // Use the preferred stereo view mode
+          _stereoViewMode = _preferredStereoViewMode;
+        } else {
+          // Reset stereo view mode for non-stereo images
+          _stereoViewMode = StereoViewMode.none;
+        }
       });
       _precacheNearbyImages(_currentIndex);
 
@@ -188,7 +225,7 @@ class _ImageDetailViewState extends State<ImageDetailView> {
       if (image.stereo != null) ...[
         const SizedBox(height: 8),
         const Text(
-          'Stereo Image',
+          'Image Stéréo',
           style: TextStyle(fontStyle: FontStyle.italic),
         ),
       ],
@@ -280,67 +317,212 @@ class _ImageDetailViewState extends State<ImageDetailView> {
             child: child,
           );
         },
-        child: InteractiveViewer(
-          maxScale: 5.0,
-          child: Hero(
-            tag: 'image_${image.id}',
-            child: FutureBuilder<Map<String, String>>(
-              future: ApiService.instance.getImageHeaders(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return const CircularProgressIndicator();
-                return LayoutBuilder(
-                  builder: (context, constraints) {
-                    final aspectRatio = image.width / image.height;
-                    double width, height;
+        child: Column(
+          children: [
+            if (image.stereo != null)
+              _buildStereoControls(image),
+            Expanded(
+              child: InteractiveViewer(
+                maxScale: 5.0,
+                child: Hero(
+                  tag: 'image_${image.id}',
+                  child: FutureBuilder<Map<String, String>>(
+                    future: ApiService.instance.getImageHeaders(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return const CircularProgressIndicator();
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          final aspectRatio = image.width / image.height;
+                          double width, height;
 
-                    if (constraints.maxWidth / constraints.maxHeight > aspectRatio) {
-                      // Height constrained
-                      height = constraints.maxHeight;
-                      width = height * aspectRatio;
-                    } else {
-                      // Width constrained
-                      width = constraints.maxWidth;
-                      height = width / aspectRatio;
-                    }
-
-                    return Container(
-                      width: width,
-                      height: height,
-                      child: Image.network(
-                        ApiService.instance.getImageUrl(image.midiPath),
-                        headers: snapshot.data,
-                        fit: BoxFit.contain,
-                        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                          if (wasSynchronouslyLoaded) {
-                            return child;
+                          if (constraints.maxWidth / constraints.maxHeight > aspectRatio) {
+                            // Height constrained
+                            height = constraints.maxHeight;
+                            width = height * aspectRatio;
+                          } else {
+                            // Width constrained
+                            width = constraints.maxWidth;
+                            height = width / aspectRatio;
                           }
-                          final isDark = Theme.of(context).brightness == Brightness.dark;
-                          return AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: frame != null
-                                ? child
-                                : Container(
-                                    width: width,
-                                    height: height,
-                                    color: isDark
-                                        ? Colors.grey.shade800
-                                        : Colors.grey.shade200,
-                                  ),
+
+                          // Check if this is a stereo image with an active stereo view mode
+                          if (image.stereo != null && _stereoViewMode != StereoViewMode.none) {
+                            // For stereo images, display the image based on the selected view mode
+                            return _buildStereoImageView(
+                              image: image,
+                              width: width,
+                              height: height,
+                              headers: snapshot.data,
+                            );
+                          }
+
+                          return SizedBox(
+                            width: width,
+                            height: height,
+                            child: Image.network(
+                              ApiService.instance.getImageUrl(image.midiPath),
+                              headers: snapshot.data,
+                              fit: BoxFit.contain,
+                              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                                if (wasSynchronouslyLoaded) {
+                                  return child;
+                                }
+                                final isDark = Theme.of(context).brightness == Brightness.dark;
+                                return AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 200),
+                                  child: frame != null
+                                      ? child
+                                      : Container(
+                                          width: width,
+                                          height: height,
+                                          color: isDark
+                                              ? Colors.grey.shade800
+                                              : Colors.grey.shade200,
+                                        ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Icon(Icons.error_outline, size: 48),
+                                );
+                              },
+                            ),
                           );
                         },
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(
-                            child: Icon(Icons.error_outline, size: 48),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                );
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStereoImageView({
+    required ImageModel image,
+    required double width,
+    required double height,
+    required Map<String, String>? headers,
+  }) {
+    final imageUrl = ApiService.instance.getImageUrl(image.midiPath);
+    
+    // Load the image twice side by side for stereo viewing
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Left eye image
+        _buildStereoPairHalf(
+          imageUrl: imageUrl,
+          width: width / 2,
+          height: height,
+          headers: headers,
+          isLeftEye: true,
+        ),
+        // Right eye image
+        _buildStereoPairHalf(
+          imageUrl: imageUrl,
+          width: width / 2,
+          height: height,
+          headers: headers,
+          isLeftEye: false,
+        ),
+      ],
+    );
+  }
+
+  /// Builds one half of a stereo image pair (either left or right eye)
+  Widget _buildStereoPairHalf({
+    required String imageUrl,
+    required double width,
+    required double height,
+    required Map<String, String>? headers,
+    required bool isLeftEye,
+  }) {
+    // Calculate which half of the stereo image to show
+    final showLeftHalf = (_stereoViewMode == StereoViewMode.parallel && isLeftEye) ||
+                         (_stereoViewMode == StereoViewMode.crossEyed && !isLeftEye);
+    
+    // Get the actual image width (the stereo image has left and right halves side by side)
+    final imageWidth = width * 2;
+    final halfWidth = width;
+    
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Image.network(
+        imageUrl,
+        headers: headers,
+        fit: BoxFit.cover,
+        alignment: showLeftHalf ? Alignment.centerLeft : Alignment.centerRight,
+        // Adjust the width to show only the appropriate half
+        width: imageWidth,
+        height: height,
+      ),
+    );
+  }
+  
+  /// Builds the stereo control buttons for switching between parallel and cross-eyed viewing modes
+  Widget _buildStereoControls(ImageModel image) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Tooltip(
+            message: 'Pour image stéréo - regardez avec les yeux parallèles (fixez l\'horizon)',
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.arrow_upward_rounded),
+              label: const Text('Vue Parallèle'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _stereoViewMode == StereoViewMode.parallel
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : null,
+                foregroundColor: _stereoViewMode == StereoViewMode.parallel
+                    ? Theme.of(context).colorScheme.onPrimaryContainer
+                    : null,
+              ),
+              onPressed: () {
+                setState(() {
+                  if (_stereoViewMode == StereoViewMode.parallel) {
+                    _stereoViewMode = StereoViewMode.none;
+                  } else {
+                    _stereoViewMode = StereoViewMode.parallel;
+                    _preferredStereoViewMode = StereoViewMode.parallel;
+                  }
+                });
               },
             ),
           ),
-        ),
+          const SizedBox(width: 16),
+          Tooltip(
+            message: 'Pour image stéréo - utilisez la technique des yeux croisés (focus devant l\'image)',
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.compare_arrows_rounded),
+              label: const Text('Vue Croisée'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _stereoViewMode == StereoViewMode.crossEyed
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : null,
+                foregroundColor: _stereoViewMode == StereoViewMode.crossEyed
+                    ? Theme.of(context).colorScheme.onPrimaryContainer
+                    : null,
+              ),
+              onPressed: () {
+                setState(() {
+                  if (_stereoViewMode == StereoViewMode.crossEyed) {
+                    _stereoViewMode = StereoViewMode.none;
+                  } else {
+                    _stereoViewMode = StereoViewMode.crossEyed;
+                    _preferredStereoViewMode = StereoViewMode.crossEyed;
+                  }
+                });
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -719,4 +901,10 @@ class _ImageDetailViewState extends State<ImageDetailView> {
   String _formatDate(DateTime date) {
     return DateFormat('yyyy-MM-dd').format(date);
   }
+}
+
+enum StereoViewMode {
+  none,
+  parallel,
+  crossEyed,
 }
