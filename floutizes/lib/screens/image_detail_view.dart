@@ -53,9 +53,6 @@ class _ImageDetailViewState extends State<ImageDetailView>
   // For stereo animation
   AnimationController? _stereoAnimationController;
   bool _showLeftImage = true;
-  
-  // Horizontal offset for fine-tuning the stereo image alignment
-  double _stereoHorizontalOffset = 0.0;
 
   @override
   void initState() {
@@ -481,13 +478,14 @@ class _ImageDetailViewState extends State<ImageDetailView>
     required Map<String, String>? headers,
     required bool showLeftSide,
     double horizontalOffset = 0, // Horizontal offset for fine-tuning image alignment
+    double verticalOffset = 0, // Vertical offset for fine-tuning image alignment
   }) {
     // Calculate the alignment based on side and offset
     // Alignment is in range -1 to 1, where -1 is far left, 1 is far right
     // Convert offset to alignment scale (divide by width to get a value between -1 and 1)
     final double offsetAlignment = horizontalOffset / width;
     final double baseAlignment = showLeftSide ? -1.0 : 1.0; // Left or right edge
-    final Alignment alignment = Alignment(baseAlignment + offsetAlignment, 0);
+    final Alignment alignment = Alignment(baseAlignment + offsetAlignment, verticalOffset / height);
     
     return SizedBox(
       width: width,
@@ -514,7 +512,6 @@ class _ImageDetailViewState extends State<ImageDetailView>
 
     // For animated mode in fullscreen, we use a slightly different approach
     if (_stereoViewMode == StereoViewMode.animated) {
-      // Display either left half or right half based on animation state
       return Column(
         children: [
           Expanded(
@@ -527,42 +524,10 @@ class _ImageDetailViewState extends State<ImageDetailView>
                   height: height,
                   headers: headers,
                   showLeftSide: _showLeftImage,
-                  horizontalOffset: _showLeftImage ? 0 : _stereoHorizontalOffset, // Apply offset only to right image
+                  horizontalOffset: _showLeftImage ? (image.stereo?.dx ?? 0) : 0, // Use stereo.dx for left image
+                  verticalOffset: _showLeftImage ? (image.stereo?.dy ?? 0) : 0, // Use stereo.dy for left image
                 ),
               ),
-            ),
-          ),
-          // Add a slider to control the horizontal offset
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('Alignement:'),
-                Expanded(
-                  child: Slider(
-                    value: _stereoHorizontalOffset,
-                    min: 0, // Only positive values
-                    max: width / 2,
-                    divisions: 100, // Reduced divisions since range is halved
-                    label: _stereoHorizontalOffset.toStringAsFixed(0),
-                    onChanged: (value) {
-                      setState(() {
-                        _stereoHorizontalOffset = value;
-                      });
-                    },
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.restart_alt),
-                  onPressed: () {
-                    setState(() {
-                      _stereoHorizontalOffset = 0;
-                    });
-                  },
-                  tooltip: 'Réinitialiser le décalage',
-                ),
-              ],
             ),
           ),
         ],
@@ -598,6 +563,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
               headers: headers,
               showLeftSide: leftSideOnLeft, // Determined by view mode
               horizontalOffset: 0, // No offset for parallel/cross-eyed modes
+              verticalOffset: 0, // No vertical offset for parallel/cross-eyed modes
             ),
           ),
           // Right eye image (always on the right side of screen)
@@ -610,6 +576,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
               headers: headers,
               showLeftSide: !rightSideOnRight, // Determined by view mode
               horizontalOffset: 0, // No offset for parallel/cross-eyed modes
+              verticalOffset: 0, // No vertical offset for parallel/cross-eyed modes
             ),
           ),
         ],
