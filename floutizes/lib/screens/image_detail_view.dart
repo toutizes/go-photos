@@ -534,7 +534,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('Décalage:'),
+                const Text('Alignement:'),
                 Expanded(
                   child: Slider(
                     value: _stereoHorizontalOffset,
