@@ -534,6 +534,45 @@ class _ImageDetailViewState extends State<ImageDetailView>
       );
     }
 
+    // For align mode, stack the images on top of each other
+    if (_stereoViewMode == StereoViewMode.align) {
+      return Stack(
+        children: [
+          // Right image (bottom layer)
+          SizedBox(
+            width: width / 2,
+            height: height,
+            child: _imageHalf(
+              imageUrl: imageUrl,
+              width: width,
+              height: height,
+              headers: headers,
+              showLeftSide: false,
+              horizontalOffset: 0,
+              verticalOffset: 0,
+            ),
+          ),
+          // Left image (top layer with 50% opacity)
+          Opacity(
+            opacity: 0.5,
+            child: SizedBox(
+              width: width / 2,
+              height: height,
+              child: _imageHalf(
+                imageUrl: imageUrl,
+                width: width,
+                height: height,
+                headers: headers,
+                showLeftSide: true,
+                horizontalOffset: image.stereo?.dx ?? 0,
+                verticalOffset: image.stereo?.dy ?? 0,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     // For parallel and cross-eyed modes, determine which side goes where
     bool leftSideOnLeft, rightSideOnRight;
     if (_stereoViewMode == StereoViewMode.parallel) {
@@ -648,6 +687,26 @@ class _ImageDetailViewState extends State<ImageDetailView>
               ),
               onPressed: () {
                 _setStereoViewMode(StereoViewMode.animated);
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Tooltip(
+            message:
+                'Pour image stéréo - superposition des vues gauche et droite pour alignement',
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.layers_rounded),
+              label: const Text('Align'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _stereoViewMode == StereoViewMode.align
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : null,
+                foregroundColor: _stereoViewMode == StereoViewMode.align
+                    ? Theme.of(context).colorScheme.onPrimaryContainer
+                    : null,
+              ),
+              onPressed: () {
+                _setStereoViewMode(StereoViewMode.align);
               },
             ),
           ),
@@ -1045,4 +1104,5 @@ enum StereoViewMode {
   parallel,
   crossEyed,
   animated,
+  align,
 }
