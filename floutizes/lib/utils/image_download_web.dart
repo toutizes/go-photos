@@ -7,7 +7,7 @@ class ImageDownloadPlatform {
     required String url,
     required String filename,
   }) async {
-    final headers = await ApiService.instance.getImageHeaders();
+    final headers = ApiService.instance.getImageHeaders();
     final xhr = html.HttpRequest();
     xhr.open('GET', url);
     xhr.responseType = 'blob';
@@ -48,7 +48,7 @@ class ImageDownloadPlatform {
     required String url,
     required void Function(int loaded) onProgress,
   }) async {
-    final headers = await ApiService.instance.getImageHeaders();
+    final headers = ApiService.instance.getImageHeaders();
     final xhr = html.HttpRequest();
     xhr.open('GET', url);
     xhr.responseType = 'blob';

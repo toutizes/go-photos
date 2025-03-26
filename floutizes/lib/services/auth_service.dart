@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   User? _user;
+  String? _idToken;
   bool _initialized = false;
   late final Future<void> initializationDone;
 
@@ -12,8 +13,9 @@ class AuthService extends ChangeNotifier {
     initializationDone = _initialize();
 
     // Set up continuous auth state monitoring
-    _auth.authStateChanges().listen((User? user) {
+    _auth.authStateChanges().listen((User? user) async {
       _user = user;
+      _idToken = await user?.getIdToken(false);
       notifyListeners();
     });
   }
@@ -27,12 +29,11 @@ class AuthService extends ChangeNotifier {
   }
 
   User? get user => _user;
+  String? get idToken => _idToken;
   bool get initialized => _initialized;
   bool get isAuthenticated => _user != null;
 
   Future<void> signOut() async {
     await _auth.signOut();
   }
-
-  Future<String?> get idToken async => await _user?.getIdToken();
 }

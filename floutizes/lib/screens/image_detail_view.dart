@@ -180,8 +180,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
     if (images == null) {
       return;
     }
-    var headers = await ApiService.instance.getImageHeaders();
-    if (!mounted) return;
+    var headers = ApiService.instance.getImageHeaders();
 
     const int preCacheWidth = 2;
     for (var i = preCacheWidth; i >= -preCacheWidth; i--) {
@@ -384,75 +383,67 @@ class _ImageDetailViewState extends State<ImageDetailView>
                 maxScale: 5.0,
                 child: Hero(
                   tag: 'image_${image.id}',
-                  child: FutureBuilder<Map<String, String>>(
-                    future: ApiService.instance.getImageHeaders(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const CircularProgressIndicator();
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final aspectRatio = image.width / image.height;
+                      double width, height;
+
+                      if (constraints.maxWidth / constraints.maxHeight >
+                          aspectRatio) {
+                        // Height constrained
+                        height = constraints.maxHeight;
+                        width = height * aspectRatio;
+                      } else {
+                        // Width constrained
+                        width = constraints.maxWidth;
+                        height = width / aspectRatio;
                       }
-                      return LayoutBuilder(
-                        builder: (context, constraints) {
-                          final aspectRatio = image.width / image.height;
-                          double width, height;
 
-                          if (constraints.maxWidth / constraints.maxHeight >
-                              aspectRatio) {
-                            // Height constrained
-                            height = constraints.maxHeight;
-                            width = height * aspectRatio;
-                          } else {
-                            // Width constrained
-                            width = constraints.maxWidth;
-                            height = width / aspectRatio;
-                          }
+                      // Check if this is a stereo image with an active stereo view mode
+                      if (image.stereo != null &&
+                          _stereoViewMode != StereoViewMode.none) {
+                        // For stereo images, display the image based on the selected view mode
+                        return _buildStereoImageView(
+                          image: image,
+                          width: width,
+                          height: height,
+                          headers: ApiService.instance.getImageHeaders(),
+                        );
+                      }
 
-                          // Check if this is a stereo image with an active stereo view mode
-                          if (image.stereo != null &&
-                              _stereoViewMode != StereoViewMode.none) {
-                            // For stereo images, display the image based on the selected view mode
-                            return _buildStereoImageView(
-                              image: image,
-                              width: width,
-                              height: height,
-                              headers: snapshot.data,
+                      return SizedBox(
+                        width: width,
+                        height: height,
+                        child: Image.network(
+                          ApiService.instance.getImageUrl(image.midiPath),
+                          headers: ApiService.instance.getImageHeaders(),
+                          fit: BoxFit.contain,
+                          frameBuilder:
+                              (context, child, frame, wasSynchronouslyLoaded) {
+                            if (wasSynchronouslyLoaded) {
+                              return child;
+                            }
+                            final isDark =
+                                Theme.of(context).brightness == Brightness.dark;
+                            return AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              child: frame != null
+                                  ? child
+                                  : Container(
+                                      width: width,
+                                      height: height,
+                                      color: isDark
+                                          ? Colors.grey.shade800
+                                          : Colors.grey.shade200,
+                                    ),
                             );
-                          }
-
-                          return SizedBox(
-                            width: width,
-                            height: height,
-                            child: Image.network(
-                              ApiService.instance.getImageUrl(image.midiPath),
-                              headers: snapshot.data,
-                              fit: BoxFit.contain,
-                              frameBuilder: (context, child, frame,
-                                  wasSynchronouslyLoaded) {
-                                if (wasSynchronouslyLoaded) {
-                                  return child;
-                                }
-                                final isDark = Theme.of(context).brightness ==
-                                    Brightness.dark;
-                                return AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 200),
-                                  child: frame != null
-                                      ? child
-                                      : Container(
-                                          width: width,
-                                          height: height,
-                                          color: isDark
-                                              ? Colors.grey.shade800
-                                              : Colors.grey.shade200,
-                                        ),
-                                );
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Center(
-                                  child: Icon(Icons.error_outline, size: 48),
-                                );
-                              },
-                            ),
-                          );
-                        },
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Center(
+                              child: Icon(Icons.error_outline, size: 48),
+                            );
+                          },
+                        ),
                       );
                     },
                   ),

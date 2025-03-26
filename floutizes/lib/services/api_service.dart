@@ -1,13 +1,17 @@
 import 'dart:convert';
+
 import 'package:logging/logging.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/image.dart';
 import '../models/directory.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'auth_service.dart';
 
 class ApiService {
   static ApiService? _instance;
   static final _logger = Logger('ApiService');
+  final AuthService authService;
   final String baseUrl;
   final http.Client _client;
 
@@ -16,7 +20,8 @@ class ApiService {
   final Map<String, List<ImageModel>> _searchCache = {};
   final List<String> _cacheOrder = [];
 
-  ApiService._({required this.baseUrl}) : _client = http.Client();
+  ApiService._({required this.baseUrl, required this.authService})
+      : _client = http.Client();
 
   static void _initLogging() {
     Logger.root.level = Level.OFF;
@@ -25,9 +30,9 @@ class ApiService {
     });
   }
 
-  static void initialize({required String baseUrl}) {
+  static void initialize({required String baseUrl, required authService}) {
     _initLogging();
-    _instance = ApiService._(baseUrl: baseUrl);
+    _instance = ApiService._(baseUrl: baseUrl, authService: authService);
   }
 
   static ApiService get instance {
@@ -201,34 +206,11 @@ class ApiService {
   }
 
   // Helper method to get the current user's ID token
-  Future<String?> _getIdToken() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      _logger.warning('No user is currently signed in');
-      return null;
-    }
-    try {
-      // Get current token without forcing refresh
-      final token = await user.getIdToken(false);
-      _logger.fine('Got ID token');
-      return token;
-    } catch (e) {
-      _logger.warning('Error getting current token, trying refresh: $e');
-      try {
-        // If current token failed, try forcing a refresh
-        final token = await user.getIdToken(true);
-        _logger.info('Got fresh token after refresh');
-        return token;
-      } catch (e) {
-        _logger.severe('Error getting ID token even after refresh: $e');
-        return null;
-      }
-    }
-  }
+  String? _getIdToken() => authService.idToken;
 
   // Helper method to create authenticated headers
-  Future<Map<String, String>> _getHeaders() async {
-    final token = await _getIdToken();
+  Map<String, String> _getHeaders() {
+    final token = _getIdToken();
     final headers = {
       'Accept': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
@@ -243,8 +225,8 @@ class ApiService {
     _logger.info('User signed out successfully');
   }
 
-  Future<Map<String, String>> getImageHeaders() async {
-    final token = await _getIdToken();
+  Map<String, String> getImageHeaders() {
+    final token = _getIdToken();
     return {
       if (token != null) 'Authorization': 'Bearer $token',
     };

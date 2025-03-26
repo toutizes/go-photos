@@ -26,7 +26,7 @@ void main() async {
 
   const backendUrl =
       String.fromEnvironment('BACKEND', defaultValue: 'http://localhost:8080');
-  ApiService.initialize(baseUrl: backendUrl);
+  ApiService.initialize(authService: authService, baseUrl: backendUrl);
   // await ApiService.instance.signOut();
   runApp(const MyApp());
 }
@@ -174,7 +174,9 @@ class ImmersiveModeScope extends InheritedNotifier<ImmersiveModeNotifier> {
   }) : super(notifier: notifier);
 
   static ImmersiveModeNotifier of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<ImmersiveModeScope>()!.notifier!;
+    return context
+        .dependOnInheritedWidgetOfExactType<ImmersiveModeScope>()!
+        .notifier!;
   }
 }
 
@@ -187,10 +189,12 @@ class ScaffoldWithNestedNavigation extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   @override
-  State<ScaffoldWithNestedNavigation> createState() => _ScaffoldWithNestedNavigationState();
+  State<ScaffoldWithNestedNavigation> createState() =>
+      _ScaffoldWithNestedNavigationState();
 }
 
-class _ScaffoldWithNestedNavigationState extends State<ScaffoldWithNestedNavigation> {
+class _ScaffoldWithNestedNavigationState
+    extends State<ScaffoldWithNestedNavigation> {
   final _immersiveModeNotifier = ImmersiveModeNotifier();
 
   @override
@@ -208,23 +212,26 @@ class _ScaffoldWithNestedNavigationState extends State<ScaffoldWithNestedNavigat
         builder: (context, isImmersive, child) {
           return Scaffold(
             body: widget.navigationShell,
-            bottomNavigationBar: isImmersive ? null : BottomNavigationBar(
-              currentIndex: widget.navigationShell.currentIndex,
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.photo_album),
-                  label: 'Albums',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.photo_library),
-                  label: 'Photos',
-                ),
-              ],
-              onTap: (index) => widget.navigationShell.goBranch(
-                index,
-                initialLocation: index == widget.navigationShell.currentIndex,
-              ),
-            ),
+            bottomNavigationBar: isImmersive
+                ? null
+                : BottomNavigationBar(
+                    currentIndex: widget.navigationShell.currentIndex,
+                    items: const [
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.photo_album),
+                        label: 'Albums',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.photo_library),
+                        label: 'Photos',
+                      ),
+                    ],
+                    onTap: (index) => widget.navigationShell.goBranch(
+                      index,
+                      initialLocation:
+                          index == widget.navigationShell.currentIndex,
+                    ),
+                  ),
           );
         },
       ),

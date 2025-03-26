@@ -111,19 +111,37 @@ class MontagedImages<T> {
     final positionInGroup = index % groupSize;
     final montageUrl = _montageUrls[montageGroupIndex];
     final adaptedItem = _items[index];
+    final headers = ApiService.instance.getImageHeaders();
 
-    return FutureBuilder<Map<String, String>>(
-      future: ApiService.instance.getImageHeaders(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const CircularProgressIndicator();
-
+    return Image.network(
+      montageUrl,
+      headers: headers,
+      fit: BoxFit.none,
+      alignment: Alignment(-1 + 2 * positionInGroup / (groupSize - 1), 0),
+      width: _imageSize.toDouble(),
+      height: _imageSize.toDouble(),
+      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+        if (wasSynchronouslyLoaded) {
+          return child;
+        }
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: frame != null
+              ? child
+              : Container(
+                  width: _imageSize.toDouble(),
+                  height: _imageSize.toDouble(),
+                  color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+                ),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) {
+        // Fallback to individual image if montage fails
         return Image.network(
-          montageUrl,
-          headers: snapshot.data,
-          fit: BoxFit.none,
-          alignment: Alignment(-1 + 2 * positionInGroup / (groupSize - 1), 0),
-          width: _imageSize.toDouble(),
-          height: _imageSize.toDouble(),
+          ApiService.instance.getImageUrl(adaptedItem.fallbackPath),
+          headers: headers,
+          fit: BoxFit.cover,
           frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
             if (wasSynchronouslyLoaded) {
               return child;
@@ -142,34 +160,8 @@ class MontagedImages<T> {
             );
           },
           errorBuilder: (context, error, stackTrace) {
-            // Fallback to individual image if montage fails
-            return Image.network(
-              ApiService.instance.getImageUrl(adaptedItem.fallbackPath),
-              headers: snapshot.data,
-              fit: BoxFit.cover,
-              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                if (wasSynchronouslyLoaded) {
-                  return child;
-                }
-                final isDark = Theme.of(context).brightness == Brightness.dark;
-                return AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: frame != null
-                      ? child
-                      : Container(
-                          width: _imageSize.toDouble(),
-                          height: _imageSize.toDouble(),
-                          color: isDark
-                              ? Colors.grey.shade800
-                              : Colors.grey.shade200,
-                        ),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return const Center(
-                  child: Icon(Icons.error_outline),
-                );
-              },
+            return const Center(
+              child: Icon(Icons.error_outline),
             );
           },
         );

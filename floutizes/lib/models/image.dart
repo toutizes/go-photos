@@ -20,10 +20,7 @@ class ImageModel {
     required this.keywords,
     this.stereo,
   }) {
-    if ((keywords.contains('stereo') || keywords.contains('stéreo')) &&
-        stereo == null) {
-      stereo = StereoInfo(dx: 0, dy: 0, anaDx: 0, anaDy: 0);
-    }
+    _maybeAddStereo();
   }
 
   String get miniPath => '/db/mini/$albumDir/$imageName';
@@ -43,6 +40,15 @@ class ImageModel {
       stereo:
           json['Stereo'] != null ? StereoInfo.fromJson(json['Stereo']) : null,
     );
+  }
+
+  void _maybeAddStereo() {
+    for (var k in keywords) {
+      if (k.startsWith('stereo:') || k == 'stereo' || k == 'stéreo') {
+        stereo = StereoInfo(dx: 0, dy: 0, anaDx: 0, anaDy: 0);
+        return;
+      }
+    }
   }
 }
 
