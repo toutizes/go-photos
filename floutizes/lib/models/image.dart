@@ -44,7 +44,10 @@ class ImageModel {
 
   void _maybeAddStereo() {
     for (var k in keywords) {
-      if (k.startsWith('stereo:') || k == 'stereo' || k == 'stéreo') {
+      if (k.startsWith('stereo:') ||
+          k == 'stereo' ||
+          k == 'stéreo' ||
+          k == 'stéréo') {
         stereo = StereoInfo(dx: 0, dy: 0, anaDx: 0, anaDy: 0);
         return;
       }

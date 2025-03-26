@@ -405,9 +405,8 @@ class _ImageDetailViewState extends State<ImageDetailView>
                         // For stereo images, display the image based on the selected view mode
                         return _buildStereoImageView(
                           image: image,
-                          width: width,
+                          width: width * 2,
                           height: height,
-                          headers: ApiService.instance.getImageHeaders(),
                         );
                       }
 
@@ -460,10 +459,10 @@ class _ImageDetailViewState extends State<ImageDetailView>
     required ImageModel image,
     required double width,
     required double height,
-    required Map<String, String>? headers,
     required bool showLeftSide,
   }) {
     final imageUrl = ApiService.instance.getImageUrl(image.midiPath);
+    final headers = ApiService.instance.getImageHeaders();
     final stereoInfo = image.stereo!;
 
     if (!showLeftSide) {
@@ -474,7 +473,9 @@ class _ImageDetailViewState extends State<ImageDetailView>
           widthFactor: 0.5,
           child: Image.network(
             imageUrl,
+            width: width,
             fit: BoxFit.fitWidth,
+            headers: headers,
           ),
         ),
       );
@@ -491,7 +492,9 @@ class _ImageDetailViewState extends State<ImageDetailView>
           offset: Offset(width * dx / image.width, height * dy / image.height),
           child: Image.network(
             imageUrl,
+            width: width,
             fit: BoxFit.fitWidth,
+            headers: headers,
           ),
         ),
       ),
@@ -502,13 +505,11 @@ class _ImageDetailViewState extends State<ImageDetailView>
     required ImageModel image,
     required double width,
     required double height,
-    required Map<String, String>? headers,
   }) {
     return _imageHalf(
       image: image,
       width: width,
       height: height,
-      headers: headers,
       showLeftSide: _showLeftImage,
     );
   }
@@ -517,7 +518,6 @@ class _ImageDetailViewState extends State<ImageDetailView>
     required ImageModel image,
     required double width,
     required double height,
-    required Map<String, String>? headers,
   }) {
     // Track drag offset
     final dragOffset = ValueNotifier<Offset>(Offset.zero);
@@ -529,7 +529,6 @@ class _ImageDetailViewState extends State<ImageDetailView>
           image: image,
           width: width,
           height: height,
-          headers: headers,
           showLeftSide: false,
         ),
         GestureDetector(
@@ -581,7 +580,6 @@ class _ImageDetailViewState extends State<ImageDetailView>
                     image: image,
                     width: width,
                     height: height,
-                    headers: headers,
                     showLeftSide: true,
                   ),
                 ),
@@ -597,7 +595,6 @@ class _ImageDetailViewState extends State<ImageDetailView>
     required ImageModel image,
     required double width,
     required double height,
-    required Map<String, String>? headers,
     required bool parallel,
   }) {
     return SizedBox(
@@ -608,16 +605,14 @@ class _ImageDetailViewState extends State<ImageDetailView>
         children: [
           _imageHalf(
             image: image,
-            width: width,
+            width: width / 2,
             height: height,
-            headers: headers,
             showLeftSide: parallel,
           ),
           _imageHalf(
             image: image,
-            width: width,
+            width: width / 2,
             height: height,
-            headers: headers,
             showLeftSide: !parallel,
           ),
         ],
@@ -629,7 +624,6 @@ class _ImageDetailViewState extends State<ImageDetailView>
     required ImageModel image,
     required double width,
     required double height,
-    required Map<String, String>? headers,
   }) {
     return ValueListenableBuilder<StereoInfo?>(
       valueListenable: _stereoMetadataNotifier,
@@ -640,14 +634,12 @@ class _ImageDetailViewState extends State<ImageDetailView>
               image: image,
               width: width,
               height: height,
-              headers: headers,
             );
           case StereoViewMode.crossEyed:
             return _twoEyesView(
               image: image,
               width: width,
               height: height,
-              headers: headers,
               parallel: false,
             );
           case StereoViewMode.animated:
@@ -655,7 +647,6 @@ class _ImageDetailViewState extends State<ImageDetailView>
               image: image,
               width: width,
               height: height,
-              headers: headers,
             );
           case StereoViewMode.parallel:
           default:
@@ -663,7 +654,6 @@ class _ImageDetailViewState extends State<ImageDetailView>
               image: image,
               width: width,
               height: height,
-              headers: headers,
               parallel: true,
             );
         }
