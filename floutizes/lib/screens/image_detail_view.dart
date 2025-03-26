@@ -24,20 +24,6 @@ class ImageDetailView extends StatefulWidget {
   State<ImageDetailView> createState() => _ImageDetailViewState();
 }
 
-/// Custom clipper to show only half of the image
-class _HalfImageClipper extends CustomClipper<Rect> {
-  final Rect clipRect;
-
-  _HalfImageClipper(this.clipRect);
-
-  @override
-  Rect getClip(Size size) => clipRect;
-
-  @override
-  bool shouldReclip(_HalfImageClipper oldClipper) =>
-      oldClipper.clipRect != clipRect;
-}
-
 class _ImageDetailViewState extends State<ImageDetailView>
     with SingleTickerProviderStateMixin {
   late PageController _pageController;
@@ -53,6 +39,10 @@ class _ImageDetailViewState extends State<ImageDetailView>
   // For stereo animation
   AnimationController? _stereoAnimationController;
   bool _showLeftImage = true;
+
+  // Track stereo metadata changes
+  final ValueNotifier<StereoInfo?> _stereoMetadataNotifier =
+      ValueNotifier(null);
 
   @override
   void initState() {
@@ -140,6 +130,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
     _pageController.removeListener(_onPageChanged);
     _pageController.dispose();
     _focusNode.dispose();
+    _stereoMetadataNotifier.dispose();
     super.dispose();
   }
 
@@ -155,6 +146,8 @@ class _ImageDetailViewState extends State<ImageDetailView>
             _images![_currentIndex].stereo != null) {
           // Use the preferred stereo view mode
           _stereoViewMode = _preferredStereoViewMode;
+          // Update the stereo metadata notifier
+          _stereoMetadataNotifier.value = _images![_currentIndex].stereo;
 
           // Restart animation if mode is animated
           if (_stereoViewMode == StereoViewMode.animated) {
@@ -166,6 +159,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
           // Reset stereo view mode for non-stereo images
           _stereoViewMode = StereoViewMode.none;
           _stereoAnimationController?.stop();
+          _stereoMetadataNotifier.value = null;
         }
       });
       _precacheNearbyImages(_currentIndex);
@@ -471,7 +465,6 @@ class _ImageDetailViewState extends State<ImageDetailView>
     );
   }
 
-  /// Utility method to create an image that shows either left or right half
   Widget _imageHalf({
     required ImageModel image,
     required double width,
@@ -480,29 +473,36 @@ class _ImageDetailViewState extends State<ImageDetailView>
     required bool showLeftSide,
   }) {
     final imageUrl = ApiService.instance.getImageUrl(image.midiPath);
-    double horizontalOffset = _showLeftImage ? (image.stereo?.dx ?? 0) : 0;
-    double verticalOffset = _showLeftImage ? (image.stereo?.dy ?? 0) : 0;
+    final stereoInfo = image.stereo!;
 
-    // Calculate the alignment based on side and offset
-    // Alignment is in range -1 to 1, where -1 is far left, 1 is far right
-    // Convert offset to alignment scale (divide by width to get a value between -1 and 1)
-    final double offsetAlignment = horizontalOffset / width;
-    final double baseAlignment =
-        showLeftSide ? -1.0 : 1.0; // Left or right edge
-    final Alignment alignment =
-        Alignment(baseAlignment + offsetAlignment, verticalOffset / height);
+    if (!showLeftSide) {
+      // Display the right half
+      return ClipRect(
+        child: Align(
+          alignment: Alignment.centerRight,
+          widthFactor: 0.5,
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.fitWidth,
+          ),
+        ),
+      );
+    }
 
-    return SizedBox(
-      width: width / 2,
-      height: height,
-      // We make the image double the width to show only half of the image in the sizedbox
-      child: Image.network(
-        imageUrl,
-        headers: headers,
-        fit: BoxFit.cover,
-        alignment: alignment,
-        width: width * 2,
-        height: height,
+    // Apply offsets for the left image.
+    double dx = stereoInfo.dx;
+    double dy = stereoInfo.dy;
+    return ClipRect(
+      child: Align(
+        alignment: Alignment.centerLeft,
+        widthFactor: 0.5,
+        child: Transform.translate(
+          offset: Offset(width * dx / image.width, height * dy / image.height),
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.fitWidth,
+          ),
+        ),
       ),
     );
   }
@@ -528,6 +528,9 @@ class _ImageDetailViewState extends State<ImageDetailView>
     required double height,
     required Map<String, String>? headers,
   }) {
+    // Track drag offset
+    final dragOffset = ValueNotifier<Offset>(Offset.zero);
+
     return Stack(
       children: [
         // Right image (bottom layer)
@@ -538,15 +541,61 @@ class _ImageDetailViewState extends State<ImageDetailView>
           headers: headers,
           showLeftSide: false,
         ),
-        // Left image (top layer with 50% opacity)
-        Opacity(
-          opacity: 0.5,
-          child: _imageHalf(
-            image: image,
-            width: width,
-            height: height,
-            headers: headers,
-            showLeftSide: true,
+        GestureDetector(
+          onPanUpdate: (details) {
+            dragOffset.value += details.delta;
+          },
+          onPanEnd: (details) async {
+            var stereoInfo = image.stereo!;
+            // Update the model, converting the offset to image size.
+            image.stereo = StereoInfo(
+              dx: stereoInfo.dx + image.width * (dragOffset.value.dx / width),
+              dy: stereoInfo.dy + image.height * (dragOffset.value.dy / height),
+            );
+
+            // Update the notifier to trigger rebuilds
+            _stereoMetadataNotifier.value = image.stereo;
+
+            // // Save the changes to the server
+            // try {
+            //   await ApiService.instance.updateImageMetadata(
+            //     image.id,
+            //     {'stereo': {'dx': newDx, 'dy': newDy}},
+            //   );
+            // } catch (e) {
+            //   // If save fails, revert the changes
+            //   image.stereo = StereoMetadata(
+            //     dx: image.stereo!.dx,
+            //     dy: image.stereo!.dy,
+            //   );
+            //   if (mounted) {
+            //     ScaffoldMessenger.of(context).showSnackBar(
+            //       const SnackBar(
+            //         content: Text('Erreur lors de la sauvegarde des modifications'),
+            //       ),
+            //     );
+            //   }
+            // }
+            // Reset the drag offset
+            dragOffset.value = Offset.zero;
+          },
+          child: ValueListenableBuilder<Offset>(
+            valueListenable: dragOffset,
+            builder: (context, offset, child) {
+              return Opacity(
+                opacity: 0.5,
+                child: Transform.translate(
+                  offset: offset,
+                  child: _imageHalf(
+                    image: image,
+                    width: width,
+                    height: height,
+                    headers: headers,
+                    showLeftSide: true,
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -566,7 +615,6 @@ class _ImageDetailViewState extends State<ImageDetailView>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Left eye image (always on the left side of screen)
           _imageHalf(
             image: image,
             width: width,
@@ -574,7 +622,6 @@ class _ImageDetailViewState extends State<ImageDetailView>
             headers: headers,
             showLeftSide: parallel,
           ),
-          // Right eye image (always on the right side of screen)
           _imageHalf(
             image: image,
             width: width,
@@ -593,39 +640,44 @@ class _ImageDetailViewState extends State<ImageDetailView>
     required double height,
     required Map<String, String>? headers,
   }) {
-    switch (_stereoViewMode) {
-      case StereoViewMode.align:
-        return _alignView(
-          image: image,
-          width: width,
-          height: height,
-          headers: headers,
-        );
-      case StereoViewMode.crossEyed:
-        return _twoEyesView(
-          image: image,
-          width: width,
-          height: height,
-          headers: headers,
-          parallel: false,
-        );
-      case StereoViewMode.animated:
-        return _animatedView(
-          image: image,
-          width: width,
-          height: height,
-          headers: headers,
-        );
-      case StereoViewMode.parallel:
-      default:
-        return _twoEyesView(
-          image: image,
-          width: width,
-          height: height,
-          headers: headers,
-          parallel: true,
-        );
-    }
+    return ValueListenableBuilder<StereoInfo?>(
+      valueListenable: _stereoMetadataNotifier,
+      builder: (context, stereoInfo, child) {
+        switch (_stereoViewMode) {
+          case StereoViewMode.align:
+            return _alignView(
+              image: image,
+              width: width,
+              height: height,
+              headers: headers,
+            );
+          case StereoViewMode.crossEyed:
+            return _twoEyesView(
+              image: image,
+              width: width,
+              height: height,
+              headers: headers,
+              parallel: false,
+            );
+          case StereoViewMode.animated:
+            return _animatedView(
+              image: image,
+              width: width,
+              height: height,
+              headers: headers,
+            );
+          case StereoViewMode.parallel:
+          default:
+            return _twoEyesView(
+              image: image,
+              width: width,
+              height: height,
+              headers: headers,
+              parallel: true,
+            );
+        }
+      },
+    );
   }
 
   /// Builds the stereo control buttons for switching between parallel and
@@ -658,7 +710,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
           const SizedBox(width: 16),
           Tooltip(
             message:
-                'Pour image stéréo - utilisez la technique des yeux croisés (focus devant l\'image)',
+                'Pour image stéréo - utilisez la technique des yeux croisés (louchez)',
             child: ElevatedButton.icon(
               icon: const Icon(Icons.compare_arrows_rounded),
               label: const Text('Vue Croisée'),

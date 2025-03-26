@@ -54,8 +54,8 @@ class StereoInfo {
   StereoInfo({
     required this.dx,
     required this.dy,
-    required this.anaDx,
-    required this.anaDy,
+    this.anaDx = 0,
+    this.anaDy = 0,
   });
 
   factory StereoInfo.fromJson(Map<String, dynamic> json) {
