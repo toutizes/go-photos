@@ -20,7 +20,8 @@ class ImageModel {
     required this.keywords,
     this.stereo,
   }) {
-    if (keywords.contains('stereo') && stereo == null) {
+    if ((keywords.contains('stereo') || keywords.contains('stéreo')) &&
+        stereo == null) {
       stereo = StereoInfo(dx: 0, dy: 0, anaDx: 0, anaDy: 0);
     }
   }
