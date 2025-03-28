@@ -43,7 +43,8 @@ func doScaleN(in_dir string, imgs []*Image, size int, out_dir string) {
 func doScaleN_1(in_dir string, imgs []*Image, size int, out_dir string) {
 	args := make([]string, 0, len(imgs)+10)
 	args = append(args, []string{
-		*BinRoot + "mogrify",
+		*BinRoot + "magick",
+    "mogrify",
 		"-resize", fmt.Sprintf("%dx%d", size, size),
 		"-quality", "90",
 		"-path", out_dir}...)
