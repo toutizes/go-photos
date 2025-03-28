@@ -107,12 +107,17 @@ class MontagedImages<T> {
     final adaptedItem = _items[index];
     final headers = ApiService.instance.getImageHeaders();
 
+    double dx;
+    if (montageGroup.items.length == 1) {
+      dx = -1.0;
+    } else {
+      dx = -1 + 2 * positionInGroup / (montageGroup.items.length - 1);
+    }
     return Image.network(
       montageGroup.montageUrl,
       headers: headers,
       fit: BoxFit.none,
-      alignment: Alignment(
-          -1 + 2 * positionInGroup / (montageGroup.items.length - 1), 0),
+      alignment: Alignment(dx, 0),
       width: _imageSize.toDouble(),
       height: _imageSize.toDouble(),
       frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
