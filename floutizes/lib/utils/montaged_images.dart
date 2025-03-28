@@ -39,19 +39,26 @@ class DirectoryModelAdapter implements MontagedItem {
   Object get object => directory;
 }
 
+class MontageGroup {
+  final List<MontagedItem> items;
+  final String montageUrl;
+
+  MontageGroup(this.items, this.montageUrl);
+}
+
 class MontagedImages<T> {
-  static const int _imageSize = 300;
+  static const int _imageSize = 360;
   static const int _defaultGroupSize = 8;
 
   final List<MontagedItem> _items;
-  final List<String> _montageUrls;
+  final List<MontageGroup> _montageGroups;
   final int groupSize;
 
   MontagedImages._({
     required List<MontagedItem> items,
     required this.groupSize,
   })  : _items = items,
-        _montageUrls = _createMontageUrls(items, groupSize);
+        _montageGroups = _createMontageGroups(items, groupSize);
 
   factory MontagedImages.fromImageModels(List<ImageModel> images,
       {int groupSize = _defaultGroupSize}) {
@@ -69,35 +76,22 @@ class MontagedImages<T> {
     );
   }
 
-  static List<String> _createMontageUrls(
+  // Group items into groups of size groupSize, the last group may be smaller
+  static List<MontageGroup> _createMontageGroups(
       List<MontagedItem> items, int groupSize) {
-    final List<List<int>> montageGroups = [];
-
-    // Group items into groups of size groupSize
+    final List<MontageGroup> montageGroups = [];
     for (var i = 0; i < items.length; i += groupSize) {
       final end =
           (i + groupSize <= items.length) ? i + groupSize : items.length;
-      final group = items.sublist(i, end).map((item) => item.id).toList();
-
-      // Pad the last group with repeated last ID if needed
-      if (group.length < groupSize && group.isNotEmpty) {
-        final lastId = group.last;
-        while (group.length < groupSize) {
-          group.add(lastId);
-        }
-      }
-
-      montageGroups.add(group);
+      final groupItems = items.sublist(i, end).toList();
+      final url = ApiService.instance.getMontageUrl(
+        groupItems.map((item) => item.id).toList(),
+        width: _imageSize,
+        height: _imageSize,
+      );
+      montageGroups.add(MontageGroup(groupItems, url));
     }
-
-    // Create montage URLs for each group
-    return montageGroups
-        .map((group) => ApiService.instance.getMontageUrl(
-              group,
-              width: _imageSize,
-              height: _imageSize,
-            ))
-        .toList();
+    return montageGroups;
   }
 
   Widget buildImage(T item) {
@@ -109,15 +103,16 @@ class MontagedImages<T> {
 
     final montageGroupIndex = index ~/ groupSize;
     final positionInGroup = index % groupSize;
-    final montageUrl = _montageUrls[montageGroupIndex];
+    final montageGroup = _montageGroups[montageGroupIndex];
     final adaptedItem = _items[index];
     final headers = ApiService.instance.getImageHeaders();
 
     return Image.network(
-      montageUrl,
+      montageGroup.montageUrl,
       headers: headers,
       fit: BoxFit.none,
-      alignment: Alignment(-1 + 2 * positionInGroup / (groupSize - 1), 0),
+      alignment: Alignment(
+          -1 + 2 * positionInGroup / (montageGroup.items.length - 1), 0),
       width: _imageSize.toDouble(),
       height: _imageSize.toDouble(),
       frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {

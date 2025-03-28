@@ -153,7 +153,8 @@ func feedImages(db *Database, force bool, img_ch chan<- *Image) int {
 // 4: Minifed 229 images in 20249 ms
 // 4:   mogri 229 images in 14058 ms
 // 2: Minifed 229 images in 30756 ms
-// Pure go impl:
+// Pure go impl (current):
+// 2: Minifed 229 images in 20946 ms
 // 4: Minifed 229 images in 11643 ms
 // rm -rf /tmp/mini/2005-0{1,2,3,4}*
 // 8: Minifed 927 images in 68639 ms
