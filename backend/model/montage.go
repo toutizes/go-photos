@@ -49,9 +49,9 @@ func HandleMontage2(w http.ResponseWriter, r *http.Request, db *Database) {
   if servePath(w, mont) {
     return
   }
-  cmd := exec.Command(*BinRoot + "montage")
+  cmd := exec.Command(*BinRoot + "magick")
   args := make([]string, 0, len(ids) + 16)
-  args = append(args, *BinRoot + "montage")
+  args = append(args, "montage")
   for _, id := range ids {
     args = append(args, db.MiniPath(id))
   }

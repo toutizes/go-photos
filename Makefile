@@ -1,4 +1,4 @@
-SERVER=ce1
+SERVER=ce1-debian12
 LR_ACTIONS="$(HOME)/Library/Application Support/Adobe/Lightroom/Export Actions"
 SYN_TXT=backend/model/synonyms.txt
 

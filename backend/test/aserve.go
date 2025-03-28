@@ -22,6 +22,7 @@ import (
 
 var static_root = flag.String("static_root", "", "path to the static files")
 var orig_root = flag.String("orig_root", "", "path to the original images")
+var letsencrypt_root = flag.String("letsencrypt_root", "", "path to letsencrypt files")
 var root = flag.String("root", "", "path to the database index, mini, etc")
 var url_prefix = flag.String("url_prefix", "/db", "prefix for the urls.")
 var num_cpu = flag.Int("num_cpu", 0, "Number of CPUs to use.  0 means MAXPROC.")
@@ -331,8 +332,8 @@ func main() {
 		}
 		
 		err := tlsServer.ListenAndServeTLS(
-			"/etc/letsencrypt/live/toutizes.com/fullchain.pem",
-			"/etc/letsencrypt/live/toutizes.com/privkey.pem")
+			*letsencrypt_root + "/live/toutizes.com/fullchain.pem",
+			*letsencrypt_root + "/live/toutizes.com/privkey.pem")
 		log.Printf("Web server error: %s\n", err)
 	} else {
 		err := server.ListenAndServe()
