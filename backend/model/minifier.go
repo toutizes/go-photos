@@ -2,13 +2,15 @@ package model
 
 import (
 	"flag"
-	"fmt"
+	"github.com/nfnt/resize"
+	"image"
+	"image/draw"
+	"image/jpeg"
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"path"
-	"strings"
+	"sync"
 	"time"
 )
 
@@ -32,74 +34,117 @@ func mustScale(img *Image, mini_times map[string]time.Time) bool {
 	return !ok || mini_time.Before(img.FileTime())
 }
 
-func doScaleN(in_dir string, imgs []*Image, size int, out_dir string) {
-	chunk := 10
-	for i := 0; i < len(imgs); i += chunk {
-		log.Printf("doScaleN %s: %d, %d\n", out_dir, i, min(i+chunk, len(imgs)))
-		doScaleN_1(in_dir, imgs[i:min(i+chunk, len(imgs))], size, out_dir)
-	}
+func origPath(db *Database, img *Image) string {
+	return path.Join(db.orig_root, img.Directory().RelPat(), img.Name())
 }
 
-func doScaleN_1(in_dir string, imgs []*Image, size int, out_dir string) {
-	args := make([]string, 0, len(imgs)+10)
-	args = append(args, []string{
-		*BinRoot + "magick",
-    "mogrify",
-		"-resize", fmt.Sprintf("%dx%d", size, size),
-		"-quality", "90",
-		"-path", out_dir}...)
-	if size > 1000 {
-		args = append(args, []string{"-interlace", "Plane"}...)
+func midiPath(db *Database, img *Image) string {
+	return path.Join(db.midi_root, img.Directory().RelPat(), img.Name())
+}
+
+func miniPath(db *Database, img *Image) string {
+	return path.Join(db.mini_root, img.Directory().RelPat(), img.Name())
+}
+
+func centerSquareCrop(img image.Image) image.Rectangle {
+	bounds := img.Bounds()
+	width := bounds.Dx()
+	height := bounds.Dy()
+
+	var squareSize, xOffset, yOffset int
+
+	if width < height {
+		squareSize = width
+		yOffset = (height - width) / 2
+		xOffset = 0
+	} else {
+		squareSize = height
+		xOffset = (width - height) / 2
+		yOffset = 0
 	}
-	for _, img := range imgs {
-		args = append(args, path.Join(in_dir, img.Name()))
+
+	return image.Rect(xOffset, yOffset, xOffset+squareSize, yOffset+squareSize)
+}
+
+// Scale the image if it's larger than the max dim. Otherwise
+// return the image as was.
+func scaleImage(src image.Image, maxDim uint, centerCrop bool) image.Image {
+	var bounds image.Rectangle
+	if centerCrop {
+		bounds = centerSquareCrop(src)
+	} else {
+		bounds = src.Bounds()
 	}
-	cmd := exec.Command(args[0], args[1:]...)
-	output, err := cmd.CombinedOutput()
+	width := bounds.Dx()
+	height := bounds.Dy()
+
+	scale := float32(maxDim) / float32(max(width, height))
+	newW := uint(scale * float32(width))
+	newH := uint(scale * float32(height))
+	if !centerCrop {
+		if scale > 1.0 {
+			return src
+		}
+		return resize.Resize(newW, newH, src, resize.Lanczos3)
+	}
+	croppedImg := image.NewRGBA(bounds)
+	draw.Draw(croppedImg, croppedImg.Bounds(), src, bounds.Min, draw.Src)
+	if scale > 1.0 {
+		return croppedImg
+	}
+	return resize.Resize(newW, newH, croppedImg, resize.Lanczos3)
+}
+
+func doScaleImg(db *Database, img *Image) int {
+	orig := origPath(db, img)
+	f, err := os.Open(orig)
 	if err != nil {
-		log.Printf("doScaleN failed (%s): %s\n", strings.Join(args, " "), err)
-		log.Printf("Full output: %s\n", string(output))
+		log.Printf("%v: cannot open", orig)
+		return 0
 	}
+	data, err := jpeg.Decode(f)
+	if err != nil {
+		log.Printf("%v: cannot decode jpg", orig)
+		return 0
+	}
+	if img.width == 0 || img.height == 0 {
+		log.Printf("%v: zero dimension, cannot scale", orig)
+		return 0
+	}
+	midiData := scaleImage(data, 2048, false)
+	midiO, err := os.Create(midiPath(db, img))
+	if err != nil {
+		log.Printf("%v: cannot create", midiPath(db, img))
+		return 0
+	}
+	options := &jpeg.Options{Quality: 90} // Quality ranges from 1 to 100
+	jpeg.Encode(midiO, midiData, options)
+	miniData := scaleImage(midiData, 360, true)
+	miniO, err := os.Create(miniPath(db, img))
+	if err != nil {
+		log.Printf("%v: cannot create", miniPath(db, img))
+		return 0
+	}
+	jpeg.Encode(miniO, miniData, options)
+	return 1
 }
 
-func minify(db *Database, dir *Directory, force_minis bool, force_midis bool) int {
-	start_time := time.Now()
-	rel_pat := dir.RelPat()
-	mini_dir := db.FullMiniPath(rel_pat)
-	mini_times := indexTimes(mini_dir)
-	midi_dir := db.FullMidiPath(rel_pat)
-	midi_times := indexTimes(midi_dir)
-	orig_dir := db.FullOrigPath(rel_pat)
-	num_resized := 0
-	var to_minis []*Image
-	var to_midis []*Image
-	for _, img := range dir.Images() {
-		if force_minis || mustScale(img, mini_times) {
-			to_minis = append(to_minis, img)
-			num_resized += 1
-		}
-		if force_midis || mustScale(img, midi_times) {
-			to_midis = append(to_midis, img)
-			num_resized += 1
+func feedImages(db *Database, force bool, img_ch chan<- *Image) int {
+	fed := 0
+	for _, dir := range db.Directories() {
+		rel_pat := dir.RelPat()
+		mini_dir := db.FullMiniPath(rel_pat)
+		mini_times := indexTimes(mini_dir)
+		midi_dir := db.FullMidiPath(rel_pat)
+		midi_times := indexTimes(midi_dir)
+		for _, img := range dir.Images() {
+			if force || mustScale(img, mini_times) || mustScale(img, midi_times) {
+				fed += 1
+				img_ch <- img
+			}
 		}
 	}
-	if to_minis != nil {
-		doScaleN(orig_dir, to_minis, 360, mini_dir)
-	}
-	if to_midis != nil {
-		doScaleN(orig_dir, to_midis, 2048, midi_dir)
-	}
-	if num_resized > 0 {
-		log.Printf("%s: resized %d in %d ms\n", rel_pat, num_resized,
-			time.Since(start_time).Nanoseconds()/1000000)
-	}
-	return num_resized
-}
-
-func minifyWorker(db *Database, dir_ch <-chan *Directory, res_ch chan<- int, force_minis bool, force_midis bool) {
-	for dir := range dir_ch {
-		res_ch <- minify(db, dir, force_minis, force_midis)
-	}
+	return fed
 }
 
 // rm -rf /tmp/mini/2005-01*
@@ -108,6 +153,8 @@ func minifyWorker(db *Database, dir_ch <-chan *Directory, res_ch chan<- int, for
 // 4: Minifed 229 images in 20249 ms
 // 4:   mogri 229 images in 14058 ms
 // 2: Minifed 229 images in 30756 ms
+// Pure go impl:
+// 4: Minifed 229 images in 11643 ms
 // rm -rf /tmp/mini/2005-0{1,2,3,4}*
 // 8: Minifed 927 images in 68639 ms
 // 8:   mogri 927 images in 47370
@@ -115,33 +162,32 @@ func minifyWorker(db *Database, dir_ch <-chan *Directory, res_ch chan<- int, for
 // 4: Minifed 927 images in 81521 ms
 // 4:   mogri 927 images in 49567 ms
 
+func minifyWorker2(db *Database, img_ch <-chan *Image, wg *sync.WaitGroup, id int) {
+	defer wg.Done()
+	N := 10
+	i := 0
+	start_time := time.Now()
+	for img := range img_ch {
+		i += 1
+		doScaleImg(db, img)
+		if (i % N) == 0 {
+			log.Printf("%d: Resized %d in %d ms\n", id, N,
+				time.Since(start_time).Nanoseconds()/1000000)
+			start_time = time.Now()
+		}
+	}
+}
+
 func MinifyDatabase(db *Database, force_minis bool, force_midis bool) int {
-	N := *minifier_threads
-	dir_ch := make(chan *Directory, N)
-	res_ch := make(chan int, N)
-	for i := 0; i < N; i++ {
-		go minifyWorker(db, dir_ch, res_ch, force_minis, force_midis)
+	force := force_minis || force_midis
+	img_ch := make(chan *Image)
+	var wg sync.WaitGroup
+	for i := 0; i < *minifier_threads; i++ {
+		wg.Add(1)
+		go minifyWorker2(db, img_ch, &wg, i)
 	}
-	dirs := db.Directories()
-	left := len(dirs)
-	pushed := 0
-	minified := 0
-	for left > 0 {
-		has_pushed := false
-		if pushed < len(dirs) {
-			select {
-			case dir_ch <- dirs[pushed]:
-				pushed += 1
-				has_pushed = true
-			default:
-			}
-		}
-		if !has_pushed {
-			minified += <-res_ch
-			left -= 1
-		}
-	}
-	close(dir_ch)
-	close(res_ch)
-	return minified
+	resized := feedImages(db, force, img_ch)
+	close(img_ch)
+	wg.Wait()
+	return resized
 }
