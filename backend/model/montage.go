@@ -11,6 +11,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func montageSpec(spec string) (geometry string, ids []int) {
@@ -42,6 +43,7 @@ func servePath(w http.ResponseWriter, path string) bool {
 }
 
 func HandleMontage2(w http.ResponseWriter, r *http.Request, db *Database) {
+	log.Printf("Montage: %s\n", r.URL.Path)
 	splits := strings.Split(r.URL.Path, "/")
 	if len(splits) == 0 {
 		return
@@ -50,13 +52,16 @@ func HandleMontage2(w http.ResponseWriter, r *http.Request, db *Database) {
 	geo, ids := montageSpec(spec)
 	mont := path.Join(db.MontagePath(), spec+".jpg")
 	if servePath(w, mont) {
+		log.Printf("Montage served from cache: %s\n", r.URL.Path)
 		return
 	}
 	createMontage2(db, geo, ids, mont)
 	servePath(w, mont)
+	log.Printf("Montage built and serve: %s\n", r.URL.Path)
 }
 
 func createMontage2(db *Database, geo string, ids []int, montPath string) {
+	start_time := time.Now()
 	var images []image.Image
 	var width, height int
 
@@ -104,4 +109,6 @@ func createMontage2(db *Database, geo string, ids []int, montPath string) {
 
 	// Adjust quality as needed
 	jpeg.Encode(outFile, concatenatedImg, &jpeg.Options{Quality: 90})
+	log.Printf("Montage built %d ms\n",
+		time.Since(start_time).Nanoseconds()/1000000)
 }
