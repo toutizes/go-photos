@@ -40,8 +40,10 @@ push_minify:
 	GOOS=linux GOARCH=amd64 go build -o bin_linux/minify backend/util/minify.go
 	rsync "bin_linux/minify" $(SERVER):/mnt/photos/bin/
 
-addkwds: generate
-	go run backend/test/addkwds.go --root /tmp/a
+list_kwds: generate
+	go run backend/test/list_kwds.go /Users/matthieu/projects/test-photos/2003/2003-05-07/Image02.jpg
+	# go run backend/test/list_kwds.go ~/projects/test-photos/2003/2003-05-07/Image06.jpg 
+	# go run backend/test/list_kwds.go ~/projects/test-photos/1979/Devin-io-0168.jpg 
 
 GENERATED=backend/store/db.pb.go
 generate: $(GENERATED)

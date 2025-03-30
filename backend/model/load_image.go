@@ -2,19 +2,24 @@ package model
 
 import (
 	"bufio"
-	"errors"
-	"fmt"
+	"bytes"
+	"golang.org/x/text/encoding/charmap"
+	"image"
+	_ "image/jpeg"
 	"log"
 	"os"
-	"os/exec"
-	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 import (
 	"github.com/golang/protobuf/proto"
 	"github.com/rwcarlsen/goexif/exif"
+	// For parsing JPEG segments
+	jpegstructure "github.com/dsoprea/go-jpeg-image-structure/v2"
+	// For parsing IPTC data
+	iptc "github.com/dsoprea/go-iptc"
 )
 
 import "toutizes.com/go-photwo/backend/store"
@@ -165,73 +170,6 @@ func tagTime(ex *exif.Exif, ts exif.FieldName) (t time.Time, err error) {
 	return
 }
 
-func tagInt(ex *exif.Exif, ts exif.FieldName) (val int32, err error) {
-	val = -1
-	tg, err := ex.Get(ts)
-	if err != nil {
-		return
-	}
-	if tg.Count != 1 {
-		err = errors.New(fmt.Sprintf("Tag count not 1: %s", ts))
-		return
-	}
-	int_val, err := tg.Int(0)
-	if err == nil {
-		val = int32(int_val)
-	}
-	return
-}
-
-func parseKeywords(s string) (keywords []string) {
-	if strings.HasPrefix(s, "convert: unknown image property") || len(s) == 0 {
-		return nil
-	}
-	if strings.HasSuffix(s, "\n") {
-		s = s[0 : len(s)-1]
-	}
-	s = macAccentsCleaner.Replace(s)
-	return strings.Split(s, ";")
-}
-
-func getImageInfo(file string) (height int, width int, keywords []string, err error) {
-	args := []string{
-		*BinRoot + "magick", file, "-format", "%h\\ %w\\n%[IPTC:2:25]\\n", "info:"}
-	cmd := exec.Command(args[0], args[1:]...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		// If there is no IPTC entry.
-		log.Printf("IPTC failed, trying just sizes: %s\n", file)
-		log.Printf("Cmd: %s =>\n%s\n", strings.Join(args, " "), string(out))
-		cmd = exec.Command(*BinRoot + "magick", file, "-format", "%h %w\\n", "info:")
-		out, err = cmd.Output()
-	}
-	if err != nil {
-		return
-	}
-	// First line is "height width"
-	// Second line is "kwd;kwd;kwd"
-	lines := strings.Split(string(out), "\n")
-	if len(lines) >= 1 {
-		h_w := strings.SplitN(lines[0], " ", 2)
-		height, err = strconv.Atoi(h_w[0])
-		if err != nil {
-      log.Printf("Cmd: %s =>\n%s\n", strings.Join(args, " "), string(out))
-      log.Printf("Error in Atoi for height: %s\n", h_w[0])
-			return
-		}
-		width, err = strconv.Atoi(h_w[1])
-		if err != nil {
-      // log.Printf("Cmd: %s =>\n%s\n", strings.Join(args, " "), string(out))
-      // log.Printf("Error in Atoi for width: %s\n", h_w[1])
-			return
-		}
-	}
-	if len(lines) >= 2 {
-		keywords = parseKeywords(lines[1])
-	}
-	return
-}
-
 func LoadImageFile(file string, image *store.Item) error {
 	fi, err := os.Open(file)
 	if err != nil {
@@ -271,7 +209,7 @@ func LoadImageFile(file string, image *store.Item) error {
 	}
 	its := TimeToProto(image_time)
 	image.ItemTimestamp = &its
-	height, width, kwds, err := getImageInfo(file)
+	height, width, kwds, err := GetImageInfo2(file)
 	if err == nil {
 		if kwds != nil && len(kwds) > 0 {
 			image.Keywords = kwds
@@ -283,4 +221,77 @@ func LoadImageFile(file string, image *store.Item) error {
 		log.Printf("Info got error %s: %s", file, err.Error())
 	}
 	return nil
+}
+
+func GetImageInfo2(filepath string) (height int, width int, keywords []string, err error) {
+	data, err := os.ReadFile(filepath)
+	if err != nil {
+		return
+	}
+
+	reader := bytes.NewReader(data)
+
+	// Decode image configuration using the reader based on the byte slice
+	config, _, err := image.DecodeConfig(reader)
+	if err != nil {
+		log.Printf("Error decoding image config: %s\n", err.Error())
+		return
+	}
+
+	// Named return values
+	height = config.Height
+	width = config.Width
+
+	parser := jpegstructure.NewJpegMediaParser()
+	intfc, err := parser.ParseBytes(data)
+	if err != nil {
+		log.Printf("Parsing jpeg media: %s\n", err.Error())
+		return
+	}
+
+	sl := intfc.(*jpegstructure.SegmentList)
+	_, segment, err := sl.FindIptc()
+	if err != nil {
+		log.Printf("Finding iptc: %s\n", err.Error())
+		return
+	}
+
+	tags, err := segment.Iptc()
+	if err != nil {
+		log.Printf("Iptc tags: %s\n", err.Error())
+		return
+	}
+
+	kwdBytes := tags[iptc.StreamTagKey{RecordNumber: 2, DatasetNumber: 25}]
+
+	keywords = make([]string, 0, len(kwdBytes))
+	for _, bytes := range kwdBytes {
+		var decodedString string
+		if utf8.Valid(bytes) {
+      // fmt.Printf("valid utf8: %v\n", bytes)
+      // for _, b := range bytes {
+      //   fmt.Printf(" %x %d %c\n", b, b, b)
+      // }
+			decodedString = string(bytes)
+      // fmt.Printf("decoded utf8: %s\n", decodedString)
+		} else {
+			// Assume Latin-1
+			decoder := charmap.ISO8859_1.NewDecoder()
+			decodedBytes, err := decoder.Bytes(bytes)
+      // fmt.Printf("decoded latin1: %v",decodedBytes)
+			if err != nil {
+				// Should be rare for ISO-8859-1, but handle just in case
+				log.Printf("%s: Failed to decode supposed ISO-8859-1 keyword bytes: %v", filepath, err)
+				// Pray! (As we did before)
+				decodedString = string(bytes)
+			} else {
+				decodedString = string(decodedBytes) // Now contains valid Go UTF-8 string
+			}
+		}
+		for _, kwd := range strings.Split(decodedString, ";") {
+			keywords = append(keywords, kwd)
+		}
+	}
+
+	return
 }
