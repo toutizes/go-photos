@@ -33,7 +33,7 @@ void main() async {
 
 final _router = GoRouter(
   // debugLogDiagnostics: true,
-  initialLocation: '/albums',
+  initialLocation: '/images',
   refreshListenable: authService,
   redirect: (context, state) {
     final auth = Provider.of<AuthService>(context, listen: false);
@@ -54,7 +54,7 @@ final _router = GoRouter(
         final uri = Uri.parse(decodedPath);
         return '${uri.path}${uri.query.isEmpty ? '' : '?${uri.query}'}';
       }
-      return '/albums';
+      return '/images';
     }
 
     return null;

@@ -38,8 +38,12 @@ class _HomeScreenState extends State<HomeScreen> {
       _currentSearch = widget.initialSearchString!;
       _searchController.text = widget.initialSearchString!;
     } else if (_currentView == ViewType.images) {
-      _currentSearch = 'grimace';
-      _searchController.text = 'grimace';
+      // Default the search term to the current month and day
+      final DateTime now = DateTime.now();
+      final String month = now.month.toString().padLeft(2, '0');
+      final String day = now.day.toString().padLeft(2, '0');
+      _currentSearch = '$month-$day';
+      _searchController.text = _currentSearch;
     }
     _scrollToImageId = widget.initialImageId;
     _loadHelpContent();
