@@ -215,7 +215,11 @@ class _ScaffoldWithNestedNavigationState
             bottomNavigationBar: isImmersive
                 ? null
                 : BottomNavigationBar(
+                    type: BottomNavigationBarType.fixed,
                     currentIndex: widget.navigationShell.currentIndex,
+                    selectedItemColor: Theme.of(context).colorScheme.primary,
+                    unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                    backgroundColor: Theme.of(context).colorScheme.surface,
                     items: const [
                       BottomNavigationBarItem(
                         icon: Icon(Icons.photo_album),
