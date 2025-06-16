@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../services/api_service.dart';
 import 'flow_view.dart';
 import 'albums_view.dart';
+import 'news_view.dart';
 import '../models/view_type.dart';
 import '../widgets/search_box.dart';
 
@@ -117,20 +118,44 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: SearchBox(
-          controller: _searchController,
-          hintText: _currentView == ViewType.albums
-              ? 'Recherche albums...'
-              : 'Recherche photos...',
-          onSearch: () => _performSearch(_searchController.text),
-          onClear: _clearSearch,
-          onHelp: () => _showSearchHelp(context),
-          onLogout: _handleLogout,
-        ),
+        title: _currentView == ViewType.news
+            ? Row(
+                children: [
+                  const Expanded(
+                    child: Text('Actualités'),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.logout),
+                    onPressed: _handleLogout,
+                    tooltip: 'Déconnexion',
+                  ),
+                ],
+              )
+            : SearchBox(
+                controller: _searchController,
+                hintText: _currentView == ViewType.albums
+                    ? 'Recherche albums...'
+                    : 'Recherche photos...',
+                onSearch: () => _performSearch(_searchController.text),
+                onClear: _clearSearch,
+                onHelp: () => _showSearchHelp(context),
+                onLogout: _handleLogout,
+              ),
       ),
       body: IndexedStack(
-        index: _currentView == ViewType.albums ? 0 : 1,
+        index: _currentView == ViewType.news 
+            ? 0 
+            : _currentView == ViewType.albums 
+                ? 1 
+                : 2,
         children: [
+          NewsView(
+            onAlbumSelected: (albumId) {
+              // Quote keywords containing spaces
+              var query = albumId.contains(' ') ? '"album:$albumId"' : "album:$albumId";
+              context.go('/images?q=${Uri.encodeComponent(query)}');
+            },
+          ),
           AlbumsView(
             searchQuery: _currentView == ViewType.albums ? _currentSearch : '',
             onAlbumSelected: (albumId) {
