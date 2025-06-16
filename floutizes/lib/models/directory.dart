@@ -11,6 +11,10 @@ class DirectoryModel {
   final int coverId;
   // Cover image name (CovName in backend)
   final String coverName;
+  // First 4 photo IDs for previews (PreviewIds in backend)
+  final List<int> previewIds;
+  // First 4 photo names for previews (PreviewNames in backend)
+  final List<String> previewNames;
 
   DirectoryModel({
     required this.id,
@@ -19,6 +23,8 @@ class DirectoryModel {
     required this.imageCount,
     required this.coverId,
     required this.coverName,
+    required this.previewIds,
+    required this.previewNames,
   });
 
   factory DirectoryModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +35,8 @@ class DirectoryModel {
       imageCount: json['Nimgs'] as int,
       coverId: json['Cov'] as int,
       coverName: json['CovName'] as String,
+      previewIds: List<int>.from(json['PreviewIds'] ?? []),
+      previewNames: List<String>.from(json['PreviewNames'] ?? []),
     );
   }
 
@@ -41,4 +49,8 @@ class DirectoryModel {
   String get coverMiniPath => '$miniPath/$coverName';
   String get coverMidiPath => '$midiPath/$coverName';
   String get coverMaxiPath => '$maxiPath/$coverName';
+
+  // Get preview image paths
+  List<String> get previewMiniPaths => previewNames.map((name) => '$miniPath/$name').toList();
+  List<String> get previewMidiPaths => previewNames.map((name) => '$midiPath/$name').toList();
 }

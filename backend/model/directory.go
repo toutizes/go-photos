@@ -149,6 +149,8 @@ type JsonDirectory struct {
   Nimgs int                     // Number of images in album
   Cov int                       // Cover image id
   CovName string                // Cover image name
+  PreviewIds []int              // First 4 photo IDs for previews
+  PreviewNames []string         // First 4 photo names for previews
 }
 
 func (dir *Directory) Json(jdir *JsonDirectory) {
@@ -164,6 +166,20 @@ func (dir *Directory) Json(jdir *JsonDirectory) {
     img0 := dir.images[0]
     jdir.Cov = img0.Id
     jdir.CovName = img0.Name()
+    
+    // Populate images 1, 2, and 3 for previews (cover is already image 0)
+    previewCount := len(dir.images) - 1  // Exclude the first image (cover)
+    if previewCount > 3 {
+      previewCount = 3
+    }
+    if previewCount > 0 {
+      jdir.PreviewIds = make([]int, previewCount)
+      jdir.PreviewNames = make([]string, previewCount)
+      for i := 0; i < previewCount; i++ {
+        jdir.PreviewIds[i] = dir.images[i+1].Id      // Start from index 1
+        jdir.PreviewNames[i] = dir.images[i+1].Name() // Start from index 1
+      }
+    }
   }
 }
 
