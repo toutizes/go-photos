@@ -42,8 +42,9 @@ push_minify:
 
 list_kwds: generate
 	go run backend/test/list_kwds.go /Users/matthieu/projects/test-photos/2003/2003-05-07/Image02.jpg
-	# go run backend/test/list_kwds.go ~/projects/test-photos/2003/2003-05-07/Image06.jpg 
-	# go run backend/test/list_kwds.go ~/projects/test-photos/1979/Devin-io-0168.jpg 
+
+# go run backend/test/list_kwds.go ~/projects/test-photos/2003/2003-05-07/Image06.jpg 
+# go run backend/test/list_kwds.go ~/projects/test-photos/1979/Devin-io-0168.jpg 
 
 GENERATED=backend/store/db.pb.go
 generate: $(GENERATED)
@@ -64,12 +65,12 @@ install_sync:
 	go build --ldflags='-X main.Type=F' -o $(LR_ACTIONS)/gsync sync/gsync.go
 	go build --ldflags='-X main.Type=I' -o $(LR_ACTIONS)/gsync_incr sync/gsync.go
 
-test_sync:
-	go run --ldflags='-X main.Type=I' sync/gsync.go '/Users/matthieu/Pics from Bernard/Bernard/1953 and before/final/fianchabi.jpg'
+build_sync:
+	go build --ldflags='-X main.Type=F' -o bin/gsync sync/gsync.go
+	go build --ldflags='-X main.Type=I' -o bin/gsync_incr sync/gsync.go
 
-install_sync_inc:
-	go build -o bin/gsync sync/gsync.go
-	cp bin/gsync "$(HOME)/Library/Application Support/Adobe/Lightroom/Export Actions/gsync_inc"
+test_sync:
+	go run --ldflags='-X main.Type=I' sync/gsync.go --dry_run /Users/matthieu/Pictures/Photos/2025/2025-06-11/final/PXL_20250611_233024990.jpg /Users/matthieu/Pictures/Photos/2025/2025-06-11/final/PXL_20250612_002002574.jpg
 
 # Rules
 %.pb.go: %.proto
