@@ -15,7 +15,7 @@ class AuthService extends ChangeNotifier {
     // Set up continuous auth state monitoring
     _auth.authStateChanges().listen((User? user) async {
       _user = user;
-      _idToken = await user?.getIdToken(false);
+      await _refreshToken();
       notifyListeners();
     });
   }
@@ -26,6 +26,37 @@ class AuthService extends ChangeNotifier {
     _initialized = true;
     _user = _auth.currentUser;
     notifyListeners();
+  }
+
+  /// Refresh the ID token from Firebase
+  Future<void> _refreshToken() async {
+    if (_user != null) {
+      try {
+        _idToken = await _user!.getIdToken(false); // Use cached token initially
+      } catch (e) {
+        debugPrint('Error refreshing token: $e');
+        _idToken = null;
+      }
+    } else {
+      _idToken = null;
+    }
+  }
+
+  /// Manually refresh the token (for use by ApiService on 401 errors)
+  Future<String?> refreshToken() async {
+    if (_user != null) {
+      try {
+        _idToken = await _user!.getIdToken(true); // Force refresh on demand
+        notifyListeners();
+        return _idToken;
+      } catch (e) {
+        debugPrint('Error force refreshing token: $e');
+        _idToken = null;
+        notifyListeners();
+        return null;
+      }
+    }
+    return null;
   }
 
   User? get user => _user;

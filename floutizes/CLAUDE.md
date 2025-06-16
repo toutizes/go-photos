@@ -33,6 +33,7 @@ The app connects to a photo backend service via HTTP API:
 - Firebase Auth integration with Google Sign-In
 - `AuthService` manages authentication state globally via ChangeNotifier
 - JWT tokens are automatically included in API requests via Authorization headers
+- **Reactive token renewal**: API requests automatically retry with refreshed tokens on 401 authentication failures
 - Router-level authentication guards redirect unauthenticated users to `/login`
 - Authentication state is preserved across app restarts
 

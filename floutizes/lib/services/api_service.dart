@@ -95,14 +95,13 @@ class ApiService {
       return _searchCache[query]!;
     }
 
-    final headers = await _getHeaders();
     final url = '$baseUrl/db/q?q=${Uri.encodeComponent(query)}';
-    _logRequest('GET', url, headers);
 
     try {
-      final response = await _client.get(
-        Uri.parse(url),
-        headers: headers,
+      final response = await _makeAuthenticatedRequest(
+        (headers) => _client.get(Uri.parse(url), headers: headers),
+        'GET',
+        url,
       );
       _logResponse('GET', url, response);
 
@@ -141,13 +140,12 @@ class ApiService {
 
   Future<List<DirectoryModel>> getAlbums() async {
     final url = '$baseUrl/db/q?q=albums:&kind=album';
-    final headers = await _getHeaders();
-    _logRequest('GET', url, headers);
 
     try {
-      final response = await _client.get(
-        Uri.parse(url),
-        headers: headers,
+      final response = await _makeAuthenticatedRequest(
+        (headers) => _client.get(Uri.parse(url), headers: headers),
+        'GET',
+        url,
       );
 
       _logResponse('GET', url, response);
@@ -167,13 +165,12 @@ class ApiService {
 
   Future<List<DirectoryModel>> searchAlbums(String query) async {
     final url = '$baseUrl/db/q?q=in:${Uri.encodeComponent(query)}&kind=album';
-    final headers = await _getHeaders();
-    _logRequest('GET', url, headers);
 
     try {
-      final response = await _client.get(
-        Uri.parse(url),
-        headers: headers,
+      final response = await _makeAuthenticatedRequest(
+        (headers) => _client.get(Uri.parse(url), headers: headers),
+        'GET',
+        url,
       );
 
       _logResponse('GET', url, response);
@@ -217,6 +214,32 @@ class ApiService {
     };
     _logger.fine('Generated headers with token: ${token != null}');
     return headers;
+  }
+
+  /// Make an authenticated HTTP request with automatic token refresh on 401
+  Future<http.Response> _makeAuthenticatedRequest(
+    Future<http.Response> Function(Map<String, String> headers) requestFn,
+    String method,
+    String url,
+  ) async {
+    var headers = _getHeaders();
+    _logRequest(method, url, headers);
+
+    var response = await requestFn(headers);
+    
+    // If we get a 401, try refreshing the token and retry once
+    if (response.statusCode == 401) {
+      _logger.info('Got 401, attempting token refresh...');
+      
+      final newToken = await authService.refreshToken();
+      if (newToken != null) {
+        headers = _getHeaders();
+        _logger.info('Retrying request with refreshed token');
+        response = await requestFn(headers);
+      }
+    }
+    
+    return response;
   }
 
   /// Signs out the current user and clears the authentication state
