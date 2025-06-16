@@ -138,6 +138,17 @@ class _ImageDetailViewState extends State<ImageDetailView>
     }
   }
 
+  void _navigateToGrid() {
+    // Navigate back to grid with current image ID for scrolling
+    final currentImage = _images?[_currentIndex];
+    if (currentImage != null) {
+      context.go(
+          '/images?q=${Uri.encodeComponent(widget.searchQuery)}&imageId=${currentImage.id}');
+    } else {
+      context.go('/images?q=${Uri.encodeComponent(widget.searchQuery)}');
+    }
+  }
+
   void _clearSearch() {
     _searchController.clear();
     _performSearch('');
@@ -1050,113 +1061,128 @@ class _ImageDetailViewState extends State<ImageDetailView>
     final topPadding = mediaQuery.padding.top;
     final bottomPadding = mediaQuery.padding.bottom;
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Main content
-          Positioned.fill(
-            child: FutureBuilder<List<ImageModel>>(
-              future: _imagesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          _navigateToGrid();
+        }
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
+            // Main content
+            Positioned.fill(
+              child: FutureBuilder<List<ImageModel>>(
+                future: _imagesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Error loading images: ${snapshot.error}'),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadImages,
+                            child: const Text('Réessayer'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  _images = snapshot.data!;
+                  return _currentImageView();
+                },
+              ),
+            ),
+
+            // AppBar
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              top: _isImmersiveMode ? -kToolbarHeight - topPadding : 0,
+              left: 0,
+              right: 0,
+              height: kToolbarHeight + topPadding,
+              child: Material(
+                elevation: 4,
+                child: Container(
+                  padding: EdgeInsets.only(top: topPadding),
+                  color: Theme.of(context).appBarTheme.backgroundColor ??
+                      Theme.of(context).colorScheme.surface,
+                  child: AppBar(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    leading: IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: _navigateToGrid,
+                      tooltip: 'Retour à la grille',
+                    ),
+                    title: Row(
                       children: [
-                        Text('Error loading images: ${snapshot.error}'),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _loadImages,
-                          child: const Text('Réessayer'),
+                        Expanded(
+                          child: SearchBox(
+                            controller: _searchController,
+                            hintText: 'Recherche photos...',
+                            onSearch: () =>
+                                _performSearch(_searchController.text),
+                            onClear: _clearSearch,
+                            showHelpButton: false,
+                            showLogoutButton: false,
+                          ),
                         ),
+                        const SizedBox(width: 8),
+                        if (_images != null)
+                          Text(
+                            '${_currentIndex + 1}/${_images!.length}',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
                       ],
                     ),
-                  );
-                }
-
-                _images = snapshot.data!;
-                return _currentImageView();
-              },
-            ),
-          ),
-
-          // AppBar
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            top: _isImmersiveMode ? -kToolbarHeight - topPadding : 0,
-            left: 0,
-            right: 0,
-            height: kToolbarHeight + topPadding,
-            child: Material(
-              elevation: 4,
-              child: Container(
-                padding: EdgeInsets.only(top: topPadding),
-                color: Theme.of(context).appBarTheme.backgroundColor ??
-                    Theme.of(context).colorScheme.surface,
-                child: AppBar(
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  title: Row(
-                    children: [
-                      Expanded(
-                        child: SearchBox(
-                          controller: _searchController,
-                          hintText: 'Recherche photos...',
-                          onSearch: () =>
-                              _performSearch(_searchController.text),
-                          onClear: _clearSearch,
-                          showHelpButton: false,
-                          showLogoutButton: false,
-                        ),
+                    actions: [
+                      if (kIsWeb) _buildDownloadButton(_images?[_currentIndex]),
+                      IconButton(
+                        icon: const Icon(Icons.help_outline),
+                        onPressed: _showNavigationButtons,
                       ),
-                      const SizedBox(width: 8),
-                      if (_images != null)
-                        Text(
-                          '${_currentIndex + 1}/${_images!.length}',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
                     ],
                   ),
-                  actions: [
-                    if (kIsWeb) _buildDownloadButton(_images?[_currentIndex]),
-                    IconButton(
-                      icon: const Icon(Icons.help_outline),
-                      onPressed: _showNavigationButtons,
-                    ),
-                  ],
                 ),
               ),
             ),
-          ),
 
-          // Bottom Navigation Bar from parent
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            bottom: _isImmersiveMode
-                ? -kBottomNavigationBarHeight - bottomPadding
-                : 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              color:
-                  Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
-                      Theme.of(context).colorScheme.surface,
-              child: SafeArea(
-                top: false,
-                child: SizedBox(
-                  height: kBottomNavigationBarHeight,
-                  child: const SizedBox.shrink(), // Placeholder for bottom nav
+            // Bottom Navigation Bar from parent
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              bottom: _isImmersiveMode
+                  ? -kBottomNavigationBarHeight - bottomPadding
+                  : 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                color: Theme.of(context)
+                        .bottomNavigationBarTheme
+                        .backgroundColor ??
+                    Theme.of(context).colorScheme.surface,
+                child: SafeArea(
+                  top: false,
+                  child: SizedBox(
+                    height: kBottomNavigationBarHeight,
+                    child:
+                        const SizedBox.shrink(), // Placeholder for bottom nav
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
