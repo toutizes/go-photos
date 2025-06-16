@@ -266,25 +266,38 @@ class _ImageDetailViewState extends State<ImageDetailView>
       SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('${image.width} × ${image.height}'),
             const SizedBox(width: 16),
-            GestureDetector(
-              onTap: () {
-                if (widget.onKeywordSearch != null) {
-                  final date = _formatDate(image.itemTimestamp);
-                  widget.onKeywordSearch!(date, image.id);
-                  Navigator.of(context).pop();
-                }
-              },
-              child: Text(
-                _formatDate(image.itemTimestamp),
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  decoration: TextDecoration.underline,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    if (widget.onKeywordSearch != null) {
+                      final date = _formatDate(image.itemTimestamp);
+                      widget.onKeywordSearch!(date, image.id);
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: Text(
+                    'Prise: ${DateFormat('dd/MM/yyyy HH:mm').format(image.itemTimestamp)}',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 2),
+                Text(
+                  'Fichier: ${DateFormat('dd/MM/yyyy HH:mm').format(image.fileTimestamp)}',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

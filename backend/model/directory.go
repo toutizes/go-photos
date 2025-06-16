@@ -153,7 +153,11 @@ type JsonDirectory struct {
 
 func (dir *Directory) Json(jdir *JsonDirectory) {
   jdir.Id = dir.rel_pat
-  jdir.Ats = dir.index_time.Unix()
+  if len(dir.images) > 0 {
+    jdir.Ats = dir.images[0].ItemTime().Unix()  // Use first image's item timestamp
+  } else {
+    jdir.Ats = dir.index_time.Unix()  // Fallback if no images
+  }
   jdir.Dts = dir.last_modified.Unix()
   jdir.Nimgs = len(dir.images)
   if len(dir.images) > 0 {

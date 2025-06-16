@@ -131,7 +131,7 @@ class ApiService {
     final results =
         jsonList.map((json) => DirectoryModel.fromJson(json)).toList();
     results.sort((a, b) {
-      final timeCompare = b.directoryTime.compareTo(a.directoryTime);
+      final timeCompare = b.albumTime.compareTo(a.albumTime);
       if (timeCompare != 0) return timeCompare;
       return a.id.compareTo(b.id);
     });

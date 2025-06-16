@@ -65,9 +65,16 @@ class _NewsViewState extends State<NewsView> {
               '${album.imageCount} ${album.imageCount == 1 ? 'photo' : 'photos'}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            const SizedBox(height: 4),
+            Text(
+              'Première photo: ${DateFormat('dd/MM/yyyy HH:mm').format(album.albumTime)}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
             const SizedBox(height: 2),
             Text(
-              DateFormat('dd/MM/yyyy HH:mm').format(album.directoryTime),
+              'Album créé: ${DateFormat('dd/MM/yyyy HH:mm').format(album.directoryTime)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
