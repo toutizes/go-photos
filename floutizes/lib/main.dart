@@ -121,6 +121,10 @@ final _router = GoRouter(
                         context.go(
                             '/images?q=${Uri.encodeComponent(query2)}&imageId=$imageId');
                       },
+                      onSearch: (query, imageId) {
+                        context.go(
+                            '/images?q=${Uri.encodeComponent(query)}&imageId=$imageId');
+                      },
                     );
                   },
                 ),

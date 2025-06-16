@@ -6,6 +6,7 @@ import '../services/api_service.dart';
 import 'flow_view.dart';
 import 'albums_view.dart';
 import '../models/view_type.dart';
+import '../widgets/search_box.dart';
 
 class HomeScreen extends StatefulWidget {
   final ViewType initialView;
@@ -111,81 +112,20 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Widget _buildSearchSuffixIcons() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (_currentSearch.isNotEmpty)
-          IconButton(
-            icon: Icon(
-              Icons.clear,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            onPressed: _clearSearch,
-            tooltip: 'Effacer la recherche',
-          ),
-        IconButton(
-          icon: Icon(
-            Icons.search,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          onPressed: () => _performSearch(_searchController.text),
-          tooltip: 'Rechercher',
-        ),
-        IconButton(
-          icon: Icon(
-            Icons.help_outline,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          onPressed: () => _showSearchHelp(context),
-          tooltip: 'Aide recherche',
-        ),
-        IconButton(
-          icon: Icon(
-            Icons.logout,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          onPressed: _handleLogout,
-          tooltip: 'Déconnexion',
-        ),
-      ],
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Container(
-          height: 48,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-              width: 1,
-            ),
-          ),
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: _currentView == ViewType.albums
-                  ? 'Recherche albums...'
-                  : 'Recherche photos...',
-              hintStyle: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 16,
-              ),
-              suffixIcon: _buildSearchSuffixIcons(),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontSize: 16,
-            ),
-            onSubmitted: _performSearch,
-          ),
+        title: SearchBox(
+          controller: _searchController,
+          hintText: _currentView == ViewType.albums
+              ? 'Recherche albums...'
+              : 'Recherche photos...',
+          onSearch: () => _performSearch(_searchController.text),
+          onClear: _clearSearch,
+          onHelp: () => _showSearchHelp(context),
+          onLogout: _handleLogout,
         ),
       ),
       body: IndexedStack(

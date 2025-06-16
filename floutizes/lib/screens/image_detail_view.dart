@@ -7,17 +7,20 @@ import '../services/api_service.dart';
 import '../utils/image_download.dart';
 import 'package:go_router/go_router.dart';
 import '../main.dart'; // Import ImmersiveModeScope from main.dart
+import '../widgets/search_box.dart';
 
 class ImageDetailView extends StatefulWidget {
   final String searchQuery;
   final int imageId;
   final Function(String, int)? onKeywordSearch;
+  final Function(String, int)? onSearch;
 
   const ImageDetailView({
     super.key,
     required this.searchQuery,
     required this.imageId,
     this.onKeywordSearch,
+    this.onSearch,
   });
 
   @override
@@ -29,6 +32,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
   late PageController _pageController;
   late int _currentIndex;
   final FocusNode _focusNode = FocusNode();
+  final TextEditingController _searchController = TextEditingController();
   Future<List<ImageModel>>? _imagesFuture;
   List<ImageModel>? _images;
   bool _isImmersiveMode = false;
@@ -47,6 +51,9 @@ class _ImageDetailViewState extends State<ImageDetailView>
   @override
   void initState() {
     super.initState();
+    // Initialize the search controller with the current search query
+    _searchController.text = widget.searchQuery;
+
     // Initialize the controller immediately with page 0
     _pageController = PageController(initialPage: 0);
     _pageController.addListener(_onPageChanged);
@@ -124,12 +131,25 @@ class _ImageDetailViewState extends State<ImageDetailView>
     }
   }
 
+  void _performSearch(String query) {
+    if (widget.onSearch != null) {
+      final currentImage = _images?[_currentIndex];
+      widget.onSearch!(query, currentImage?.id ?? -1);
+    }
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _performSearch('');
+  }
+
   @override
   void dispose() {
     _stereoAnimationController?.dispose();
     _pageController.removeListener(_onPageChanged);
     _pageController.dispose();
     _focusNode.dispose();
+    _searchController.dispose();
     _stereoMetadataNotifier.dispose();
     super.dispose();
   }
@@ -1084,8 +1104,17 @@ class _ImageDetailViewState extends State<ImageDetailView>
                   title: Row(
                     children: [
                       Expanded(
-                        child: Text(widget.searchQuery),
+                        child: SearchBox(
+                          controller: _searchController,
+                          hintText: 'Recherche photos...',
+                          onSearch: () =>
+                              _performSearch(_searchController.text),
+                          onClear: _clearSearch,
+                          showHelpButton: false,
+                          showLogoutButton: false,
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       if (_images != null)
                         Text(
                           '${_currentIndex + 1}/${_images!.length}',
