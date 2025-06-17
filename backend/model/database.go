@@ -14,16 +14,16 @@ import "github.com/golang/protobuf/proto"
 import "toutizes.com/go-photwo/backend/store"
 
 type Database struct {
-	root        string
-	indx_root   string
-	orig_root   string
-	midi_root   string
-	mini_root   string
-	mont_root   string
-	static_root string
-	directories []*Directory
-	indexer     *Indexer
-	file_times  FileTimes
+	root                 string
+	indx_root            string
+	orig_root            string
+	midi_root            string
+	mini_root            string
+	mont_root            string
+	static_root          string
+	directories          []*Directory
+	indexer              *Indexer
+	file_times           FileTimes
 	recentActiveKeywords []KeywordCount
 }
 
@@ -324,14 +324,14 @@ func (db *Database) Load(update_disk, minify, force_reload bool) error {
 			num_minified,
 			time.Since(start_time).Seconds()*1000)
 	}
-	
+
 	// Compute and cache recent active keywords
 	start_time = time.Now()
 	db.recentActiveKeywords = db.GetRecentActiveKeywordsAt(time.Now())
 	log.Printf("Computed %d recent active keywords in %g ms\n",
 		len(db.recentActiveKeywords),
 		time.Since(start_time).Seconds()*1000)
-	
+
 	db.file_times = nil // free that.
 	return nil
 }
@@ -339,6 +339,7 @@ func (db *Database) Load(update_disk, minify, force_reload bool) error {
 // KeywordCount represents a keyword with its occurrence count and sample images
 type KeywordCount struct {
 	Keyword      string   `json:"keyword"`
+	Weight       float64  `json:"weight"`
 	Count        int      `json:"count"`
 	RecentImages []*Image `json:"recent_images"`
 }
@@ -353,67 +354,101 @@ func (db *Database) GetRecentActiveKeywords() []KeywordCount {
 	return db.GetRecentActiveKeywordsAt(time.Now())
 }
 
-// GetRecentActiveKeywordsAt returns keywords from albums with directory timestamp less than one month before the given time,
-// sorted by weighted count based on recency. Keywords are weighted by 1 / (days since now), so recent keywords count more.
+// GetRecentActiveKeywordsAt returns keywords from the most recent
+// albums, sorted by weighted count based on recency.
 func (db *Database) GetRecentActiveKeywordsAt(now time.Time) []KeywordCount {
-	oneMonthAgo := now.AddDate(0, -1, 0)
+	if len(db.directories) == 0 {
+		return nil // No recent albums found
+	}
+
+	// Sort albums by item time, most recent first
+	sortedAlbums := make([]*Directory, len(db.directories))
+	copy(sortedAlbums, db.directories)
+	sort.Slice(sortedAlbums, func(i, j int) bool {
+		return sortedAlbums[i].ItemTime().After(sortedAlbums[j].ItemTime())
+	})
+
+	// Pick the first 20 albums
+	if len(sortedAlbums) > 20 {
+		sortedAlbums = sortedAlbums[:20]
+	}
+
+	// Timestamp used to compute the weight of each keywort occurrence.
+	currentTime := sortedAlbums[0].ItemTime()
+
 	keywordImages := make(map[string][]*Image)
 	keywordWeights := make(map[string]float64)
-	
-	// Find directories with last_modified time within the last month
-	for _, dir := range db.directories {
-		if dir.last_modified.After(oneMonthAgo) {
-			// Collect images for each keyword from this recent directory
-			for _, img := range dir.images {
-				// Process main keywords only (skip sub-keywords)
-				for _, keyword := range img.keywords {
-					if keyword != "" { // Skip empty keywords
-						keywordImages[keyword] = append(keywordImages[keyword], img)
-						
-						// Calculate weight based on how many days ago the image was taken
-						daysSince := now.Sub(img.ItemTime()).Hours() / 24.0
-						if daysSince < 1.0 {
-							daysSince = 1.0 // Minimum 1 day to avoid division by zero and very large weights
+
+	// Collect images for each keyword from this recent directory
+	for _, dir := range sortedAlbums {
+		for _, img := range dir.images {
+			for _, keyword := range img.keywords {
+				if keyword != "" { // Skip empty keywords
+					keywordImages[keyword] = append(keywordImages[keyword], img)
+
+					// Only first 5 occurrences contribute to the weight of the keyword.
+					if len(keywordImages[keyword]) <= 5 {
+						// Calculate weight based on how long ago the image was taken
+						since := currentTime.Sub(img.ItemTime()).Hours()
+						if since < 1.0 {
+							since = 1.0 // Minimum 1 hour to avoid division by zero and very large weights
 						}
-						weight := 1.0 / daysSince
+						weight := 1.0 / since
 						keywordWeights[keyword] += weight
 					}
 				}
 			}
 		}
 	}
-	
+
 	// Convert map to slice and prepare recent images for each keyword
 	result := make([]KeywordCount, 0, len(keywordImages))
 	for keyword, images := range keywordImages {
+		// Drop keywords with only 1 image.
+		if len(images) < 2 {
+			continue
+		}
+
 		// Sort images by item timestamp (most recent first)
 		sort.Slice(images, func(i, j int) bool {
 			return images[i].ItemTime().After(images[j].ItemTime())
 		})
-		
+
 		// Take up to 4 most recent images
 		maxImages := 4
 		if len(images) < maxImages {
 			maxImages = len(images)
 		}
-		
-		// Use weighted count instead of simple count
-		weightedCount := int(keywordWeights[keyword] + 0.5) // Round to nearest integer
-		
+
 		result = append(result, KeywordCount{
 			Keyword:      keyword,
-			Count:        weightedCount,
+			Weight:       keywordWeights[keyword],
+			Count:        len(images),
 			RecentImages: images[:maxImages],
 		})
 	}
-	
-	// Sort by count (descending), then by keyword name for consistency
+
+	// Sort by weight (descending), then by keyword name for consistency
 	sort.Slice(result, func(i, j int) bool {
-		if result[i].Count == result[j].Count {
+		if result[i].Weight == result[j].Weight {
 			return result[i].Keyword < result[j].Keyword
 		}
-		return result[i].Count > result[j].Count
+		return result[i].Weight > result[j].Weight
 	})
-	
-	return result
+
+	// Eliminate duplicates: keywords that have the same 1st image.
+	// Keep only the entry with the highest weight (first one).
+	imageIdToResultIndex := make(map[int]bool)
+	dedupResult := make([]KeywordCount, 0, len(result))
+
+	for _, entry := range result {
+		// Check if we already have an entry with this first image
+		firstImageId := entry.RecentImages[0].Id
+		if _, exists := imageIdToResultIndex[firstImageId]; !exists {
+			imageIdToResultIndex[firstImageId] = true
+			dedupResult = append(dedupResult, entry)
+		}
+	}
+
+	return dedupResult
 }

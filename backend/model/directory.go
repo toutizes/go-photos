@@ -25,6 +25,12 @@ func (dir *Directory) OrderBy() string { return dir.order_by }
 func (dir *Directory) Images() []*Image { return dir.images }
 func (dir *Directory) RelPat() string { return dir.rel_pat }
 func (dir *Directory) Time() time.Time { return dir.index_time }
+func (dir *Directory) ItemTime() time.Time { 
+  if len(dir.images) == 0 {
+    return dir.index_time
+  }
+  return dir.images[0].ItemTime()
+}
 
 
 func (dir *Directory) Intern(indexer *Indexer) {
