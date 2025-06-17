@@ -248,6 +248,14 @@ func main() {
 				model.HandleFile(w, r, *url_prefix+"/maxi/", *orig_root)
 			})(w, r)
 		})
+	mux.HandleFunc(*url_prefix+"/recent-keywords",
+		func(w http.ResponseWriter, r *http.Request) {
+			Log("/recent-keywords", r)
+			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+				AddCorsHeaders(w, r)
+				model.HandleRecentKeywords(w, r, db)
+			})(w, r)
+		})
 	// mux.Handle("/",
 	//   LogHandler(
 	//     "/ default",

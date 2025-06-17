@@ -21,6 +21,10 @@ type StringResults struct {
   Message string
 }
 
+type KeywordResults struct {
+  Keywords []KeywordCount `json:"keywords"`
+}
+
 func queryImages(q string, db *Database) []*Image {
   if len(q) > 0 {
     qry := ParseQuery(q, db)
@@ -142,5 +146,17 @@ func HandleSet(w http.ResponseWriter, r *http.Request, db *Database) {
   }
   enc := json.NewEncoder(w)
   enc.Encode(&res)
+}
+
+func HandleRecentKeywords(w http.ResponseWriter, r *http.Request, db *Database) {
+  // Get user email from context
+  userEmail := r.Context().Value("userEmail").(string)
+  log.Printf("Recent keywords request from %s", userEmail)
+  
+  keywords := db.GetRecentActiveKeywords()
+  
+  enc := json.NewEncoder(w)
+  result := KeywordResults{Keywords: keywords}
+  enc.Encode(&result)
 }
 

@@ -24,6 +24,7 @@ type Database struct {
 	directories []*Directory
 	indexer     *Indexer
 	file_times  FileTimes
+	recentActiveKeywords []KeywordCount
 }
 
 func NewDatabase(root string) *Database {
@@ -323,6 +324,77 @@ func (db *Database) Load(update_disk, minify, force_reload bool) error {
 			num_minified,
 			time.Since(start_time).Seconds()*1000)
 	}
+	
+	// Compute and cache recent active keywords
+	start_time = time.Now()
+	db.recentActiveKeywords = db.GetRecentActiveKeywordsAt(time.Now())
+	log.Printf("Computed %d recent active keywords in %g ms\n",
+		len(db.recentActiveKeywords),
+		time.Since(start_time).Seconds()*1000)
+	
 	db.file_times = nil // free that.
 	return nil
+}
+
+// KeywordCount represents a keyword with its occurrence count
+type KeywordCount struct {
+	Keyword string `json:"keyword"`
+	Count   int    `json:"count"`
+}
+
+// GetRecentActiveKeywords returns keywords from albums with directory timestamp less than one month old,
+// sorted by number of occurrences in these recent photos. Uses cached data computed during Load().
+func (db *Database) GetRecentActiveKeywords() []KeywordCount {
+	if db.recentActiveKeywords != nil {
+		return db.recentActiveKeywords
+	}
+	// Fallback to computation if cache is empty (e.g., during testing)
+	return db.GetRecentActiveKeywordsAt(time.Now())
+}
+
+// GetRecentActiveKeywordsAt returns keywords from albums with directory timestamp less than one month before the given time,
+// sorted by number of occurrences in these recent photos. This version allows for testing with a specific time.
+func (db *Database) GetRecentActiveKeywordsAt(now time.Time) []KeywordCount {
+	oneMonthAgo := now.AddDate(0, -1, 0)
+	keywordCounts := make(map[string]int)
+	
+	// Find directories with last_modified time within the last month
+	for _, dir := range db.directories {
+		if dir.last_modified.After(oneMonthAgo) {
+			// Collect keywords from all images in this recent directory
+			for _, img := range dir.images {
+				// Count main keywords
+				for _, keyword := range img.keywords {
+					if keyword != "" { // Skip empty keywords
+						keywordCounts[keyword]++
+					}
+				}
+				// Count sub-keywords
+				for _, keyword := range img.sub_keywords {
+					if keyword != "" { // Skip empty keywords
+						keywordCounts[keyword]++
+					}
+				}
+			}
+		}
+	}
+	
+	// Convert map to slice and sort by count (descending)
+	result := make([]KeywordCount, 0, len(keywordCounts))
+	for keyword, count := range keywordCounts {
+		result = append(result, KeywordCount{
+			Keyword: keyword,
+			Count:   count,
+		})
+	}
+	
+	// Sort by count (descending), then by keyword name for consistency
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].Count == result[j].Count {
+			return result[i].Keyword < result[j].Keyword
+		}
+		return result[i].Count > result[j].Count
+	})
+	
+	return result
 }
