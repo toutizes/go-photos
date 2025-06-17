@@ -237,6 +237,18 @@ class _ScaffoldWithNestedNavigationState
                     selectedItemColor: Theme.of(context).colorScheme.primary,
                     unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
                     backgroundColor: Theme.of(context).colorScheme.surface,
+                    selectedLabelStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    unselectedLabelStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    selectedIconTheme: IconThemeData(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    unselectedIconTheme: IconThemeData(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                     items: const [
                       BottomNavigationBarItem(
                         icon: Icon(Icons.newspaper),
