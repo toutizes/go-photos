@@ -76,8 +76,8 @@ final _router = GoRouter(
             GoRoute(
               path: '/activity',
               builder: (context, state) {
-                return HomeScreen(
-                  key: const ValueKey('activity'),
+                return const HomeScreen(
+                  key: ValueKey('activity'),
                   initialView: ViewType.activity,
                 );
               },
@@ -151,8 +151,8 @@ final _router = GoRouter(
             GoRoute(
               path: '/admin',
               builder: (context, state) {
-                return HomeScreen(
-                  key: const ValueKey('admin'),
+                return const HomeScreen(
+                  key: ValueKey('admin'),
                   initialView: ViewType.adminQueries,
                 );
               },

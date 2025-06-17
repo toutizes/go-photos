@@ -1222,12 +1222,11 @@ class _ImageDetailViewState extends State<ImageDetailView>
                         .bottomNavigationBarTheme
                         .backgroundColor ??
                     Theme.of(context).colorScheme.surface,
-                child: SafeArea(
+                child: const SafeArea(
                   top: false,
                   child: SizedBox(
                     height: kBottomNavigationBarHeight,
-                    child:
-                        const SizedBox.shrink(), // Placeholder for bottom nav
+                    child: SizedBox.shrink(), // Placeholder for bottom nav
                   ),
                 ),
               ),
