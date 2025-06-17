@@ -77,11 +77,18 @@ class ApiService {
     }
   }
 
-  List<ImageModel> _toImages(String body) {
+  List<ImageModel> _toImages(String body, String query) {
     final List<dynamic> jsonList = json.decode(body);
     final results = jsonList.map((json) => ImageModel.fromJson(json)).toList();
+    
+    // Check if this is an album query (any term starts with "album:")
+    final queryTerms = query.toLowerCase().split(' ');
+    final isAlbumQuery = queryTerms.any((term) => term.startsWith('album:'));
+    
     results.sort((a, b) {
-      final timeCompare = b.itemTimestamp.compareTo(a.itemTimestamp);
+      final timeCompare = isAlbumQuery 
+          ? a.itemTimestamp.compareTo(b.itemTimestamp)  // Increasing for album queries
+          : b.itemTimestamp.compareTo(a.itemTimestamp); // Decreasing for other queries
       if (timeCompare != 0) return timeCompare;
       return b.imageName.compareTo(a.imageName);
     });
@@ -106,7 +113,7 @@ class ApiService {
       _logResponse('GET', url, response);
 
       if (response.statusCode == 200) {
-        final results = _toImages(response.body);
+        final results = _toImages(response.body, query);
         _addToCache(query, results);
         return results;
       } else {
