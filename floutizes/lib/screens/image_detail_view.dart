@@ -399,7 +399,11 @@ class _ImageDetailViewState extends State<ImageDetailView>
   Widget _photo(ImageModel image) {
     return GestureDetector(
       onDoubleTap: () {
-        _setImmersiveMode(true);
+        if (_isImmersiveMode) {
+          _setImmersiveMode(false);
+        } else {
+          _setImmersiveMode(true);
+        }
       },
       onTap: _isImmersiveMode
           ? () {
@@ -950,84 +954,60 @@ class _ImageDetailViewState extends State<ImageDetailView>
     final nextOpacity = hasNext ? 1.0 : 0.3;
 
     // This method is only used in immersive mode - arrows at screen edges
-    return Positioned.fill(
-      child: Row(
-        children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: hasPrev ? _prevPage : null,
-              child: SizedBox(
-                width: 60,
-                child: Opacity(
-                  opacity: prevOpacity,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.chevron_left,
-                      size: 40,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withValues(alpha: 0.8),
-                          blurRadius: 2,
-                          offset: const Offset(1, 1),
-                        ),
-                      ],
+    return Stack(
+      children: [
+        // Navigation arrows
+        Positioned.fill(
+          child: Row(
+            children: [
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: hasPrev ? _prevPage : null,
+                  child: SizedBox(
+                    width: 60,
+                    child: Opacity(
+                      opacity: prevOpacity,
+                      child: _buildShadowedIcon(Icons.chevron_left),
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
-          const Spacer(),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: hasNext ? _nextPage : null,
-              child: SizedBox(
-                width: 60,
-                child: Opacity(
-                  opacity: nextOpacity,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.chevron_right,
-                      size: 40,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withValues(alpha: 0.8),
-                          blurRadius: 2,
-                          offset: const Offset(1, 1),
-                        ),
-                      ],
+              const Spacer(),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: hasNext ? _nextPage : null,
+                  child: SizedBox(
+                    width: 60,
+                    child: Opacity(
+                      opacity: nextOpacity,
+                      child: _buildShadowedIcon(Icons.chevron_right),
                     ),
                   ),
                 ),
               ),
+            ],
+          ),
+        ),
+        // Zoom out button - positioned at upper right
+        Positioned(
+          top: 10,
+          right: 10,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _setImmersiveMode(false),
+              child: Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                child: _buildShadowedIcon(Icons.zoom_out, size: 24),
+              ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -1045,8 +1025,6 @@ class _ImageDetailViewState extends State<ImageDetailView>
   Widget _buildOverlayArrows(List<ImageModel> images) {
     bool hasPrev = _hasPrev();
     bool hasNext = _hasNext(images);
-
-    if (!hasPrev && !hasNext) return const SizedBox.shrink();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1089,30 +1067,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
                       width: 60,
                       height: 60,
                       alignment: Alignment.center,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.3),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.chevron_left,
-                          size: 40,
-                          color: Colors.white,
-                          shadows: [
-                            Shadow(
-                              color: Colors.black.withValues(alpha: 0.8),
-                              blurRadius: 2,
-                              offset: const Offset(1, 1),
-                            ),
-                          ],
-                        ),
-                      ),
+                      child: _buildShadowedIcon(Icons.chevron_left),
                     ),
                   ),
                 ),
@@ -1130,34 +1085,28 @@ class _ImageDetailViewState extends State<ImageDetailView>
                       width: 60,
                       height: 60,
                       alignment: Alignment.center,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.3),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.chevron_right,
-                          size: 40,
-                          color: Colors.white,
-                          shadows: [
-                            Shadow(
-                              color: Colors.black.withValues(alpha: 0.8),
-                              blurRadius: 2,
-                              offset: const Offset(1, 1),
-                            ),
-                          ],
-                        ),
-                      ),
+                      child: _buildShadowedIcon(Icons.chevron_right),
                     ),
                   ),
                 ),
               ),
+            // Zoom toggle button - positioned at top-right of image area
+            Positioned(
+              left: imageAreaRight - 60, // Same horizontal position as right arrow (centered)
+              top: imageAreaTop + 10, // 10px from top edge of image area
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _setImmersiveMode(true),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    child: _buildShadowedIcon(Icons.zoom_in, size: 24),
+                  ),
+                ),
+              ),
+            ),
           ],
         );
       },
@@ -1375,6 +1324,33 @@ class _ImageDetailViewState extends State<ImageDetailView>
 
   String _formatDate(DateTime date) {
     return DateFormat('yyyy-MM-dd').format(date);
+  }
+
+  Widget _buildShadowedIcon(IconData icon, {double size = 40}) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Icon(
+        icon,
+        size: size,
+        color: Colors.white,
+        shadows: [
+          Shadow(
+            color: Colors.black.withValues(alpha: 0.8),
+            blurRadius: 2,
+            offset: const Offset(1, 1),
+          ),
+        ],
+      ),
+    );
   }
 }
 
