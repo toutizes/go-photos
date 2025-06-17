@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../models/directory.dart';
 import '../models/image.dart';
 import '../services/api_service.dart';

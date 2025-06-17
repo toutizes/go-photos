@@ -66,9 +66,6 @@ class _AlbumsViewState extends State<AlbumsView> {
       maxAllowedColumns: 6,
     );
 
-    // Calculate item size based on available width
-    final screenWidth = MediaQuery.of(context).size.width;
-    final itemWidth = (screenWidth - 16 - (numColumns - 1) * 8) / numColumns;
 
     // Create montaged images handler
     final montaged = MontagedImages.fromDirectoryModels(albums);
