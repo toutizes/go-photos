@@ -248,21 +248,25 @@ class _ScaffoldWithNestedNavigationState
               
               // Build navigation items conditionally
               final navigationItems = [
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.trending_up),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.trending_up, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  activeIcon: Icon(Icons.trending_up, color: Theme.of(context).colorScheme.primary),
                   label: 'Activité',
                 ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.photo_album),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.photo_album, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  activeIcon: Icon(Icons.photo_album, color: Theme.of(context).colorScheme.primary),
                   label: 'Albums',
                 ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.photo_library),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.photo_library, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  activeIcon: Icon(Icons.photo_library, color: Theme.of(context).colorScheme.primary),
                   label: 'Photos',
                 ),
                 if (isAdmin)
-                  const BottomNavigationBarItem(
-                    icon: Icon(Icons.admin_panel_settings),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.admin_panel_settings, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    activeIcon: Icon(Icons.admin_panel_settings, color: Theme.of(context).colorScheme.primary),
                     label: 'Admin',
                   ),
               ];
@@ -277,18 +281,6 @@ class _ScaffoldWithNestedNavigationState
                         selectedItemColor: Theme.of(context).colorScheme.primary,
                         unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
                         backgroundColor: Theme.of(context).colorScheme.surface,
-                        selectedLabelStyle: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        unselectedLabelStyle: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        selectedIconTheme: IconThemeData(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        unselectedIconTheme: IconThemeData(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
                         items: navigationItems,
                         onTap: (index) => widget.navigationShell.goBranch(
                           index,
