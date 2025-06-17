@@ -960,10 +960,29 @@ class _ImageDetailViewState extends State<ImageDetailView>
                 width: 60,
                 child: Opacity(
                   opacity: prevOpacity,
-                  child: const Icon(
-                    Icons.chevron_left,
-                    size: 40,
-                    color: Colors.white,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.chevron_left,
+                      size: 40,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.8),
+                          blurRadius: 2,
+                          offset: const Offset(1, 1),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -978,10 +997,29 @@ class _ImageDetailViewState extends State<ImageDetailView>
                 width: 60,
                 child: Opacity(
                   opacity: nextOpacity,
-                  child: const Icon(
-                    Icons.chevron_right,
-                    size: 40,
-                    color: Colors.white,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.chevron_right,
+                      size: 40,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.8),
+                          blurRadius: 2,
+                          offset: const Offset(1, 1),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
