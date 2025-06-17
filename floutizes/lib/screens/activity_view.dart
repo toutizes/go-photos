@@ -90,7 +90,7 @@ class _ActivityViewState extends State<ActivityView> {
                     ),
                   ),
                   Text(
-                    '${keyword.count} ${keyword.count == 1 ? 'photo' : 'photos'}',
+                    '${keyword.count} ${keyword.count == 1 ? 'photo récente' : 'photos récentes'}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),

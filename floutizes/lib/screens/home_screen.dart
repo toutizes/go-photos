@@ -123,9 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
           controller: _searchController,
           hintText: _currentView == ViewType.albums
               ? 'Recherche albums...'
-              : _currentView == ViewType.activity
-                  ? 'Recherche activité...'
-                  : 'Recherche photos...',
+              : 'Recherche photos...',
           onSearch: () => _performSearch(_searchController.text),
           onClear: _clearSearch,
           onHelp: () => _showSearchHelp(context),

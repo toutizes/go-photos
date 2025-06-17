@@ -33,7 +33,7 @@ void main() async {
 
 final _router = GoRouter(
   // debugLogDiagnostics: true,
-  initialLocation: '/news',
+  initialLocation: '/activity',
   refreshListenable: authService,
   redirect: (context, state) {
     final auth = Provider.of<AuthService>(context, listen: false);
@@ -71,19 +71,6 @@ final _router = GoRouter(
         return ScaffoldWithNestedNavigation(navigationShell: navigationShell);
       },
       branches: [
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/news',
-              builder: (context, state) {
-                return HomeScreen(
-                  key: const ValueKey('news'),
-                  initialView: ViewType.news,
-                );
-              },
-            ),
-          ],
-        ),
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -263,10 +250,6 @@ class _ScaffoldWithNestedNavigationState
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                     items: const [
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.newspaper),
-                        label: 'Actualités',
-                      ),
                       BottomNavigationBarItem(
                         icon: Icon(Icons.trending_up),
                         label: 'Activité',
