@@ -78,15 +78,16 @@ class _FlowViewState extends State<FlowView> {
 
     // Calculate item width and height
 
-    // Account for padding (8 on each side)
-    final itemWidth = (width - 16) / numColumns;
-    // Square items + spacing
-    final rowHeight = itemWidth + 8;
+    // Account for grid padding (8 on each side) and spacing between items
+    final itemWidth = (width - 16 - (numColumns - 1) * 8) / numColumns;
+    // Square items (no need to manually add spacing as GridView handles it)
+    final itemHeight = itemWidth;
     final row = index ~/ numColumns;
 
     // Calculate target offset to center the item
-    final itemOffset = row * rowHeight;
-    final targetOffset = itemOffset - (height - rowHeight) / 2;
+    // Account for: top padding + (row * item height) + (row * spacing between rows)
+    final itemOffset = 8 + row * (itemHeight + 8);
+    final targetOffset = itemOffset - (height - itemHeight) / 2;
 
     // Ensure the scroll controller is ready
     if (_scrollController.hasClients) {
