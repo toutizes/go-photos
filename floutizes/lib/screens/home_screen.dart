@@ -6,6 +6,7 @@ import '../services/api_service.dart';
 import 'flow_view.dart';
 import 'albums_view.dart';
 import 'news_view.dart';
+import 'activity_view.dart';
 import '../models/view_type.dart';
 import '../widgets/search_box.dart';
 
@@ -122,7 +123,9 @@ class _HomeScreenState extends State<HomeScreen> {
           controller: _searchController,
           hintText: _currentView == ViewType.albums
               ? 'Recherche albums...'
-              : 'Recherche photos...',
+              : _currentView == ViewType.activity
+                  ? 'Recherche activité...'
+                  : 'Recherche photos...',
           onSearch: () => _performSearch(_searchController.text),
           onClear: _clearSearch,
           onHelp: () => _showSearchHelp(context),
@@ -132,15 +135,22 @@ class _HomeScreenState extends State<HomeScreen> {
       body: IndexedStack(
         index: _currentView == ViewType.news 
             ? 0 
-            : _currentView == ViewType.albums 
-                ? 1 
-                : 2,
+            : _currentView == ViewType.activity
+                ? 1
+                : _currentView == ViewType.albums 
+                    ? 2 
+                    : 3,
         children: [
           NewsView(
             onAlbumSelected: (albumId) {
               // Quote keywords containing spaces
               var query = albumId.contains(' ') ? '"album:$albumId"' : "album:$albumId";
               context.go('/images?q=${Uri.encodeComponent(query)}');
+            },
+          ),
+          ActivityView(
+            onKeywordSearch: (keyword) {
+              context.go('/images?q=${Uri.encodeComponent(keyword)}');
             },
           ),
           AlbumsView(

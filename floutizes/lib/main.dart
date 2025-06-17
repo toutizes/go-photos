@@ -87,6 +87,19 @@ final _router = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
+              path: '/activity',
+              builder: (context, state) {
+                return HomeScreen(
+                  key: const ValueKey('activity'),
+                  initialView: ViewType.activity,
+                );
+              },
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
               path: '/albums',
               builder: (context, state) {
                 final q = state.uri.queryParameters['q'];
@@ -253,6 +266,10 @@ class _ScaffoldWithNestedNavigationState
                       BottomNavigationBarItem(
                         icon: Icon(Icons.newspaper),
                         label: 'Actualités',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.trending_up),
+                        label: 'Activité',
                       ),
                       BottomNavigationBarItem(
                         icon: Icon(Icons.photo_album),

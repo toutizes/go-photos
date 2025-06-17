@@ -21,8 +21,21 @@ type StringResults struct {
   Message string
 }
 
+// ImageInfo represents simplified image information for JSON responses
+type ImageInfo struct {
+  Id   int    `json:"id"`
+  Name string `json:"name"`
+}
+
+// KeywordResponse represents a simplified keyword with image pairs for API responses
+type KeywordResponse struct {
+  Keyword      string      `json:"keyword"`
+  Count        int         `json:"count"`
+  RecentImages []ImageInfo `json:"recent_images"`
+}
+
 type KeywordResults struct {
-  Keywords []KeywordCount `json:"keywords"`
+  Keywords []KeywordResponse `json:"keywords"`
 }
 
 func queryImages(q string, db *Database) []*Image {
@@ -155,8 +168,27 @@ func HandleRecentKeywords(w http.ResponseWriter, r *http.Request, db *Database) 
   
   keywords := db.GetRecentActiveKeywords()
   
+  // Convert from internal KeywordCount (with *Image) to external KeywordResponse (with simplified ImageInfo)
+  responseKeywords := make([]KeywordResponse, len(keywords))
+  for i, kw := range keywords {
+    // Convert *Image to simplified ImageInfo
+    simplifiedImages := make([]ImageInfo, len(kw.RecentImages))
+    for j, img := range kw.RecentImages {
+      simplifiedImages[j] = ImageInfo{
+        Id:   img.Id,
+        Name: img.Name(),
+      }
+    }
+    
+    responseKeywords[i] = KeywordResponse{
+      Keyword:      kw.Keyword,
+      Count:        kw.Count,
+      RecentImages: simplifiedImages,
+    }
+  }
+  
   enc := json.NewEncoder(w)
-  result := KeywordResults{Keywords: keywords}
+  result := KeywordResults{Keywords: responseKeywords}
   enc.Encode(&result)
 }
 

@@ -31,6 +31,8 @@ func TestGetRecentActiveKeywords(t *testing.T) {
 		name:         "test1.jpg",
 		keywords:     []string{"vacation", "beach", "family"},
 		sub_keywords: []string{"summer"},
+		item_time:    baseTime.AddDate(0, 0, -10), // 10 days before baseTime
+		Id:           123,
 	}
 	
 	recentImg2 := &Image{
@@ -38,6 +40,8 @@ func TestGetRecentActiveKeywords(t *testing.T) {
 		name:         "test2.jpg", 
 		keywords:     []string{"vacation", "sunset"},
 		sub_keywords: []string{"photography"},
+		item_time:    baseTime.AddDate(0, 0, -5), // 5 days before baseTime (more recent)
+		Id:           124,
 	}
 	
 	oldImg := &Image{
@@ -45,6 +49,8 @@ func TestGetRecentActiveKeywords(t *testing.T) {
 		name:         "old.jpg",
 		keywords:     []string{"old", "archive"},
 		sub_keywords: []string{},
+		item_time:    baseTime.AddDate(0, -3, 0), // 3 months before baseTime
+		Id:           125,
 	}
 	
 	// Add images to directories
@@ -62,11 +68,28 @@ func TestGetRecentActiveKeywords(t *testing.T) {
 		t.Fatal("Expected keywords, got none")
 	}
 	
-	// Check that "vacation" appears twice (highest count)
+	// Check that "vacation" appears twice (highest count) and has recent images
 	found := false
 	for _, kw := range keywords {
 		if kw.Keyword == "vacation" && kw.Count == 2 {
 			found = true
+			if len(kw.RecentImages) == 0 {
+				t.Error("Expected recent images for vacation keyword")
+			}
+			// Check that recent images contain the expected image names (now *Image format)
+			foundImg1 := false
+			foundImg2 := false
+			for _, img := range kw.RecentImages {
+				if img.Name() == "test1.jpg" {
+					foundImg1 = true
+				}
+				if img.Name() == "test2.jpg" {
+					foundImg2 = true
+				}
+			}
+			if !foundImg1 || !foundImg2 {
+				t.Error("Expected to find test1.jpg and test2.jpg in recent images")
+			}
 			break
 		}
 	}

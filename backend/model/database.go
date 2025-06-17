@@ -336,10 +336,11 @@ func (db *Database) Load(update_disk, minify, force_reload bool) error {
 	return nil
 }
 
-// KeywordCount represents a keyword with its occurrence count
+// KeywordCount represents a keyword with its occurrence count and sample images
 type KeywordCount struct {
-	Keyword string `json:"keyword"`
-	Count   int    `json:"count"`
+	Keyword      string   `json:"keyword"`
+	Count        int      `json:"count"`
+	RecentImages []*Image `json:"recent_images"`
 }
 
 // GetRecentActiveKeywords returns keywords from albums with directory timestamp less than one month old,
@@ -356,35 +357,47 @@ func (db *Database) GetRecentActiveKeywords() []KeywordCount {
 // sorted by number of occurrences in these recent photos. This version allows for testing with a specific time.
 func (db *Database) GetRecentActiveKeywordsAt(now time.Time) []KeywordCount {
 	oneMonthAgo := now.AddDate(0, -1, 0)
-	keywordCounts := make(map[string]int)
+	keywordImages := make(map[string][]*Image)
 	
 	// Find directories with last_modified time within the last month
 	for _, dir := range db.directories {
 		if dir.last_modified.After(oneMonthAgo) {
-			// Collect keywords from all images in this recent directory
+			// Collect images for each keyword from this recent directory
 			for _, img := range dir.images {
-				// Count main keywords
+				// Process main keywords
 				for _, keyword := range img.keywords {
 					if keyword != "" { // Skip empty keywords
-						keywordCounts[keyword]++
+						keywordImages[keyword] = append(keywordImages[keyword], img)
 					}
 				}
-				// Count sub-keywords
+				// Process sub-keywords
 				for _, keyword := range img.sub_keywords {
 					if keyword != "" { // Skip empty keywords
-						keywordCounts[keyword]++
+						keywordImages[keyword] = append(keywordImages[keyword], img)
 					}
 				}
 			}
 		}
 	}
 	
-	// Convert map to slice and sort by count (descending)
-	result := make([]KeywordCount, 0, len(keywordCounts))
-	for keyword, count := range keywordCounts {
+	// Convert map to slice and prepare recent images for each keyword
+	result := make([]KeywordCount, 0, len(keywordImages))
+	for keyword, images := range keywordImages {
+		// Sort images by item timestamp (most recent first)
+		sort.Slice(images, func(i, j int) bool {
+			return images[i].ItemTime().After(images[j].ItemTime())
+		})
+		
+		// Take up to 4 most recent images
+		maxImages := 4
+		if len(images) < maxImages {
+			maxImages = len(images)
+		}
+		
 		result = append(result, KeywordCount{
-			Keyword: keyword,
-			Count:   count,
+			Keyword:      keyword,
+			Count:        len(images),
+			RecentImages: images[:maxImages],
 		})
 	}
 	

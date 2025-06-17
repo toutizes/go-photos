@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/image.dart';
 import '../models/directory.dart';
+import '../models/keyword.dart';
 import 'auth_service.dart';
 
 class ApiService {
@@ -247,6 +248,35 @@ class ApiService {
     }
     
     return response;
+  }
+
+  Future<List<KeywordModel>> getRecentKeywords() async {
+    final url = '$baseUrl/db/recent-keywords';
+
+    try {
+      final response = await _makeAuthenticatedRequest(
+        (headers) => _client.get(Uri.parse(url), headers: headers),
+        'GET',
+        url,
+      );
+
+      _logResponse('GET', url, response);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final List<dynamic> keywordsJson = responseData['keywords'] as List<dynamic>;
+        return keywordsJson
+            .map((json) => KeywordModel.fromJson(json as Map<String, dynamic>))
+            .toList();
+      } else {
+        final error = 'Failed to fetch recent keywords: ${response.statusCode}';
+        _logResponse('GET', url, response, error);
+        throw Exception(error);
+      }
+    } catch (e) {
+      _logger.severe('Error fetching recent keywords: $e');
+      rethrow;
+    }
   }
 
   /// Signs out the current user and clears the authentication state
