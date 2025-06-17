@@ -3,4 +3,5 @@ enum ViewType {
   images,
   news,
   activity,
+  adminQueries,
 } 

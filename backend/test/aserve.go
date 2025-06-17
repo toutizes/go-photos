@@ -30,6 +30,7 @@ var update_db = flag.Bool("update_db", true, "If true update the database files.
 var force_reload = flag.Bool("force_reload", false, "If true force a reload of images.")
 var use_https = flag.Bool("use_https", false, "If true listen for HTTPS in 443.")
 var firebase_creds = flag.String("firebase_creds", "", "Path to the Firebase service account credentials JSON file")
+var log_dir = flag.String("log_dir", "", "Path to directory containing query log files for analysis")
 
 var authClient *auth.Client
 
@@ -254,6 +255,14 @@ func main() {
 			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 				AddCorsHeaders(w, r)
 				model.HandleRecentKeywords(w, r, db)
+			})(w, r)
+		})
+	mux.HandleFunc(*url_prefix+"/user-queries",
+		func(w http.ResponseWriter, r *http.Request) {
+			Log("/user-queries", r)
+			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+				AddCorsHeaders(w, r)
+				model.HandleUserQueries(w, r, db, *log_dir)
 			})(w, r)
 		})
 	// mux.Handle("/",

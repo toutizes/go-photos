@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/image.dart';
 import '../models/directory.dart';
 import '../models/keyword.dart';
+import '../models/user_query.dart';
 import 'auth_service.dart';
 
 class ApiService {
@@ -290,5 +291,31 @@ class ApiService {
     return {
       if (token != null) 'Authorization': 'Bearer $token',
     };
+  }
+
+  Future<AllUserQueriesModel> getUserQueries() async {
+    final url = '$baseUrl/db/user-queries';
+
+    try {
+      final response = await _makeAuthenticatedRequest(
+        (headers) => _client.get(Uri.parse(url), headers: headers),
+        'GET',
+        url,
+      );
+
+      _logResponse('GET', url, response);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return AllUserQueriesModel.fromJson(responseData);
+      } else {
+        final error = 'Failed to fetch user queries: ${response.statusCode}';
+        _logResponse('GET', url, response, error);
+        throw Exception(error);
+      }
+    } catch (e) {
+      _logger.severe('Error fetching user queries: $e');
+      rethrow;
+    }
   }
 }

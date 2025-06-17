@@ -192,3 +192,72 @@ func HandleRecentKeywords(w http.ResponseWriter, r *http.Request, db *Database) 
   enc.Encode(&result)
 }
 
+// UserQueriesResult represents the response for user queries endpoint
+type UserQueriesResult struct {
+  User    string                `json:"user"`
+  Queries []QueryWithTimestamp `json:"queries"`
+}
+
+// AllUserQueriesResult represents the response for all user queries endpoint
+type AllUserQueriesResult struct {
+  Users map[string][]QueryWithTimestamp `json:"users"`
+}
+
+// HandleUserQueries handles requests for user query history from logs
+func HandleUserQueries(w http.ResponseWriter, r *http.Request, db *Database, logDir string) {
+  if logDir == "" {
+    http.Error(w, "Log directory not configured", http.StatusInternalServerError)
+    return
+  }
+  
+  // Get user email from context
+  userEmail := r.Context().Value("userEmail").(string)
+  log.Printf("User queries request from %s", userEmail)
+  
+  // Restrict access to specific admin user only
+  if userEmail != "matthieu.devin@gmail.com" {
+    log.Printf("Access denied for user queries endpoint: %s", userEmail)
+    http.Error(w, "Access denied", http.StatusForbidden)
+    return
+  }
+  
+  // Create log parser
+  parser := NewLogParser(logDir)
+  
+  // Check if requesting specific user queries or all users
+  requestedUser := r.FormValue("user")
+  
+  if requestedUser != "" {
+    // Get queries for specific user
+    queries, err := parser.GetQueriesForUser(requestedUser)
+    if err != nil {
+      log.Printf("Error getting queries for user %s: %v", requestedUser, err)
+      http.Error(w, "Error retrieving user queries", http.StatusInternalServerError)
+      return
+    }
+    
+    result := UserQueriesResult{
+      User:    requestedUser,
+      Queries: queries,
+    }
+    
+    enc := json.NewEncoder(w)
+    enc.Encode(&result)
+  } else {
+    // Get all user queries
+    allQueries, err := parser.GroupQueriesByUser()
+    if err != nil {
+      log.Printf("Error getting all user queries: %v", err)
+      http.Error(w, "Error retrieving user queries", http.StatusInternalServerError)
+      return
+    }
+    
+    result := AllUserQueriesResult{
+      Users: allQueries,
+    }
+    
+    enc := json.NewEncoder(w)
+    enc.Encode(&result)
+  }
+}
+

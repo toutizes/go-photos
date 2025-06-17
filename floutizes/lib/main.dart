@@ -145,6 +145,20 @@ final _router = GoRouter(
             ),
           ],
         ),
+        // Admin branch - conditionally added based on user email
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/admin',
+              builder: (context, state) {
+                return HomeScreen(
+                  key: const ValueKey('admin'),
+                  initialView: ViewType.adminQueries,
+                );
+              },
+            ),
+          ],
+        ),
       ],
     ),
   ],
@@ -227,48 +241,63 @@ class _ScaffoldWithNestedNavigationState
       child: ValueListenableBuilder<bool>(
         valueListenable: _immersiveModeNotifier,
         builder: (context, isImmersive, child) {
-          return Scaffold(
-            body: widget.navigationShell,
-            bottomNavigationBar: isImmersive
-                ? null
-                : BottomNavigationBar(
-                    type: BottomNavigationBarType.fixed,
-                    currentIndex: widget.navigationShell.currentIndex,
-                    selectedItemColor: Theme.of(context).colorScheme.primary,
-                    unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                    backgroundColor: Theme.of(context).colorScheme.surface,
-                    selectedLabelStyle: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    unselectedLabelStyle: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    selectedIconTheme: IconThemeData(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    unselectedIconTheme: IconThemeData(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    items: const [
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.trending_up),
-                        label: 'Activité',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.photo_album),
-                        label: 'Albums',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.photo_library),
-                        label: 'Photos',
-                      ),
-                    ],
-                    onTap: (index) => widget.navigationShell.goBranch(
-                      index,
-                      initialLocation:
-                          index == widget.navigationShell.currentIndex,
-                    ),
+          return Consumer<AuthService>(
+            builder: (context, authService, child) {
+              // Check if current user is admin
+              final isAdmin = authService.user?.email == 'matthieu.devin@gmail.com';
+              
+              // Build navigation items conditionally
+              final navigationItems = [
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.trending_up),
+                  label: 'Activité',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.photo_album),
+                  label: 'Albums',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.photo_library),
+                  label: 'Photos',
+                ),
+                if (isAdmin)
+                  const BottomNavigationBarItem(
+                    icon: Icon(Icons.admin_panel_settings),
+                    label: 'Admin',
                   ),
+              ];
+
+              return Scaffold(
+                body: widget.navigationShell,
+                bottomNavigationBar: isImmersive
+                    ? null
+                    : BottomNavigationBar(
+                        type: BottomNavigationBarType.fixed,
+                        currentIndex: widget.navigationShell.currentIndex,
+                        selectedItemColor: Theme.of(context).colorScheme.primary,
+                        unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        selectedLabelStyle: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        unselectedLabelStyle: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        selectedIconTheme: IconThemeData(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        unselectedIconTheme: IconThemeData(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        items: navigationItems,
+                        onTap: (index) => widget.navigationShell.goBranch(
+                          index,
+                          initialLocation:
+                              index == widget.navigationShell.currentIndex,
+                        ),
+                      ),
+              );
+            },
           );
         },
       ),

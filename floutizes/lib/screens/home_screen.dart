@@ -7,6 +7,7 @@ import 'flow_view.dart';
 import 'albums_view.dart';
 import 'news_view.dart';
 import 'activity_view.dart';
+import 'admin_queries_view.dart';
 import '../models/view_type.dart';
 import '../widgets/search_box.dart';
 
@@ -137,7 +138,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? 1
                 : _currentView == ViewType.albums 
                     ? 2 
-                    : 3,
+                    : _currentView == ViewType.images
+                        ? 3
+                        : 4, // adminQueries
         children: [
           NewsView(
             onAlbumSelected: (albumId) {
@@ -165,6 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onKeywordSearch: (String keyword, int imageId) => context.go(
                 '/images?q=${Uri.encodeComponent(keyword)}&imageId=$imageId'),
           ),
+          const AdminQueriesView(),
         ],
       ),
     );
