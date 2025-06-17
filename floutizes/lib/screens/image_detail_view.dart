@@ -1055,41 +1055,45 @@ class _ImageDetailViewState extends State<ImageDetailView>
         return Stack(
           children: [
             // Left arrow - positioned just left of image area
-            if (hasPrev)
-              Positioned(
-                left: imageAreaLeft + 10, // 10px from left edge of image area
-                top: arrowVerticalCenter - 30, // Center the 60px arrow
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _prevPage,
-                    child: Container(
-                      width: 60,
-                      height: 60,
-                      alignment: Alignment.center,
+            Positioned(
+              left: imageAreaLeft + 10, // 10px from left edge of image area
+              top: arrowVerticalCenter - 30, // Center the 60px arrow
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: hasPrev ? _prevPage : null,
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    alignment: Alignment.center,
+                    child: Opacity(
+                      opacity: hasPrev ? 1.0 : 0.3,
                       child: _buildShadowedIcon(Icons.chevron_left),
                     ),
                   ),
                 ),
               ),
+            ),
             // Right arrow - positioned just right of image area
-            if (hasNext)
-              Positioned(
-                left: imageAreaRight - 70, // 10px from right edge of image area (60px arrow + 10px)
-                top: arrowVerticalCenter - 30, // Center the 60px arrow
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _nextPage,
-                    child: Container(
-                      width: 60,
-                      height: 60,
-                      alignment: Alignment.center,
+            Positioned(
+              left: imageAreaRight - 70, // 10px from right edge of image area (60px arrow + 10px)
+              top: arrowVerticalCenter - 30, // Center the 60px arrow
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: hasNext ? _nextPage : null,
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    alignment: Alignment.center,
+                    child: Opacity(
+                      opacity: hasNext ? 1.0 : 0.3,
                       child: _buildShadowedIcon(Icons.chevron_right),
                     ),
                   ),
                 ),
               ),
+            ),
             // Zoom toggle button - positioned at top-right of image area
             Positioned(
               left: imageAreaRight - 60, // Same horizontal position as right arrow (centered)
