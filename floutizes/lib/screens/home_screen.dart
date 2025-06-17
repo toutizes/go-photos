@@ -118,29 +118,16 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: _currentView == ViewType.news
-            ? Row(
-                children: [
-                  const Expanded(
-                    child: Text('Actualités'),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.logout),
-                    onPressed: _handleLogout,
-                    tooltip: 'Déconnexion',
-                  ),
-                ],
-              )
-            : SearchBox(
-                controller: _searchController,
-                hintText: _currentView == ViewType.albums
-                    ? 'Recherche albums...'
-                    : 'Recherche photos...',
-                onSearch: () => _performSearch(_searchController.text),
-                onClear: _clearSearch,
-                onHelp: () => _showSearchHelp(context),
-                onLogout: _handleLogout,
-              ),
+        title: SearchBox(
+          controller: _searchController,
+          hintText: _currentView == ViewType.albums
+              ? 'Recherche albums...'
+              : 'Recherche photos...',
+          onSearch: () => _performSearch(_searchController.text),
+          onClear: _clearSearch,
+          onHelp: () => _showSearchHelp(context),
+          onLogout: _handleLogout,
+        ),
       ),
       body: IndexedStack(
         index: _currentView == ViewType.news 
