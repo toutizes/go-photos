@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../models/user_query.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 
 class AdminQueriesView extends StatefulWidget {
   const AdminQueriesView({super.key});
@@ -17,10 +19,19 @@ class _AdminQueriesViewState extends State<AdminQueriesView> {
   @override
   void initState() {
     super.initState();
-    _loadUserQueries();
+    // Don't load data in initState - will be loaded conditionally in build
+  }
+
+  bool _isAdmin(BuildContext context) {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    return authService.user?.email == 'matthieu.devin@gmail.com';
   }
 
   Future<void> _loadUserQueries() async {
+    if (!_isAdmin(context)) {
+      return; // Don't make API call if not admin
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -114,6 +125,31 @@ class _AdminQueriesViewState extends State<AdminQueriesView> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if user is admin
+    if (!_isAdmin(context)) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.admin_panel_settings_outlined,
+              size: 48,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 16),
+            Text('Accès administrateur requis'),
+          ],
+        ),
+      );
+    }
+
+    // Load data if not already loaded
+    if (_userQueriesFuture == null && !_isLoading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadUserQueries();
+      });
+    }
+
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
