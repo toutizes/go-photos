@@ -949,6 +949,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
     final prevOpacity = hasPrev ? 1.0 : 0.3;
     final nextOpacity = hasNext ? 1.0 : 0.3;
 
+    // This method is only used in immersive mode - arrows at screen edges
     return Positioned.fill(
       child: Row(
         children: [
@@ -1030,6 +1031,139 @@ class _ImageDetailViewState extends State<ImageDetailView>
     );
   }
 
+  Widget _pageViewWithArrows(List<ImageModel> images) {
+    return Stack(
+      children: [
+        // Original PageView layout (unchanged)
+        _pageView(images),
+        // Overlay arrows positioned relative to the image content
+        _buildOverlayArrows(images),
+      ],
+    );
+  }
+
+  Widget _buildOverlayArrows(List<ImageModel> images) {
+    bool hasPrev = _hasPrev();
+    bool hasNext = _hasNext(images);
+
+    if (!hasPrev && !hasNext) return const SizedBox.shrink();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final mediaQuery = MediaQuery.of(context);
+        final isLandscape = mediaQuery.size.width > mediaQuery.size.height;
+        final topPadding = mediaQuery.padding.top;
+        final bottomPadding = mediaQuery.padding.bottom;
+        
+        // Calculate the image content area bounds
+        double imageAreaLeft, imageAreaRight, imageAreaTop, imageAreaBottom;
+        
+        if (isLandscape) {
+          // In landscape: image takes 7/10 of the row width (see original _pageView)
+          imageAreaLeft = 0;
+          imageAreaRight = constraints.maxWidth * 0.7; // 7/10 of total width
+          imageAreaTop = kToolbarHeight + topPadding;
+          imageAreaBottom = constraints.maxHeight - kBottomNavigationBarHeight - bottomPadding;
+        } else {
+          // In portrait: image takes full width, positioned above keywords
+          imageAreaLeft = 0;
+          imageAreaRight = constraints.maxWidth;
+          imageAreaTop = kToolbarHeight + topPadding;
+          imageAreaBottom = constraints.maxHeight - (constraints.maxHeight * 0.2) - kBottomNavigationBarHeight - bottomPadding;
+        }
+
+        final arrowVerticalCenter = (imageAreaTop + imageAreaBottom) / 2;
+
+        return Stack(
+          children: [
+            // Left arrow - positioned just left of image area
+            if (hasPrev)
+              Positioned(
+                left: imageAreaLeft + 10, // 10px from left edge of image area
+                top: arrowVerticalCenter - 30, // Center the 60px arrow
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _prevPage,
+                    child: Container(
+                      width: 60,
+                      height: 60,
+                      alignment: Alignment.center,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.chevron_left,
+                          size: 40,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withValues(alpha: 0.8),
+                              blurRadius: 2,
+                              offset: const Offset(1, 1),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            // Right arrow - positioned just right of image area
+            if (hasNext)
+              Positioned(
+                left: imageAreaRight - 70, // 10px from right edge of image area (60px arrow + 10px)
+                top: arrowVerticalCenter - 30, // Center the 60px arrow
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _nextPage,
+                    child: Container(
+                      width: 60,
+                      height: 60,
+                      alignment: Alignment.center,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.chevron_right,
+                          size: 40,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withValues(alpha: 0.8),
+                              blurRadius: 2,
+                              offset: const Offset(1, 1),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _currentImageView() {
     var images = _images;
     if (images!.isEmpty) {
@@ -1038,12 +1172,14 @@ class _ImageDetailViewState extends State<ImageDetailView>
     return KeyboardListener(
       focusNode: _focusNode,
       onKeyEvent: _onKeyEvent,
-      child: Stack(
-        children: [
-          _pageView(images),
-          _pageNav(images),
-        ],
-      ),
+      child: _isImmersiveMode
+          ? Stack(
+              children: [
+                _pageView(images),
+                _pageNav(images),
+              ],
+            )
+          : _pageViewWithArrows(images),
     );
   }
 
