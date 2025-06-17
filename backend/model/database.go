@@ -354,26 +354,29 @@ func (db *Database) GetRecentActiveKeywords() []KeywordCount {
 }
 
 // GetRecentActiveKeywordsAt returns keywords from albums with directory timestamp less than one month before the given time,
-// sorted by number of occurrences in these recent photos. This version allows for testing with a specific time.
+// sorted by weighted count based on recency. Keywords are weighted by 1 / (days since now), so recent keywords count more.
 func (db *Database) GetRecentActiveKeywordsAt(now time.Time) []KeywordCount {
 	oneMonthAgo := now.AddDate(0, -1, 0)
 	keywordImages := make(map[string][]*Image)
+	keywordWeights := make(map[string]float64)
 	
 	// Find directories with last_modified time within the last month
 	for _, dir := range db.directories {
 		if dir.last_modified.After(oneMonthAgo) {
 			// Collect images for each keyword from this recent directory
 			for _, img := range dir.images {
-				// Process main keywords
+				// Process main keywords only (skip sub-keywords)
 				for _, keyword := range img.keywords {
 					if keyword != "" { // Skip empty keywords
 						keywordImages[keyword] = append(keywordImages[keyword], img)
-					}
-				}
-				// Process sub-keywords
-				for _, keyword := range img.sub_keywords {
-					if keyword != "" { // Skip empty keywords
-						keywordImages[keyword] = append(keywordImages[keyword], img)
+						
+						// Calculate weight based on how many days ago the image was taken
+						daysSince := now.Sub(img.ItemTime()).Hours() / 24.0
+						if daysSince < 1.0 {
+							daysSince = 1.0 // Minimum 1 day to avoid division by zero and very large weights
+						}
+						weight := 1.0 / daysSince
+						keywordWeights[keyword] += weight
 					}
 				}
 			}
@@ -394,9 +397,12 @@ func (db *Database) GetRecentActiveKeywordsAt(now time.Time) []KeywordCount {
 			maxImages = len(images)
 		}
 		
+		// Use weighted count instead of simple count
+		weightedCount := int(keywordWeights[keyword] + 0.5) // Round to nearest integer
+		
 		result = append(result, KeywordCount{
 			Keyword:      keyword,
-			Count:        len(images),
+			Count:        weightedCount,
 			RecentImages: images[:maxImages],
 		})
 	}
