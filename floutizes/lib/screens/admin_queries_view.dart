@@ -15,20 +15,30 @@ class AdminQueriesView extends StatefulWidget {
 class _AdminQueriesViewState extends State<AdminQueriesView> {
   Future<AllUserQueriesModel>? _userQueriesFuture;
   bool _isLoading = false;
+  bool _hasInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    // Don't load data in initState - will be loaded conditionally in build
+    // Will be initialized in didChangeDependencies when context is available
   }
 
-  bool _isAdmin(BuildContext context) {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasInitialized && _isAdmin()) {
+      _hasInitialized = true;
+      _loadUserQueries();
+    }
+  }
+
+  bool _isAdmin() {
     final authService = Provider.of<AuthService>(context, listen: false);
     return authService.user?.email == 'matthieu.devin@gmail.com';
   }
 
   Future<void> _loadUserQueries() async {
-    if (!_isAdmin(context)) {
+    if (!_isAdmin()) {
       return; // Don't make API call if not admin
     }
 
@@ -126,7 +136,7 @@ class _AdminQueriesViewState extends State<AdminQueriesView> {
   @override
   Widget build(BuildContext context) {
     // Check if user is admin
-    if (!_isAdmin(context)) {
+    if (!_isAdmin()) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -143,14 +153,8 @@ class _AdminQueriesViewState extends State<AdminQueriesView> {
       );
     }
 
-    // Load data if not already loaded
-    if (_userQueriesFuture == null && !_isLoading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _loadUserQueries();
-      });
-    }
-
-    if (_isLoading) {
+    // Show loading indicator if still loading or future not yet set
+    if (_isLoading || _userQueriesFuture == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
