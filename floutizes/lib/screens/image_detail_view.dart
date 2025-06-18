@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:intl/intl.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import '../models/image.dart';
 import '../services/api_service.dart';
 import '../utils/image_download.dart';
@@ -333,7 +334,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
                   }
                 },
                 child: Chip(
-                  avatar: const Icon(Icons.album, size: 18),
+                  avatar: const Icon(Symbols.album, size: 18),
                   label: Text(image.albumDir),
                   backgroundColor:
                       Theme.of(context).colorScheme.secondaryContainer,
@@ -487,7 +488,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
                           },
                           errorBuilder: (context, error, stackTrace) {
                             return const Center(
-                              child: Icon(Icons.error_outline, size: 48),
+                              child: Icon(Symbols.error_outline, size: 48),
                             );
                           },
                         ),
@@ -721,7 +722,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
             message:
                 'Pour image stéréo - regardez avec les yeux parallèles (fixez l\'horizon)',
             child: ElevatedButton.icon(
-              icon: const Icon(Icons.arrow_upward_rounded),
+              icon: const Icon(Symbols.arrow_upward_rounded),
               label: const Text('Vue Parallèle'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _stereoViewMode == StereoViewMode.parallel
@@ -741,7 +742,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
             message:
                 'Pour image stéréo - utilisez la technique des yeux croisés (louchez)',
             child: ElevatedButton.icon(
-              icon: const Icon(Icons.compare_arrows_rounded),
+              icon: const Icon(Symbols.compare_arrows_rounded),
               label: const Text('Vue Croisée'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _stereoViewMode == StereoViewMode.crossEyed
@@ -761,7 +762,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
             message:
                 'Pour image stéréo - alternance automatique des vues gauche et droite',
             child: ElevatedButton.icon(
-              icon: const Icon(Icons.animation_rounded),
+              icon: const Icon(Symbols.animation_rounded),
               label: const Text('Vue Animée'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _stereoViewMode == StereoViewMode.animated
@@ -781,7 +782,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
             message:
                 'Pour image stéréo - superposition des vues gauche et droite pour alignement',
             child: ElevatedButton.icon(
-              icon: const Icon(Icons.layers_rounded),
+              icon: const Icon(Symbols.layers_rounded),
               label: const Text('Align'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _stereoViewMode == StereoViewMode.align
@@ -968,7 +969,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
                     width: 60,
                     child: Opacity(
                       opacity: prevOpacity,
-                      child: _buildShadowedIcon(Icons.chevron_left),
+                      child: _buildShadowedIcon(Symbols.chevron_left),
                     ),
                   ),
                 ),
@@ -982,7 +983,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
                     width: 60,
                     child: Opacity(
                       opacity: nextOpacity,
-                      child: _buildShadowedIcon(Icons.chevron_right),
+                      child: _buildShadowedIcon(Symbols.chevron_right),
                     ),
                   ),
                 ),
@@ -1002,7 +1003,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
                 width: 40,
                 height: 40,
                 alignment: Alignment.center,
-                child: _buildShadowedIcon(Icons.zoom_out, size: 24),
+                child: _buildShadowedIcon(Symbols.zoom_out, size: 24),
               ),
             ),
           ),
@@ -1068,7 +1069,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
                     alignment: Alignment.center,
                     child: Opacity(
                       opacity: hasPrev ? 1.0 : 0.3,
-                      child: _buildShadowedIcon(Icons.chevron_left),
+                      child: _buildShadowedIcon(Symbols.chevron_left),
                     ),
                   ),
                 ),
@@ -1088,7 +1089,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
                     alignment: Alignment.center,
                     child: Opacity(
                       opacity: hasNext ? 1.0 : 0.3,
-                      child: _buildShadowedIcon(Icons.chevron_right),
+                      child: _buildShadowedIcon(Symbols.chevron_right),
                     ),
                   ),
                 ),
@@ -1106,7 +1107,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
                     width: 40,
                     height: 40,
                     alignment: Alignment.center,
-                    child: _buildShadowedIcon(Icons.zoom_in, size: 24),
+                    child: _buildShadowedIcon(Symbols.zoom_in, size: 24),
                   ),
                 ),
               ),
@@ -1141,7 +1142,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
 
     return PopupMenuButton<String>(
       icon: Icon(
-        Icons.download,
+        Symbols.download,
         color: isEnabled ? null : Theme.of(context).disabledColor,
       ),
       tooltip: 'Télécharger',
@@ -1260,7 +1261,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
                     backgroundColor: Colors.transparent,
                     elevation: 0,
                     leading: IconButton(
-                      icon: const Icon(Icons.arrow_back),
+                      icon: const Icon(Symbols.arrow_back),
                       onPressed: _navigateToGrid,
                       tooltip: 'Retour à la grille',
                     ),
@@ -1288,7 +1289,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
                     actions: [
                       if (kIsWeb) _buildDownloadButton(_images?[_currentIndex]),
                       IconButton(
-                        icon: const Icon(Icons.help_outline),
+                        icon: const Icon(Symbols.help_outline),
                         onPressed: _showNavigationButtons,
                       ),
                     ],

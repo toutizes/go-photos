@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 class SearchBox extends StatefulWidget {
   final TextEditingController controller;
@@ -43,7 +44,7 @@ class _SearchBoxState extends State<SearchBox> {
         if (widget.controller.text.isNotEmpty && widget.onClear != null)
           IconButton(
             icon: Icon(
-              Icons.clear,
+              Symbols.clear,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             onPressed: widget.onClear,
@@ -52,7 +53,7 @@ class _SearchBoxState extends State<SearchBox> {
         if (widget.onSearch != null)
           IconButton(
             icon: Icon(
-              Icons.search,
+              Symbols.search,
               color: Theme.of(context).colorScheme.primary,
             ),
             onPressed: widget.onSearch,
@@ -61,7 +62,7 @@ class _SearchBoxState extends State<SearchBox> {
         if (widget.showHelpButton && widget.onHelp != null)
           IconButton(
             icon: Icon(
-              Icons.help_outline,
+              Symbols.help_outline,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             onPressed: widget.onHelp,
@@ -70,7 +71,7 @@ class _SearchBoxState extends State<SearchBox> {
         if (widget.showLogoutButton && widget.onLogout != null)
           IconButton(
             icon: Icon(
-              Icons.logout,
+              Symbols.logout,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             onPressed: widget.onLogout,

@@ -5,15 +5,14 @@ build: FORCE
 build-web-release:
 	flutter build web --release --dart-define BACKEND=https://toutizes.com
 
-push-web-release: 
-	make build-web-release
-	(cd ..; make push_flutter)
-
 run-web:
 	flutter run -d chrome --web-port 3000
 
 run-web-tt:
 	flutter run -d chrome --web-port 3000 --dart-define BACKEND=https://toutizes.com
+
+run-web-tt-release:
+	flutter run --release -d chrome --web-port 3000 --dart-define BACKEND=https://toutizes.com
 
 run-ios-simulator-pro15:
 	flutter run -d "iPhone 15 Pro Max"

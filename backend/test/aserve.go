@@ -41,12 +41,12 @@ func Log(n string, r *http.Request) {
 	log.Printf("%s: %s %s\n", n, r.RemoteAddr, r.URL)
 }
 
-func LogHandler(n string, handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		Log(n, r)
-		handler.ServeHTTP(w, r)
-	})
-}
+// func LogHandler(n string, handler http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		Log(n, r)
+// 		handler.ServeHTTP(w, r)
+// 	})
+// }
 
 // Add CORS headers to all responses
 func AddCorsHeaders(w http.ResponseWriter, r *http.Request) {
@@ -107,10 +107,10 @@ func handleFlutterApp(w http.ResponseWriter, r *http.Request) {
 	AddCorsHeaders(w, r)
 
 	// Cache static assets but not index.html
-	if !strings.HasSuffix(filePath, "index.html") {
-		w.Header().Set("Cache-Control", "public, max-age=31536000")
-	} else {
+	if strings.HasSuffix(filePath, "index.html") {
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	} else {
+		w.Header().Set("Cache-Control", "public, max-age=31536000")
 	}
 
 	http.ServeFile(w, r, filePath)
@@ -203,7 +203,7 @@ func main() {
 	// Wrap API endpoints with AuthMiddleware
 	mux.HandleFunc(*url_prefix+"/q",
 		func(w http.ResponseWriter, r *http.Request) {
-			// Log("TT db/q", r)
+			Log("/q", r)
 			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 				AddCorsHeaders(w, r)
 				model.HandleQuery(w, r, db)
@@ -211,7 +211,7 @@ func main() {
 		})
 	mux.HandleFunc(*url_prefix+"/montage/",
 		func(w http.ResponseWriter, r *http.Request) {
-			// Log("/montage", r)
+			Log("/montage", r)
 			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 				AddCorsHeaders(w, r)
 				model.HandleMontage2(w, r, db)
@@ -235,7 +235,7 @@ func main() {
 		})
 	mux.HandleFunc(*url_prefix+"/midi/",
 		func(w http.ResponseWriter, r *http.Request) {
-			// Log("/midi", r)
+			Log("/midi", r)
 			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 				AddCorsHeaders(w, r)
 				model.HandleFile(w, r, *url_prefix, *root)
@@ -276,7 +276,7 @@ func main() {
 	// 		http.FileServer(http.Dir(*static_root))))
 	mux.HandleFunc("/",
 		func(w http.ResponseWriter, r *http.Request) {
-			// http.Redirect(w, r, "/db/pic.html", 301)
+      Log("/", r)
 			http.Redirect(w, r, "/app/", 301)
 		})
 
@@ -328,6 +328,7 @@ func main() {
 		var http_mux = http.NewServeMux()
 		http_mux.HandleFunc("/",
 			func(w http.ResponseWriter, r *http.Request) {
+        Log("HTTPS /", r)
 				http.Redirect(w, r, "https://toutizes.com"+r.RequestURI, 301)
 			})
 		

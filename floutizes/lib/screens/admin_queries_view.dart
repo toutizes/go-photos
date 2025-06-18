@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import '../models/user_query.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
@@ -142,7 +143,7 @@ class _AdminQueriesViewState extends State<AdminQueriesView> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.admin_panel_settings_outlined,
+              Symbols.admin_panel_settings,
               size: 48,
               color: Colors.grey,
             ),
@@ -171,7 +172,7 @@ class _AdminQueriesViewState extends State<AdminQueriesView> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(
-                  Icons.error_outline,
+                  Symbols.error_outline,
                   size: 48,
                   color: Colors.grey,
                 ),
@@ -195,7 +196,7 @@ class _AdminQueriesViewState extends State<AdminQueriesView> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.search_outlined,
+                  Symbols.search,
                   size: 48,
                   color: Colors.grey,
                 ),

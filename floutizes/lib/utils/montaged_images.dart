@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import '../models/image.dart';
 import '../models/directory.dart';
 import '../services/api_service.dart';
@@ -161,7 +162,7 @@ class MontagedImages<T> {
           },
           errorBuilder: (context, error, stackTrace) {
             return const Center(
-              child: Icon(Icons.error_outline),
+              child: Icon(Symbols.error_outline),
             );
           },
         );

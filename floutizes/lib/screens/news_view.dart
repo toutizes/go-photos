@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import '../models/directory.dart';
 import '../models/image.dart';
 import '../services/api_service.dart';
@@ -107,7 +108,7 @@ class _NewsViewState extends State<NewsView> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward_ios, size: 16),
+                  const Icon(Symbols.arrow_forward_ios, size: 16),
                 ],
               ),
               const SizedBox(height: 12),
@@ -168,7 +169,7 @@ class _NewsViewState extends State<NewsView> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(
-                  Icons.error_outline,
+                  Symbols.error_outline,
                   size: 48,
                   color: Colors.grey,
                 ),
@@ -192,7 +193,7 @@ class _NewsViewState extends State<NewsView> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.folder_outlined,
+                  Symbols.folder,
                   size: 48,
                   color: Colors.grey,
                 ),

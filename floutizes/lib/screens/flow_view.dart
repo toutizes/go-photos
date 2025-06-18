@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:material_symbols_icons/symbols.dart';
 import '../models/image.dart';
 import '../services/api_service.dart';
 import '../utils/layout_utils.dart';
@@ -126,7 +127,7 @@ class _FlowViewState extends State<FlowView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(
-            Icons.search_off,
+            Symbols.search_off,
             size: 48,
             color: Colors.grey,
           ),
@@ -141,7 +142,7 @@ class _FlowViewState extends State<FlowView> {
                 if (widget.onKeywordSearch != null)
                   TextButton.icon(
                     onPressed: () => widget.onKeywordSearch!('', -1),
-                    icon: const Icon(Icons.clear),
+                    icon: const Icon(Symbols.clear),
                     label: const Text('Annuler'),
                   ),
               ],
@@ -170,7 +171,7 @@ class _FlowViewState extends State<FlowView> {
       actions: [
         if (images != null && images.isNotEmpty && kIsWeb)
           PopupMenuButton<String>(
-            icon: const Icon(Icons.download),
+            icon: const Icon(Symbols.download),
             tooltip: 'Télécharger les images',
             onSelected: (value) async {
               if (!mounted) return;

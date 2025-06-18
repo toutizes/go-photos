@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import '../services/api_service.dart';
 import 'image_download_stub.dart'
     if (dart.library.html) 'image_download_web.dart';
@@ -117,7 +118,7 @@ class _DownloadDialogState extends State<_DownloadDialog> {
             ),
           ] else if (_error != null) ...[
             const Icon(
-              Icons.error_outline,
+              Symbols.error_outline,
               color: Colors.red,
               size: 48,
             ),
@@ -134,7 +135,7 @@ class _DownloadDialogState extends State<_DownloadDialog> {
             ),
           ] else if (_downloadComplete) ...[
             const Icon(
-              Icons.check_circle_outline,
+              Symbols.check_circle_outline,
               color: Colors.green,
               size: 48,
             ),

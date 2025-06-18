@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'screens/home_screen.dart';
 import 'services/api_service.dart';
 import 'models/view_type.dart';
@@ -249,24 +250,24 @@ class _ScaffoldWithNestedNavigationState
               // Build navigation items conditionally
               final navigationItems = [
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.trending_up, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  activeIcon: Icon(Icons.trending_up, color: Theme.of(context).colorScheme.primary),
+                  icon: Icon(Symbols.trending_up, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  activeIcon: Icon(Symbols.trending_up, color: Theme.of(context).colorScheme.primary),
                   label: 'Activité',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.photo_album, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  activeIcon: Icon(Icons.photo_album, color: Theme.of(context).colorScheme.primary),
+                  icon: Icon(Symbols.photo_album, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  activeIcon: Icon(Symbols.photo_album, color: Theme.of(context).colorScheme.primary),
                   label: 'Albums',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.photo_library, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  activeIcon: Icon(Icons.photo_library, color: Theme.of(context).colorScheme.primary),
+                  icon: Icon(Symbols.photo_library, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  activeIcon: Icon(Symbols.photo_library, color: Theme.of(context).colorScheme.primary),
                   label: 'Photos',
                 ),
                 if (isAdmin)
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.admin_panel_settings, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    activeIcon: Icon(Icons.admin_panel_settings, color: Theme.of(context).colorScheme.primary),
+                    icon: Icon(Symbols.admin_panel_settings, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    activeIcon: Icon(Symbols.admin_panel_settings, color: Theme.of(context).colorScheme.primary),
                     label: 'Admin',
                   ),
               ];
