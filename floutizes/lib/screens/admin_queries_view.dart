@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:go_router/go_router.dart';
 import '../models/user_query.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
@@ -114,9 +115,18 @@ class _AdminQueriesViewState extends State<AdminQueriesView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  query.query,
-                  style: Theme.of(context).textTheme.bodyMedium,
+                GestureDetector(
+                  onTap: () {
+                    // Navigate to photos view with this query
+                    context.go('/images?q=${Uri.encodeComponent(query.query)}');
+                  },
+                  child: Text(
+                    query.query,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
                 ),
                 if (query.kind.isNotEmpty)
                   Text(
