@@ -2,16 +2,16 @@ package main
 
 import (
 	"context"
+	firebase "firebase.google.com/go/v4"
+	"firebase.google.com/go/v4/auth"
 	"flag"
+	"google.golang.org/api/option"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
-	firebase "firebase.google.com/go/v4"
-	"firebase.google.com/go/v4/auth"
-	"google.golang.org/api/option"
 	// "github.com/alexedwards/scs/v2"
 	"time"
 )
@@ -55,14 +55,14 @@ func AddCorsHeaders(w http.ResponseWriter, r *http.Request) {
 		// If no Origin header, fall back to the Referer
 		origin = r.Header.Get("Referer")
 	}
-	
+
 	// Allow both localhost and toutizes.com
 	allowedOrigins := []string{
 		"http://localhost",
 		"http://localhost:3000",
 		"https://toutizes.com",
 	}
-	
+
 	// Check if the origin is allowed
 	for _, allowed := range allowedOrigins {
 		if strings.HasPrefix(origin, allowed) {
@@ -70,7 +70,7 @@ func AddCorsHeaders(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	
+
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Origin, Authorization")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -149,7 +149,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		// Add user email to context
 		userEmail := token.Claims["email"].(string)
 		ctx := context.WithValue(r.Context(), "userEmail", userEmail)
-		
+
 		// Call next handler with updated context
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
@@ -199,7 +199,7 @@ func main() {
 	// sessionManager.Store = scs.NewCookieStore([]byte(cookieSalt))
 
 	var mux = http.NewServeMux()
-	
+
 	// Wrap API endpoints with AuthMiddleware
 	mux.HandleFunc(*url_prefix+"/q",
 		func(w http.ResponseWriter, r *http.Request) {
@@ -294,9 +294,9 @@ func main() {
 		// Increase max header size for larger tokens
 		MaxHeaderBytes: 1 << 20, // 1MB
 		// Add timeouts to prevent hanging connections
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   30 * time.Second, // Longer for image transfers
-		IdleTimeout:    120 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second, // Longer for image transfers
+		IdleTimeout:  120 * time.Second,
 	}
 
 	// Create a custom transport for the file server
@@ -307,7 +307,7 @@ func main() {
 	// 	// Enable TCP keep-alives
 	// 	DisableKeepAlives: false,
 	// }
-	
+
 	// Create a custom client for file serving
 	// client := &http.Client{
 	// 	Transport: transport,
@@ -331,11 +331,11 @@ func main() {
         Log("HTTPS /", r)
 				http.Redirect(w, r, "https://toutizes.com"+r.RequestURI, 301)
 			})
-		
+
 		redirectServer := &http.Server{
 			Addr:         ":8080",
 			Handler:      http_mux,
-			ReadTimeout:  5 * time.Second,  // Short timeout for redirects
+			ReadTimeout:  5 * time.Second, // Short timeout for redirects
 			WriteTimeout: 5 * time.Second,
 		}
 		go redirectServer.ListenAndServe()
@@ -348,10 +348,10 @@ func main() {
 			WriteTimeout: 30 * time.Second,
 			IdleTimeout:  120 * time.Second,
 		}
-		
+
 		err := tlsServer.ListenAndServeTLS(
-			*letsencrypt_root + "/live/toutizes.com/fullchain.pem",
-			*letsencrypt_root + "/live/toutizes.com/privkey.pem")
+			*letsencrypt_root+"/live/toutizes.com/fullchain.pem",
+			*letsencrypt_root+"/live/toutizes.com/privkey.pem")
 		log.Printf("Web server error: %s\n", err)
 	} else {
 		err := server.ListenAndServe()
