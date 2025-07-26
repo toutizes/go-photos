@@ -92,7 +92,7 @@ class _AlbumsViewState extends State<AlbumsView> {
                 Expanded(
                   child: Hero(
                     tag: 'album_${album.id}',
-                    child: montaged.buildImage(album),
+                    child: montaged.buildImage(album, fit: BoxFit.none),
                   ),
                 ),
                 Padding(

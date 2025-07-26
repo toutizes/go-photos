@@ -126,8 +126,8 @@ class _NewsViewState extends State<NewsView> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: SizedBox(
-                          width: 80,
-                          height: 80,
+                          width: 180,
+                          height: 180,
                           child: FittedBox(
                             fit: BoxFit.cover,
                             child: SizedBox(

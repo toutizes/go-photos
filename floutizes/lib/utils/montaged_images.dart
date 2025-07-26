@@ -95,7 +95,7 @@ class MontagedImages<T> {
     return montageGroups;
   }
 
-  Widget buildImage(T item) {
+  Widget buildImage(T item, {BoxFit fit = BoxFit.cover}) {
     final index = _items.indexWhere((i) => i.object == item);
 
     if (index == -1) {
@@ -117,7 +117,7 @@ class MontagedImages<T> {
     return Image.network(
       montageGroup.montageUrl,
       headers: headers,
-      fit: BoxFit.cover,
+      fit: fit,
       alignment: Alignment(dx, 0),
       width: _imageSize.toDouble(),
       height: _imageSize.toDouble(),
