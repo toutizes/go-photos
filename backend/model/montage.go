@@ -63,10 +63,10 @@ func HandleMontage2(w http.ResponseWriter, r *http.Request, db *Database) {
 func createMontage2(db *Database, geo string, ids []int, montPath string) {
 	start_time := time.Now()
 	var images []image.Image
-	var width, height int
+	var nominal_width, total_width, height int
 
 	// 1. Load and decode JPEG images
-	for _, id := range ids {
+	for i, id := range ids {
 		var path = db.MiniPath(id)
 		file, err := os.Open(path)
 		if err != nil {
@@ -83,21 +83,22 @@ func createMontage2(db *Database, geo string, ids []int, montPath string) {
 
 		images = append(images, img)
 
-		// Assuming all images are square and of the same size
-		if height == 0 {
+		// The height and width of the first image determines the montage dimensions
+		if i == 0 {
 			height = img.Bounds().Dy()
+			nominal_width = img.Bounds().Dx()
 		}
-		width += img.Bounds().Dx()
+		total_width += nominal_width
 	}
 
 	// 2. Create the destination image
-	concatenatedImg := image.NewRGBA(image.Rect(0, 0, width, height))
+	concatenatedImg := image.NewRGBA(image.Rect(0, 0, total_width, height))
 
 	// 3. Draw the images horizontally
-	xOffset := 0
-	for _, img := range images {
-		draw.Draw(concatenatedImg, img.Bounds().Add(image.Point{xOffset, 0}), img, img.Bounds().Min, draw.Over)
-		xOffset += img.Bounds().Dx()
+	for i, img := range images {
+		draw.Draw(concatenatedImg,
+			image.Rectangle{image.Point{i * nominal_width, 0}, image.Point{(i + 1) * nominal_width, height}},
+			img, image.Point{0, 0}, draw.Over)
 	}
 
 	outFile, err := os.Create(montPath)

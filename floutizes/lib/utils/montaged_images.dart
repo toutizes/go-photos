@@ -117,7 +117,7 @@ class MontagedImages<T> {
     return Image.network(
       montageGroup.montageUrl,
       headers: headers,
-      fit: BoxFit.none,
+      fit: BoxFit.cover,
       alignment: Alignment(dx, 0),
       width: _imageSize.toDouble(),
       height: _imageSize.toDouble(),
