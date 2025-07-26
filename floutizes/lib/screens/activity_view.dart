@@ -18,7 +18,7 @@ class ActivityView extends StatefulWidget {
 }
 
 class _ActivityViewState extends State<ActivityView> {
-  Future<List<KeywordModel>>? _keywordsFuture;
+  Future<List<KeywordGroupModel>>? _keywordGroupsFuture;
   bool _isLoading = false;
 
   @override
@@ -33,8 +33,8 @@ class _ActivityViewState extends State<ActivityView> {
     });
 
     try {
-      _keywordsFuture = ApiService.instance.getRecentKeywords();
-      await _keywordsFuture;
+      _keywordGroupsFuture = ApiService.instance.getRecentKeywordGroups();
+      await _keywordGroupsFuture;
     } finally {
       if (mounted) {
         setState(() {
@@ -44,33 +44,128 @@ class _ActivityViewState extends State<ActivityView> {
     }
   }
 
-  Widget _buildKeywordCard(KeywordModel keyword) {
+  Widget _buildKeywordGroupCard(KeywordGroupModel group) {
     // Create fake ImageModel objects for montage from the recent images
     final List<ImageModel> previewImages = [];
-    
-    for (final recentImage in keyword.recentImages) {
+
+    for (final recentImage in group.recentImages) {
       previewImages.add(ImageModel(
         id: recentImage.id,
         albumDir: '', // We don't have album dir in the simplified response
         imageName: recentImage.name,
-        itemTimestamp: DateTime.now(), // We don't have timestamp in the simplified response
+        itemTimestamp: DateTime
+            .now(), // We don't have timestamp in the simplified response
         fileTimestamp: DateTime.now(),
         height: 1,
         width: 1,
         keywords: [],
       ));
     }
-    
+
     // Create montaged images handler
-    final montaged = MontagedImages.fromImageModels(previewImages, groupSize: 4);
-    
+    final montaged =
+        MontagedImages.fromImageModels(previewImages, groupSize: 4);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Keywords row
+            Wrap(
+              spacing: 8,
+              children: group.keywords
+                  .map((keyword) => GestureDetector(
+                        onTap: () {
+                          // Quote keywords containing spaces
+                          final searchTerm = keyword.keyword.contains(' ')
+                              ? '"${keyword.keyword}"'
+                              : keyword.keyword;
+                          widget.onKeywordSearch(searchTerm);
+                        },
+                        child: Chip(
+                          label: Text(
+                            '${keyword.keyword} (${keyword.count} récentes)',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          backgroundColor:
+                              Theme.of(context).colorScheme.secondaryContainer,
+                        ),
+                      ))
+                  .toList(),
+            ),
+            const SizedBox(height: 12),
+            // Second line: Photo previews
+            if (previewImages.isNotEmpty)
+              Row(
+                children: [
+                  for (int i = 0; i < previewImages.length; i++) ...[
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: SizedBox(
+                          width: 80,
+                          height: 80,
+                          child: FittedBox(
+                            fit: BoxFit.cover,
+                            child: SizedBox(
+                              width: 360,
+                              height: 360,
+                              child: montaged.buildImage(previewImages[i]),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (i < previewImages.length - 1) const SizedBox(width: 8),
+                  ],
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKeywordCard(KeywordModel keyword) {
+    // Create fake ImageModel objects for montage from the recent images
+    final List<ImageModel> previewImages = [];
+
+    for (final recentImage in keyword.recentImages) {
+      previewImages.add(ImageModel(
+        id: recentImage.id,
+        albumDir: '', // We don't have album dir in the simplified response
+        imageName: recentImage.name,
+        itemTimestamp: DateTime
+            .now(), // We don't have timestamp in the simplified response
+        fileTimestamp: DateTime.now(),
+        height: 1,
+        width: 1,
+        keywords: [],
+      ));
+    }
+
+    // Create montaged images handler
+    final montaged =
+        MontagedImages.fromImageModels(previewImages, groupSize: 4);
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: InkWell(
         onTap: () {
           // Quote keywords containing spaces
-          final searchTerm = keyword.keyword.contains(' ') 
-              ? '"${keyword.keyword}"' 
+          final searchTerm = keyword.keyword.contains(' ')
+              ? '"${keyword.keyword}"'
               : keyword.keyword;
           widget.onKeywordSearch(searchTerm);
         },
@@ -93,8 +188,8 @@ class _ActivityViewState extends State<ActivityView> {
                   Text(
                     '${keyword.count} ${keyword.count == 1 ? 'photo récente' : 'photos récentes'}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                   ),
                   const SizedBox(width: 8),
                   const Icon(Symbols.arrow_forward_ios, size: 16),
@@ -111,7 +206,9 @@ class _ActivityViewState extends State<ActivityView> {
                         height: 80,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
@@ -129,7 +226,8 @@ class _ActivityViewState extends State<ActivityView> {
                           ),
                         ),
                       ),
-                      if (i < previewImages.length - 1) const SizedBox(width: 8),
+                      if (i < previewImages.length - 1)
+                        const SizedBox(width: 8),
                     ],
                   ],
                 ),
@@ -146,8 +244,8 @@ class _ActivityViewState extends State<ActivityView> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return FutureBuilder<List<KeywordModel>>(
-      future: _keywordsFuture,
+    return FutureBuilder<List<KeywordGroupModel>>(
+      future: _keywordGroupsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -175,9 +273,9 @@ class _ActivityViewState extends State<ActivityView> {
           );
         }
 
-        final keywords = snapshot.data!;
-        
-        if (keywords.isEmpty) {
+        final groups = snapshot.data!;
+
+        if (groups.isEmpty) {
           return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -198,9 +296,9 @@ class _ActivityViewState extends State<ActivityView> {
           onRefresh: _loadRecentKeywords,
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: keywords.length,
+            itemCount: groups.length,
             itemBuilder: (context, index) {
-              return _buildKeywordCard(keywords[index]);
+              return _buildKeywordGroupCard(groups[index]);
             },
           ),
         );

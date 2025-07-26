@@ -1,4 +1,4 @@
-SERVER=ce1-debian12
+SERVER=ce1
 LR_ACTIONS="$(HOME)/Library/Application Support/Adobe/Lightroom/Export Actions"
 SYN_TXT=backend/model/synonyms.txt
 
@@ -16,7 +16,7 @@ install_html:
 install_flutter: 
 	mkdir -p /tmp/aserve/db/htdocs/flutter
 	rsync --delete --recursive floutizes/build/web/* /tmp/aserve/db/htdocs/flutter
-	rsync --delete --recursive $(SYN_TXT) $(SERVER):/mnt/photos/htdocs/synonyms.txt
+	rsync --delete --recursive $(SYN_TXT) /tmp/aserve/db/htdocs/synonyms.txt
 
 push_serve: generate 
 	GOOS=linux GOARCH=amd64 go build -o bin_linux/aserve backend/test/aserve.go

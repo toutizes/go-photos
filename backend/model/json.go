@@ -38,6 +38,18 @@ type KeywordResults struct {
   Keywords []KeywordResponse `json:"keywords"`
 }
 
+// KeywordGroupResponse represents a group of keywords that share the same images
+type KeywordGroupResponse struct {
+  Keywords     []KeywordResponse `json:"keywords"`
+  RecentImages []ImageInfo       `json:"recent_images"`
+  TotalWeight  float64           `json:"total_weight"`
+  TotalCount   int               `json:"total_count"`
+}
+
+type KeywordGroupResults struct {
+  Groups []KeywordGroupResponse `json:"groups"`
+}
+
 func queryImages(q string, db *Database) []*Image {
   if len(q) > 0 {
     qry := ParseQuery(q, db)
@@ -189,6 +201,57 @@ func HandleRecentKeywords(w http.ResponseWriter, r *http.Request, db *Database) 
   
   enc := json.NewEncoder(w)
   result := KeywordResults{Keywords: responseKeywords}
+  enc.Encode(&result)
+}
+
+func HandleRecentKeywordGroups(w http.ResponseWriter, r *http.Request, db *Database) {
+  // Get user email from context
+  userEmail := r.Context().Value("userEmail").(string)
+  log.Printf("Recent keyword groups request from %s", userEmail)
+  
+  groups := db.GetRecentActiveKeywordGroups()
+  
+  // Convert from internal KeywordGroup to external KeywordGroupResponse
+  responseGroups := make([]KeywordGroupResponse, len(groups))
+  for i, group := range groups {
+    // Convert keywords within the group
+    responseKeywords := make([]KeywordResponse, len(group.Keywords))
+    for j, kw := range group.Keywords {
+      // Convert *Image to simplified ImageInfo
+      simplifiedImages := make([]ImageInfo, len(kw.RecentImages))
+      for k, img := range kw.RecentImages {
+        simplifiedImages[k] = ImageInfo{
+          Id:   img.Id,
+          Name: img.Name(),
+        }
+      }
+      
+      responseKeywords[j] = KeywordResponse{
+        Keyword:      kw.Keyword,
+        Count:        kw.Count,
+        RecentImages: simplifiedImages,
+      }
+    }
+    
+    // Convert group's recent images
+    groupImages := make([]ImageInfo, len(group.RecentImages))
+    for j, img := range group.RecentImages {
+      groupImages[j] = ImageInfo{
+        Id:   img.Id,
+        Name: img.Name(),
+      }
+    }
+    
+    responseGroups[i] = KeywordGroupResponse{
+      Keywords:     responseKeywords,
+      RecentImages: groupImages,
+      TotalWeight:  group.TotalWeight,
+      TotalCount:   group.TotalCount,
+    }
+  }
+  
+  enc := json.NewEncoder(w)
+  result := KeywordGroupResults{Groups: responseGroups}
   enc.Encode(&result)
 }
 

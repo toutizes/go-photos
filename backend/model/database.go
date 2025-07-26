@@ -344,6 +344,14 @@ type KeywordCount struct {
 	RecentImages []*Image `json:"recent_images"`
 }
 
+// KeywordGroup represents a group of keywords that share the same set of images
+type KeywordGroup struct {
+	Keywords     []KeywordCount `json:"keywords"`
+	RecentImages []*Image       `json:"recent_images"`
+	TotalWeight  float64        `json:"total_weight"`
+	TotalCount   int            `json:"total_count"`
+}
+
 // GetRecentActiveKeywords returns keywords from albums with directory timestamp less than one month old,
 // sorted by number of occurrences in these recent photos. Uses cached data computed during Load().
 func (db *Database) GetRecentActiveKeywords() []KeywordCount {
@@ -352,6 +360,11 @@ func (db *Database) GetRecentActiveKeywords() []KeywordCount {
 	}
 	// Fallback to computation if cache is empty (e.g., during testing)
 	return db.GetRecentActiveKeywordsAt(time.Now())
+}
+
+// GetRecentActiveKeywordGroups returns grouped keywords that share the same set of images
+func (db *Database) GetRecentActiveKeywordGroups() []KeywordGroup {
+	return db.GetRecentActiveKeywordGroupsAt(time.Now())
 }
 
 // GetRecentActiveKeywordsAt returns keywords from the most recent
@@ -451,4 +464,139 @@ func (db *Database) GetRecentActiveKeywordsAt(now time.Time) []KeywordCount {
 	}
 
 	return dedupResult
+}
+
+// GetRecentActiveKeywordGroupsAt returns keyword groups from the most recent
+// albums, where keywords sharing the same images are grouped together.
+func (db *Database) GetRecentActiveKeywordGroupsAt(now time.Time) []KeywordGroup {
+	if len(db.directories) == 0 {
+		return nil // No recent albums found
+	}
+
+	// Sort albums by item time, most recent first
+	sortedAlbums := make([]*Directory, len(db.directories))
+	copy(sortedAlbums, db.directories)
+	sort.Slice(sortedAlbums, func(i, j int) bool {
+		return sortedAlbums[i].ItemTime().After(sortedAlbums[j].ItemTime())
+	})
+
+	// Pick the first 20 albums
+	if len(sortedAlbums) > 20 {
+		sortedAlbums = sortedAlbums[:20]
+	}
+
+	// Timestamp used to compute the weight of each keyword occurrence.
+	currentTime := sortedAlbums[0].ItemTime()
+
+	keywordImages := make(map[string][]*Image)
+	keywordWeights := make(map[string]float64)
+
+	// Collect images for each keyword from this recent directory
+	for _, dir := range sortedAlbums {
+		for _, img := range dir.images {
+			for _, keyword := range img.keywords {
+				if keyword != "" { // Skip empty keywords
+					keywordImages[keyword] = append(keywordImages[keyword], img)
+
+					// Only first 5 occurrences contribute to the weight of the keyword.
+					if len(keywordImages[keyword]) <= 5 {
+						// Calculate weight based on how long ago the image was taken
+						since := currentTime.Sub(img.ItemTime()).Hours()
+						if since < 1.0 {
+							since = 1.0 // Minimum 1 hour to avoid division by zero and very large weights
+						}
+						weight := 1.0 / since
+						keywordWeights[keyword] += weight
+					}
+				}
+			}
+		}
+	}
+
+	// Convert map to slice and prepare recent images for each keyword
+	keywordCounts := make([]KeywordCount, 0, len(keywordImages))
+	for keyword, images := range keywordImages {
+		// Drop keywords with only 1 image.
+		if len(images) < 2 {
+			continue
+		}
+
+		// Sort images by item timestamp (most recent first)
+		sort.Slice(images, func(i, j int) bool {
+			return images[i].ItemTime().After(images[j].ItemTime())
+		})
+
+		// Take up to 4 most recent images
+		maxImages := 4
+		if len(images) < maxImages {
+			maxImages = len(images)
+		}
+
+		keywordCounts = append(keywordCounts, KeywordCount{
+			Keyword:      keyword,
+			Weight:       keywordWeights[keyword],
+			Count:        len(images),
+			RecentImages: images[:maxImages],
+		})
+	}
+
+	// Sort by weight (descending), then by keyword name for consistency
+	sort.Slice(keywordCounts, func(i, j int) bool {
+		if keywordCounts[i].Weight == keywordCounts[j].Weight {
+			return keywordCounts[i].Keyword < keywordCounts[j].Keyword
+		}
+		return keywordCounts[i].Weight > keywordCounts[j].Weight
+	})
+
+	// Group keywords by their first image ID
+	imageIdToKeywords := make(map[int][]KeywordCount)
+	imageIdToImages := make(map[int][]*Image)
+
+	for _, kc := range keywordCounts {
+		firstImageId := kc.RecentImages[0].Id
+		imageIdToKeywords[firstImageId] = append(imageIdToKeywords[firstImageId], kc)
+		if imageIdToImages[firstImageId] == nil {
+			imageIdToImages[firstImageId] = kc.RecentImages
+		}
+	}
+
+	// Create groups from the map
+	groups := make([]KeywordGroup, 0, len(imageIdToKeywords))
+	for imageId, keywords := range imageIdToKeywords {
+		// Sort keywords by weight (descending) and keep only top 5
+		sort.Slice(keywords, func(i, j int) bool {
+			return keywords[i].Weight > keywords[j].Weight
+		})
+		
+		// Limit to 5 keywords per group
+		maxKeywords := 5
+		if len(keywords) > maxKeywords {
+			keywords = keywords[:maxKeywords]
+		}
+		
+		totalWeight := 0.0
+		allImageIds := make(map[int]bool)
+		
+		for _, kc := range keywords {
+			totalWeight += kc.Weight
+			// Collect all unique image IDs from all keywords in this group
+			for _, img := range kc.RecentImages {
+				allImageIds[img.Id] = true
+			}
+		}
+
+		groups = append(groups, KeywordGroup{
+			Keywords:     keywords,
+			RecentImages: imageIdToImages[imageId],
+			TotalWeight:  totalWeight,
+			TotalCount:   len(allImageIds),
+		})
+	}
+
+	// Sort groups by total weight (descending)
+	sort.Slice(groups, func(i, j int) bool {
+		return groups[i].TotalWeight > groups[j].TotalWeight
+	})
+
+	return groups
 }

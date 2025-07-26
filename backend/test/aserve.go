@@ -257,6 +257,14 @@ func main() {
 				model.HandleRecentKeywords(w, r, db)
 			})(w, r)
 		})
+	mux.HandleFunc(*url_prefix+"/recent-keyword-groups",
+		func(w http.ResponseWriter, r *http.Request) {
+			Log("/recent-keyword-groups", r)
+			AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+				AddCorsHeaders(w, r)
+				model.HandleRecentKeywordGroups(w, r, db)
+			})(w, r)
+		})
 	mux.HandleFunc(*url_prefix+"/user-queries",
 		func(w http.ResponseWriter, r *http.Request) {
 			Log("/user-queries", r)

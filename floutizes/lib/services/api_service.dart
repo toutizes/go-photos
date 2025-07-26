@@ -280,6 +280,35 @@ class ApiService {
     }
   }
 
+  Future<List<KeywordGroupModel>> getRecentKeywordGroups() async {
+    final url = '$baseUrl/db/recent-keyword-groups';
+
+    try {
+      final response = await _makeAuthenticatedRequest(
+        (headers) => _client.get(Uri.parse(url), headers: headers),
+        'GET',
+        url,
+      );
+
+      _logResponse('GET', url, response);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final List<dynamic> groupsJson = responseData['groups'] as List<dynamic>;
+        return groupsJson
+            .map((json) => KeywordGroupModel.fromJson(json as Map<String, dynamic>))
+            .toList();
+      } else {
+        final error = 'Failed to fetch recent keyword groups: ${response.statusCode}';
+        _logResponse('GET', url, response, error);
+        throw Exception(error);
+      }
+    } catch (e) {
+      _logger.severe('Error fetching recent keyword groups: $e');
+      rethrow;
+    }
+  }
+
   /// Signs out the current user and clears the authentication state
   Future<void> signOut() async {
     await FirebaseAuth.instance.signOut();
