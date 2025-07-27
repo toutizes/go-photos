@@ -25,6 +25,19 @@ func KeywordQuery(db *Database, kwd string) Query {
 	return q
 }
 
+func FullKeywordQuery(db *Database, kwd string) Query {
+	q := make(chan *Image)
+
+	go func(q chan *Image, idx *Indexer) {
+		defer close(q)
+		for _, img := range idx.ImagesWithSubkeywords(kwd, false) {
+			q <- img
+		}
+	}(q, db.Indexer())
+
+	return q
+}
+
 func EmptyQuery(_ *Database) Query {
 	q := make(chan *Image)
 	close(q)

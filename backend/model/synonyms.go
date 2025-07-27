@@ -34,12 +34,12 @@ func personQuery(db *Database, p *Person) Query {
 	queries := make([]Query, 2*len(p.name_set))
 	i := 0
 	for n, _ := range p.name_set {
-		queries[i] = KeywordQuery(db, n)
+		queries[i] = FullKeywordQuery(db, n)
 		i += 1
 		words := strings.Fields(n)
 		and_queries := make([]Query, len(words))
 		for j, w := range words {
-			and_queries[j] = KeywordQuery(db, w)
+			and_queries[j] = FullKeywordQuery(db, w)
 		}
 		queries[i] = AndQuery(and_queries)
 		i += 1

@@ -54,8 +54,13 @@ func queryImages(q string, db *Database) []*Image {
   if len(q) > 0 {
     qry := ParseQuery(q, db)
     imgs := make([]*Image, 0)
+    seen := make(map[int]bool) // Track seen image IDs for deduplication
     for img := range qry {
-      imgs = append(imgs, img)
+      // Only add image if we haven't seen it before
+      if !seen[img.Id] {
+        seen[img.Id] = true
+        imgs = append(imgs, img)
+      }
     }
     return imgs
   } else {
