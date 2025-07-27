@@ -79,11 +79,7 @@ class _ActivityViewState extends State<ActivityView> {
               children: group.keywords
                   .map((keyword) => GestureDetector(
                         onTap: () {
-                          // Quote keywords containing spaces
-                          final searchTerm = keyword.keyword.contains(' ')
-                              ? '"${keyword.keyword}"'
-                              : keyword.keyword;
-                          widget.onKeywordSearch(searchTerm);
+                          widget.onKeywordSearch(keyword.keyword);
                         },
                         child: Chip(
                           label: Text(
@@ -163,11 +159,7 @@ class _ActivityViewState extends State<ActivityView> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: InkWell(
         onTap: () {
-          // Quote keywords containing spaces
-          final searchTerm = keyword.keyword.contains(' ')
-              ? '"${keyword.keyword}"'
-              : keyword.keyword;
-          widget.onKeywordSearch(searchTerm);
+          widget.onKeywordSearch(keyword.keyword);
         },
         child: Padding(
           padding: const EdgeInsets.all(16),

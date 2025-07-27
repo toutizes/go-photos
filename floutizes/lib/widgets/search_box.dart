@@ -28,6 +28,10 @@ class SearchBox extends StatefulWidget {
 }
 
 class _SearchBoxState extends State<SearchBox> {
+  final FocusNode _focusNode = FocusNode();
+  OverlayEntry? _overlayEntry;
+  final GlobalKey _textFieldKey = GlobalKey();
+  bool _hasShownHint = false;
 
   @override
   void initState() {
@@ -35,6 +39,76 @@ class _SearchBoxState extends State<SearchBox> {
     widget.controller.addListener(() {
       setState(() {}); // Rebuild when text changes
     });
+    
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus && !_hasShownHint) {
+        _showSearchHint();
+        _hasShownHint = true;
+      } else if (!_focusNode.hasFocus) {
+        _hideSearchHint();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _hideSearchHint();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _showSearchHint() {
+    if (_overlayEntry != null) return;
+
+    final RenderBox? renderBox = _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+
+    final offset = renderBox.localToGlobal(Offset.zero);
+    final size = renderBox.size;
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        left: offset.dx,
+        top: offset.dy + size.height + 8,
+        width: size.width,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.inverseSurface,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Text(
+              'Nouveau, séparez les mots-clefs par des virgules. Par exemple: coline, ben, 2025',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onInverseSurface,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+
+    // Auto-hide after 5 seconds
+    Future.delayed(const Duration(seconds: 5), () {
+      _hideSearchHint();
+    });
+  }
+
+  void _hideSearchHint() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
   }
 
   Widget _buildSuffixIcons(BuildContext context) {
@@ -84,6 +158,7 @@ class _SearchBoxState extends State<SearchBox> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      key: _textFieldKey,
       height: 48,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
@@ -95,6 +170,7 @@ class _SearchBoxState extends State<SearchBox> {
       ),
       child: TextField(
         controller: widget.controller,
+        focusNode: _focusNode,
         decoration: InputDecoration(
           hintText: widget.hintText,
           hintStyle: TextStyle(

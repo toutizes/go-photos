@@ -451,7 +451,17 @@ func keywordMatchQuery(db *Database, s string) Query {
 	return OrQuery(qs)
 }
 
+var UseLRParser bool = false
+
 func ParseQuery(s string, db *Database) Query {
+	if UseLRParser {
+		return ParseQueryLR(s, db)
+	} else {
+		return ParseQueryOriginal(s, db)
+	}
+}
+
+func ParseQueryOriginal(s string, db *Database) Query {
 	lower_s := strings.ToLower(s)
 	// Shortcut for people names
 	if IsName(db, lower_s) {
@@ -489,6 +499,76 @@ func ParseQuery(s string, db *Database) Query {
 			qs[i] = YearRangeQuery(db, t)
 		case strings.HasPrefix(lower_t, "\""):
 			qs[i] = KeywordSynonymsQuery(db, lower_t[1:len(t)])
+		default:
+			qs[i] = keywordMatchQuery(db, lower_t)
+		}
+	}
+	return AndQuery(qs)
+}
+
+// ParseQueryLR parses queries using Lightroom-style syntax where keywords with spaces
+// are separated by commas instead of using double quotes.
+//
+// Examples:
+//
+//	"matthieu devin, 2025" -> keywords "matthieu devin" AND year 2025
+//	"vacation, beach, 2024-06" -> keywords "vacation" AND "beach" AND month 2024-06
+//	"album:paris, sunset" -> album "paris" AND keyword "sunset"
+func ParseQueryLR(s string, db *Database) Query {
+	// Split by commas and trim whitespace
+	tokens := strings.Split(s, ",")
+	for i := range tokens {
+		tokens[i] = strings.TrimSpace(tokens[i])
+	}
+
+	// Remove empty tokens
+	filteredTokens := make([]string, 0, len(tokens))
+	for _, token := range tokens {
+		if token != "" {
+			filteredTokens = append(filteredTokens, token)
+		}
+	}
+	tokens = filteredTokens
+
+	if len(tokens) == 0 {
+		return EmptyQuery(db)
+	}
+
+	// Parse each token similar to original ParseQuery but treat multi-word tokens
+	// as exact keyword matches (like quoted strings in the original)
+	qs := make([]Query, len(tokens))
+	for i, t := range tokens {
+		lower_t := strings.ToLower(t)
+
+		// Check if token contains spaces - if so, treat as exact keyword match
+		hasSpaces := strings.Contains(t, " ")
+
+		switch {
+		case strings.HasPrefix(lower_t, "count:"):
+			qs[i] = KeywordCountQuery(db, t[len("count:"):])
+		case strings.HasPrefix(lower_t, "stereo:"):
+			qs[i] = StereoQuery(db)
+		case strings.HasPrefix(lower_t, "album:"):
+			qs[i] = DirectoryByNameQuery(db, t[len("album:"):])
+		case strings.HasPrefix(lower_t, "in:"):
+			qs[i] = DirectoryBySubnameQuery(db, t[len("in:"):])
+		case strings.HasPrefix(lower_t, "titre:"):
+			qs[i] = DirectoryBySubnameQuery(db, t[len("titre:"):])
+		case t == "albums:":
+			qs[i] = DirectoriesQuery(db)
+		case matches(year_re, t):
+			qs[i] = OrQuery([]Query{YearQuery(db, t), KeywordQuery(db, t)})
+		case matches(month_re, t):
+			qs[i] = OrQuery([]Query{MonthQuery(db, t), KeywordQuery(db, t)})
+		case matches(day_re, t):
+			qs[i] = OrQuery([]Query{DayQuery(db, t), KeywordQuery(db, t)})
+		case matches(month_day_re, t):
+			qs[i] = MonthDayQuery(db, t)
+		case matches(year_range_re, t):
+			qs[i] = YearRangeQuery(db, t)
+		case hasSpaces:
+			// Multi-word token - treat as exact keyword match (like quoted string)
+			qs[i] = KeywordSynonymsQuery(db, lower_t)
 		default:
 			qs[i] = keywordMatchQuery(db, lower_t)
 		}

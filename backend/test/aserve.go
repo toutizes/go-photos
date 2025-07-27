@@ -31,6 +31,7 @@ var force_reload = flag.Bool("force_reload", false, "If true force a reload of i
 var use_https = flag.Bool("use_https", false, "If true listen for HTTPS in 443.")
 var firebase_creds = flag.String("firebase_creds", "", "Path to the Firebase service account credentials JSON file")
 var log_dir = flag.String("log_dir", "", "Path to directory containing query log files for analysis")
+var use_lr_parser = flag.Bool("use_lr_parser", false, "If true use Lightroom-style query parser (comma-separated keywords)")
 
 var authClient *auth.Client
 
@@ -192,6 +193,15 @@ func main() {
 
 	db := model.NewDatabase2(*orig_root, *root, *static_root)
 	db.Load(*update_db, *update_db, *force_reload)
+	
+	// Configure query parser
+	model.UseLRParser = *use_lr_parser
+	if *use_lr_parser {
+		log.Printf("Using Lightroom-style query parser (comma-separated keywords)")
+	} else {
+		log.Printf("Using original query parser (quoted keywords)")
+	}
+	
 	log.Printf("Serving...")
 
 	// // Initialize the session manager

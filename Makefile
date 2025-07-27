@@ -8,7 +8,7 @@ SYN_TXT=backend/model/synonyms.txt
 serve_small: generate install_flutter
 	cp ~/Google\ Drive/My\ Drive/Floutizes/floutizes-firebase-adminsdk-fbsvc-584c308c82.json /tmp/aserve/db/
 	mkdir -p /tmp/aserve/log
-	go run backend/test/aserve.go --bin_root=/opt/homebrew/bin/ --use_https=false --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/aserve/db-full --static_root=/tmp/aserve/db/htdocs --firebase_creds=/tmp/aserve/db/floutizes-firebase-adminsdk-fbsvc-584c308c82.json --log_dir=/tmp/aserve/log # &> /tmp/aserve/log/aserve.log
+	go run backend/test/aserve.go --bin_root=/opt/homebrew/bin/ --use_https=false --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/aserve/db-full --static_root=/tmp/aserve/db/htdocs --firebase_creds=/tmp/aserve/db/floutizes-firebase-adminsdk-fbsvc-584c308c82.json --log_dir=/tmp/aserve/log --use_lr_parser # &> /tmp/aserve/log/aserve.log
 
 install_html:
 	cmd/install-ttpic.sh

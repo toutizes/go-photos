@@ -130,10 +130,8 @@ final _router = GoRouter(
                       searchQuery: state.uri.queryParameters['q'] ?? '',
                       imageId: imageId,
                       onKeywordSearch: (query, imageId) {
-                        // Quote keywords containing spaces
-                        var query2 = query.contains(' ') ? '"$query"' : query;
                         context.go(
-                            '/images?q=${Uri.encodeComponent(query2)}&imageId=$imageId');
+                            '/images?q=${Uri.encodeComponent(query)}&imageId=$imageId');
                       },
                       onSearch: (query, imageId) {
                         context.go(
