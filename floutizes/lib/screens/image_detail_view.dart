@@ -9,6 +9,7 @@ import '../utils/image_download.dart';
 import 'package:go_router/go_router.dart';
 import '../main.dart'; // Import ImmersiveModeScope from main.dart
 import '../widgets/search_box.dart';
+import '../widgets/native_image.dart';
 
 class ImageDetailView extends StatefulWidget {
   final String searchQuery;
@@ -462,35 +463,41 @@ class _ImageDetailViewState extends State<ImageDetailView>
                       return SizedBox(
                         width: width,
                         height: height,
-                        child: Image.network(
-                          ApiService.instance.getImageUrl(image.midiPath),
+                        child: NativeImageView(
+                          imageUrl:
+                              ApiService.instance.getImageUrl(image.midiPath),
                           headers: ApiService.instance.getImageHeaders(),
                           fit: BoxFit.contain,
-                          frameBuilder:
-                              (context, child, frame, wasSynchronouslyLoaded) {
-                            if (wasSynchronouslyLoaded) {
-                              return child;
-                            }
-                            final isDark =
-                                Theme.of(context).brightness == Brightness.dark;
-                            return AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 200),
-                              child: frame != null
-                                  ? child
-                                  : Container(
-                                      width: width,
-                                      height: height,
-                                      color: isDark
-                                          ? Colors.grey.shade800
-                                          : Colors.grey.shade200,
-                                    ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Center(
-                              child: Icon(Symbols.error_outline, size: 48),
-                            );
-                          },
+                          fallback: Image.network(
+                            ApiService.instance.getImageUrl(image.midiPath),
+                            headers: ApiService.instance.getImageHeaders(),
+                            fit: BoxFit.contain,
+                            frameBuilder: (context, child, frame,
+                                wasSynchronouslyLoaded) {
+                              if (wasSynchronouslyLoaded) {
+                                return child;
+                              }
+                              final isDark = Theme.of(context).brightness ==
+                                  Brightness.dark;
+                              return AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 200),
+                                child: frame != null
+                                    ? child
+                                    : Container(
+                                        width: width,
+                                        height: height,
+                                        color: isDark
+                                            ? Colors.grey.shade800
+                                            : Colors.grey.shade200,
+                                      ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Center(
+                                child: Icon(Symbols.error_outline, size: 48),
+                              );
+                            },
+                          ),
                         ),
                       );
                     },
@@ -1033,22 +1040,27 @@ class _ImageDetailViewState extends State<ImageDetailView>
         final isLandscape = mediaQuery.size.width > mediaQuery.size.height;
         final topPadding = mediaQuery.padding.top;
         final bottomPadding = mediaQuery.padding.bottom;
-        
+
         // Calculate the image content area bounds
         double imageAreaLeft, imageAreaRight, imageAreaTop, imageAreaBottom;
-        
+
         if (isLandscape) {
           // In landscape: image takes 7/10 of the row width (see original _pageView)
           imageAreaLeft = 0;
           imageAreaRight = constraints.maxWidth * 0.7; // 7/10 of total width
           imageAreaTop = kToolbarHeight + topPadding;
-          imageAreaBottom = constraints.maxHeight - kBottomNavigationBarHeight - bottomPadding;
+          imageAreaBottom = constraints.maxHeight -
+              kBottomNavigationBarHeight -
+              bottomPadding;
         } else {
           // In portrait: image takes full width, positioned above keywords
           imageAreaLeft = 0;
           imageAreaRight = constraints.maxWidth;
           imageAreaTop = kToolbarHeight + topPadding;
-          imageAreaBottom = constraints.maxHeight - (constraints.maxHeight * 0.2) - kBottomNavigationBarHeight - bottomPadding;
+          imageAreaBottom = constraints.maxHeight -
+              (constraints.maxHeight * 0.2) -
+              kBottomNavigationBarHeight -
+              bottomPadding;
         }
 
         final arrowVerticalCenter = (imageAreaTop + imageAreaBottom) / 2;
@@ -1077,7 +1089,8 @@ class _ImageDetailViewState extends State<ImageDetailView>
             ),
             // Right arrow - positioned just right of image area
             Positioned(
-              left: imageAreaRight - 70, // 10px from right edge of image area (60px arrow + 10px)
+              left: imageAreaRight -
+                  70, // 10px from right edge of image area (60px arrow + 10px)
               top: arrowVerticalCenter - 30, // Center the 60px arrow
               child: Material(
                 color: Colors.transparent,
@@ -1097,7 +1110,8 @@ class _ImageDetailViewState extends State<ImageDetailView>
             ),
             // Zoom toggle button - positioned at top-right of image area
             Positioned(
-              left: imageAreaRight - 60, // Same horizontal position as right arrow (centered)
+              left: imageAreaRight -
+                  60, // Same horizontal position as right arrow (centered)
               top: imageAreaTop + 10, // 10px from top edge of image area
               child: Material(
                 color: Colors.transparent,
