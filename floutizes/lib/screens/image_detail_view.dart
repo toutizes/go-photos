@@ -464,6 +464,7 @@ class _ImageDetailViewState extends State<ImageDetailView>
                         width: width,
                         height: height,
                         child: NativeImageView(
+                          key: ValueKey('native-image-${image.id}'),
                           imageUrl:
                               ApiService.instance.getImageUrl(image.midiPath),
                           headers: ApiService.instance.getImageHeaders(),

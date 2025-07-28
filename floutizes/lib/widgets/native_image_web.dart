@@ -11,7 +11,7 @@ Widget createNativeImageElement({
   double? height,
   BoxFit fit = BoxFit.contain,
 }) {
-  final viewId = 'native-image-${DateTime.now().millisecondsSinceEpoch}';
+  final viewId = 'native-image-${DateTime.now().millisecondsSinceEpoch}-${imageUrl.hashCode}';
   
   // Register the platform view factory
   ui_web.platformViewRegistry.registerViewFactory(viewId, (int viewId) {
@@ -23,6 +23,9 @@ Widget createNativeImageElement({
       ..style.margin = '0'
       ..style.padding = '0';
 
+    // Start with a placeholder or loading indicator
+    img.style.backgroundColor = '#f0f0f0';
+
     // If headers are provided, fetch with auth and create blob URL
     if (headers != null && headers.isNotEmpty) {
       _fetchImageWithAuth(imageUrl, headers).then((blobUrl) {
@@ -32,13 +35,16 @@ Widget createNativeImageElement({
           // Fallback to direct URL if fetch fails
           img.src = imageUrl;
         }
+        img.style.backgroundColor = '';
       }).catchError((error) {
         // Fallback to direct URL on error
         img.src = imageUrl;
+        img.style.backgroundColor = '';
       });
     } else {
       // No auth needed, use direct URL
       img.src = imageUrl;
+      img.style.backgroundColor = '';
     }
     
     return img;
