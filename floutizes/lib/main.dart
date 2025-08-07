@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'screens/home_screen.dart';
@@ -270,8 +271,12 @@ class _ScaffoldWithNestedNavigationState
                   ),
               ];
 
+              final body = kIsWeb 
+                  ? SelectionArea(child: widget.navigationShell)
+                  : widget.navigationShell;
+
               return Scaffold(
-                body: widget.navigationShell,
+                body: body,
                 bottomNavigationBar: isImmersive
                     ? null
                     : BottomNavigationBar(

@@ -75,55 +75,57 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // App logo
-            Image.asset(
-              'assets/logo.png',
-              width: 120,
-              height: 120,
+    final body = Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // App logo
+          Image.asset(
+            'assets/logo.png',
+            width: 120,
+            height: 120,
+          ),
+          const SizedBox(height: 24),
+          // App title
+          const Text(
+            'Photos Toutizes',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 24),
-            // App title
-            const Text(
-              'Photos Toutizes',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Il faut maintenant s\'authentifier pour voir les photos',
+            style: TextStyle(
+              fontSize: 18,
+            ),
+          ),
+          const SizedBox(height: 48),
+          // Sign in button
+          if (_isLoading)
+            const CircularProgressIndicator()
+          else
+            ElevatedButton.icon(
+              onPressed: _signInWithGoogle,
+              icon: SvgPicture.asset(
+                'assets/google_logo.svg',
+                height: 24,
               ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Il faut maintenant s\'authentifier pour voir les photos',
-              style: TextStyle(
-                fontSize: 18,
-              ),
-            ),
-            const SizedBox(height: 48),
-            // Sign in button
-            if (_isLoading)
-              const CircularProgressIndicator()
-            else
-              ElevatedButton.icon(
-                onPressed: _signInWithGoogle,
-                icon: SvgPicture.asset(
-                  'assets/google_logo.svg',
-                  height: 24,
-                ),
-                label: const Text('Se connecter avec Google'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
+              label: const Text('Se connecter avec Google'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
+    );
+
+    return Scaffold(
+      body: kIsWeb ? SelectionArea(child: body) : body,
     );
   }
 }
