@@ -153,6 +153,9 @@ class _HomeScreenState extends State<HomeScreen> {
             onKeywordSearch: (keyword) {
               context.go('/images?q=${Uri.encodeComponent(keyword)}');
             },
+            onImageTap: (keyword, imageId) {
+              context.go('/images/details/$imageId?q=${Uri.encodeComponent(keyword)}');
+            },
           ),
           AlbumsView(
             searchQuery: _currentView == ViewType.albums ? _currentSearch : '',

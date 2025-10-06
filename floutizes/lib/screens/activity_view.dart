@@ -7,10 +7,12 @@ import '../utils/montaged_images.dart';
 
 class ActivityView extends StatefulWidget {
   final Function(String) onKeywordSearch;
+  final Function(String keyword, int imageId) onImageTap;
 
   const ActivityView({
     super.key,
     required this.onKeywordSearch,
+    required this.onImageTap,
   });
 
   @override
@@ -98,26 +100,36 @@ class _ActivityViewState extends State<ActivityView> {
               Row(
                 children: [
                   for (int i = 0; i < previewImages.length; i++) ...[
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHighest,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: SizedBox(
-                          width: 180,
-                          height: 180,
-                          child: FittedBox(
-                            fit: BoxFit.cover,
-                            child: SizedBox(
-                              width: 360,
-                              height: 360,
-                              child: montaged.buildImage(previewImages[i]),
+                    InkWell(
+                      onTap: () {
+                        // Navigate to images view with first keyword and clicked image ID
+                        widget.onImageTap(
+                          group.keywords.first.keyword,
+                          previewImages[i].id,
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: SizedBox(
+                            width: 180,
+                            height: 180,
+                            child: FittedBox(
+                              fit: BoxFit.cover,
+                              child: SizedBox(
+                                width: 360,
+                                height: 360,
+                                child: montaged.buildImage(previewImages[i]),
+                              ),
                             ),
                           ),
                         ),
