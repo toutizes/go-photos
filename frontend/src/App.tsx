@@ -162,7 +162,7 @@ export function App() {
       )}
       {help && !route.full && (
         <section className="search-help">
-          <strong>Retrouver une photo</strong>
+          <strong>Chercher des photos</strong>
           <p>
             Séparez les mots-clés par des virgules : <b>famille, vacances</b>.
             Essayez une année (<b>2020</b>), une date (<b>2020-07-14</b>) ou un
