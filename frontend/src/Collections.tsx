@@ -16,7 +16,7 @@ import {
   type Album,
   type QueryEntry,
 } from "./model";
-function useResource<T>(path: string) {
+function useResource<T>(path: string, searchVersion = 0) {
   const [data, setData] = useState<T>(),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true),
@@ -38,7 +38,7 @@ function useResource<T>(path: string) {
       },
     );
     return () => c.abort();
-  }, [path, version]);
+  }, [path, version, searchVersion]);
   return { data, error, loading, refresh: () => setVersion((n) => n + 1) };
 }
 function Status({
@@ -242,12 +242,20 @@ function AlbumCard({
     </div>
   );
 }
-export function AlbumsPage({ onSearch }: { onSearch: (q: string) => void }) {
+export function AlbumsPage({
+  query,
+  searchVersion,
+  onSearch,
+}: {
+  query: string;
+  searchVersion: number;
+  onSearch: (q: string) => void;
+}) {
   const { data, error, loading, refresh } = useResource<Album[]>(
-    "/db/q?q=albums:&kind=album",
+    `/db/q?q=${encodeURIComponent(query || "albums:")}&kind=album`,
+    searchVersion,
   );
-  const [filter, setFilter] = useState(""),
-    [year, setYear] = useState("");
+  const [year, setYear] = useState("");
   const albums = (data ?? [])
     .filter((a) => a.Nimgs > 0)
     .sort((a, b) => b.Ats - a.Ats || a.Id.localeCompare(b.Id));
@@ -257,16 +265,14 @@ export function AlbumsPage({ onSearch }: { onSearch: (q: string) => void }) {
     ),
   ];
   const shown = albums.filter(
-    (a) =>
-      (!year || new Date(a.Ats * 1000).getFullYear().toString() === year) &&
-      a.Id.toLocaleLowerCase("fr").includes(filter.toLocaleLowerCase("fr")),
+    (a) => !year || new Date(a.Ats * 1000).getFullYear().toString() === year,
   );
   return (
     <div className="collection-page scroll">
       <div className="page-heading">
         <div>
           <p className="eyebrow">DES ANNÉES DE SOUVENIRS</p>
-          <h1>Les albums</h1>
+          <h1>{query ? `Albums pour « ${query} »` : "Les albums"}</h1>
           <p>{shown.length} albums à explorer</p>
         </div>
         <button
@@ -278,15 +284,10 @@ export function AlbumsPage({ onSearch }: { onSearch: (q: string) => void }) {
         </button>
       </div>
       <div className="collection-filters">
-        <label>
-          <Search size={17} />
-          <input
-            aria-label="Filtrer les albums"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            placeholder="Filtrer par nom…"
-          />
-        </label>
+        <p className="hint">
+          Utilisez <b>titre:nom</b> ou <b>in:nom</b> dans la recherche pour
+          trouver les albums dont le nom contient ce texte.
+        </p>
         <select
           aria-label="Année des albums"
           value={year}
@@ -307,8 +308,12 @@ export function AlbumsPage({ onSearch }: { onSearch: (q: string) => void }) {
       {!loading && !error && !shown.length && (
         <section className="empty">
           <FolderOpen size={32} />
-          <h2>Aucun album trouvé</h2>
-          <p>Essayez un autre nom ou une autre année.</p>
+          <h2>
+            {query
+              ? `Aucun album trouvé pour « ${query} »`
+              : "Aucun album trouvé"}
+          </h2>
+          <p>Essayez un autre mot-clé ou une autre année.</p>
         </section>
       )}
     </div>

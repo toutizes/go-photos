@@ -63,3 +63,16 @@ it("does not expose the owner history screen via a visitor deep link", () => {
   expect(screen.getByText("Accès réservé au propriétaire")).toBeDefined();
   expect(screen.queryByText("Historique privé")).toBeNull();
 });
+it("keeps header searches on Albums and preserves the typed query", () => {
+  history.replaceState({}, "", "#/albums");
+  render(<App />);
+  fireEvent.change(
+    screen.getByRole("textbox", { name: "Rechercher des albums" }),
+    {
+      target: { value: "famille, vacances" },
+    },
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Lancer la recherche" }));
+  expect(location.hash).toBe("#/albums?q=famille%2C+vacances");
+  expect(search).not.toHaveBeenCalled();
+});

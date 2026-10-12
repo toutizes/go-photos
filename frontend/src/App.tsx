@@ -119,12 +119,19 @@ export function App() {
             className="search-form"
             onSubmit={(e) => {
               e.preventDefault();
-              goSearch(draft);
+              if (route.page === "albums") {
+                setSearchVersion((v) => v + 1);
+                navigate({ page: "albums", q: draft.trim(), full: false });
+              } else goSearch(draft);
             }}
           >
             <Search size={18} />
             <input
-              aria-label="Rechercher des photos"
+              aria-label={
+                route.page === "albums"
+                  ? "Rechercher des albums"
+                  : "Rechercher des photos"
+              }
               placeholder="Un lieu, un prénom, une année…"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -184,7 +191,12 @@ export function App() {
             }
           />
         ) : route.page === "albums" ? (
-          <AlbumsPage onSearch={goSearch} />
+          <AlbumsPage
+            key={route.q}
+            query={route.q}
+            searchVersion={searchVersion}
+            onSearch={goSearch}
+          />
         ) : isAdmin(account) ? (
           <AdminPage onSearch={goSearch} />
         ) : (
