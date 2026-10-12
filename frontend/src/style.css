@@ -674,6 +674,15 @@ h2 {
   .metadata .chips {
     margin: 0 0 14px;
   }
+  .metadata > .text-button {
+    display: flex;
+    min-height: 44px;
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .metadata > .text-button + .text-button {
+    margin-top: 8px;
+  }
   .metadata-footer {
     padding-top: 14px;
     gap: 12px;
