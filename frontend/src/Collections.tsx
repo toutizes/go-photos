@@ -146,9 +146,7 @@ export function ActivityPage({
     <div className="collection-page scroll">
       <div className="page-heading">
         <div>
-          <p className="eyebrow">BIENVENUE DANS LA COLLECTION</p>
-          <h1>Au fil des photos</h1>
-          <p>Les dernières photos, par mots-clés.</p>
+          <h1>Récemment</h1>
         </div>
         <button
           className="icon-button"
@@ -159,9 +157,6 @@ export function ActivityPage({
         </button>
       </div>
       <div className="activity-intro">
-        <span>
-          <span className="status-dot" />À DÉCOUVRIR
-        </span>
         <button onClick={() => onSearch(todayQuery())}>
           <CalendarDays size={16} />
           Ce jour-là
@@ -275,9 +270,7 @@ export function AlbumsPage({
       </p>
       <div className="page-heading">
         <div>
-          <p className="eyebrow">DES ANNÉES DE SOUVENIRS</p>
-          <h1>{query ? `Albums pour « ${query} »` : "Les albums"}</h1>
-          <p>{shown.length} albums à explorer</p>
+          <h1>Les albums</h1>
         </div>
         <button
           className="icon-button"

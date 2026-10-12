@@ -804,7 +804,7 @@ h2 {
 }
 .activity-intro {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin: 0 32px 18px;
   padding-bottom: 16px;

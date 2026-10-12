@@ -255,13 +255,7 @@ function Photos({
       {route.id === undefined && (
         <div className="page-heading">
           <div>
-            <p className="eyebrow">EXPLORER LA COLLECTION</p>
-            <h1>{route.q.startsWith("album:") ? route.q.slice(6) : route.q}</h1>
-            <p>
-              {photos.length.toLocaleString("fr")} photo
-              {photos.length !== 1 ? "s" : ""}
-              {loading ? " · Actualisation…" : ""}
-            </p>
+            <h1>Les photos</h1>
           </div>
           <div className="heading-actions">
             <Downloads query={route.q} count={photos.length} />
