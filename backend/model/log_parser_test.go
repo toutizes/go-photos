@@ -9,11 +9,11 @@ import (
 
 func TestLogParserParseLogLine(t *testing.T) {
 	parser := NewLogParser("/tmp") // Directory doesn't matter for line parsing
-	
+
 	tests := []struct {
-		name     string
-		logLine  string
-		expected *QueryLogEntry
+		name        string
+		logLine     string
+		expected    *QueryLogEntry
 		shouldMatch bool
 	}{
 		{
@@ -21,7 +21,7 @@ func TestLogParserParseLogLine(t *testing.T) {
 			logLine: `2025/06/16 16:02:46 Query from viemetivier@gmail.com: "\"manif no kings\"" (kind: )`,
 			expected: &QueryLogEntry{
 				Timestamp: time.Date(2025, 6, 16, 16, 2, 46, 0, time.UTC),
-				Email:     "viemetivier",
+				Email:     "viemetivier@gmail.com",
 				Query:     `\"manif no kings\"`,
 				Kind:      "",
 			},
@@ -32,7 +32,7 @@ func TestLogParserParseLogLine(t *testing.T) {
 			logLine: `2025/06/17 09:15:30 Query from john.doe@gmail.com: "vacation photos" (kind: album)`,
 			expected: &QueryLogEntry{
 				Timestamp: time.Date(2025, 6, 17, 9, 15, 30, 0, time.UTC),
-				Email:     "john.doe",
+				Email:     "john.doe@gmail.com",
 				Query:     "vacation photos",
 				Kind:      "album",
 			},
@@ -43,7 +43,7 @@ func TestLogParserParseLogLine(t *testing.T) {
 			logLine: `2025/06/17 14:30:22 Query from test.user@gmail.com: "\"beach sunset\" OR mountains" (kind: )`,
 			expected: &QueryLogEntry{
 				Timestamp: time.Date(2025, 6, 17, 14, 30, 22, 0, time.UTC),
-				Email:     "test.user",
+				Email:     "test.user@gmail.com",
 				Query:     `\"beach sunset\" OR mountains`,
 				Kind:      "",
 			},
@@ -75,32 +75,32 @@ func TestLogParserParseLogLine(t *testing.T) {
 			shouldMatch: false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			entry, matched := parser.parseLogLine(tt.logLine)
-			
+
 			if matched != tt.shouldMatch {
 				t.Errorf("Expected match=%v, got match=%v", tt.shouldMatch, matched)
 				return
 			}
-			
+
 			if !tt.shouldMatch {
 				return // No need to check entry content for non-matching lines
 			}
-			
+
 			if !entry.Timestamp.Equal(tt.expected.Timestamp) {
 				t.Errorf("Expected timestamp=%v, got timestamp=%v", tt.expected.Timestamp, entry.Timestamp)
 			}
-			
+
 			if entry.Email != tt.expected.Email {
 				t.Errorf("Expected email=%s, got email=%s", tt.expected.Email, entry.Email)
 			}
-			
+
 			if entry.Query != tt.expected.Query {
 				t.Errorf("Expected query=%s, got query=%s", tt.expected.Query, entry.Query)
 			}
-			
+
 			if entry.Kind != tt.expected.Kind {
 				t.Errorf("Expected kind=%s, got kind=%s", tt.expected.Kind, entry.Kind)
 			}
@@ -115,7 +115,7 @@ func TestLogParserGroupQueriesByUser(t *testing.T) {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tempDir)
-	
+
 	// Create test log files with the expected naming pattern
 	testLogContent := `2025/06/16 16:02:46 Query from viemetivier@gmail.com: "\"manif no kings\"" (kind: )
 2025/06/16 16:03:15 Server info: Processing request
@@ -125,14 +125,14 @@ func TestLogParserGroupQueriesByUser(t *testing.T) {
 2025/06/17 14:30:22 Query from test.user@gmail.com: "mountains" (kind: )
 2025/06/17 14:35:00 Query from test.user@gmail.com: "albums:" (kind: )
 `
-	
+
 	// Test current log file
 	logFilePath := filepath.Join(tempDir, "aserve.log")
 	err = os.WriteFile(logFilePath, []byte(testLogContent), 0644)
 	if err != nil {
 		t.Fatalf("Failed to write current log file: %v", err)
 	}
-	
+
 	// Test rotated log file
 	rotatedLogContent := `2025/06/15 12:00:00 Query from old.user@gmail.com: "old query" (kind: )
 `
@@ -141,7 +141,7 @@ func TestLogParserGroupQueriesByUser(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to write rotated log file: %v", err)
 	}
-	
+
 	// Create a file that should be ignored (not aserve.log)
 	ignoredLogPath := filepath.Join(tempDir, "other.log")
 	ignoredLogContent := `2025/06/17 15:00:00 Query from ignored.user@gmail.com: "ignored query" (kind: )
@@ -150,60 +150,60 @@ func TestLogParserGroupQueriesByUser(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to write ignored log file: %v", err)
 	}
-	
+
 	// Test the parser
 	parser := NewLogParser(tempDir)
 	queriesByUser, err := parser.GroupQueriesByUser()
 	if err != nil {
 		t.Fatalf("Failed to parse logs: %v", err)
 	}
-	
+
 	// Verify results - queries should be sorted by decreasing timestamp (most recent first)
 	// Note: consecutive "sunset beach" queries are deduplicated, keeping the first (most recent) one
 	expectedUsers := map[string][]QueryWithTimestamp{
-		"viemetivier": {
+		"viemetivier@gmail.com": {
 			{Query: "sunset beach", Timestamp: time.Date(2025, 6, 17, 10, 21, 0, 0, time.UTC), Kind: ""},
 			{Query: `\"manif no kings\"`, Timestamp: time.Date(2025, 6, 16, 16, 2, 46, 0, time.UTC), Kind: ""},
 		},
-		"john.doe": {
+		"john.doe@gmail.com": {
 			{Query: "vacation photos", Timestamp: time.Date(2025, 6, 17, 9, 15, 30, 0, time.UTC), Kind: "album"},
 		},
-		"test.user": {
+		"test.user@gmail.com": {
 			{Query: "mountains", Timestamp: time.Date(2025, 6, 17, 14, 30, 22, 0, time.UTC), Kind: ""},
 		},
-		"old.user": {
+		"old.user@gmail.com": {
 			{Query: "old query", Timestamp: time.Date(2025, 6, 15, 12, 0, 0, 0, time.UTC), Kind: ""},
 		},
 	}
-	
+
 	if len(queriesByUser) != len(expectedUsers) {
 		t.Errorf("Expected %d users, got %d users", len(expectedUsers), len(queriesByUser))
 	}
-	
+
 	for expectedUser, expectedQueries := range expectedUsers {
 		actualQueries, exists := queriesByUser[expectedUser]
 		if !exists {
 			t.Errorf("Expected user %s not found in results", expectedUser)
 			continue
 		}
-		
+
 		if len(actualQueries) != len(expectedQueries) {
-			t.Errorf("User %s: expected %d queries, got %d queries", 
+			t.Errorf("User %s: expected %d queries, got %d queries",
 				expectedUser, len(expectedQueries), len(actualQueries))
 			continue
 		}
-		
+
 		for i, expectedQuery := range expectedQueries {
 			if actualQueries[i].Query != expectedQuery.Query {
-				t.Errorf("User %s, query %d: expected query=%s, got query=%s", 
+				t.Errorf("User %s, query %d: expected query=%s, got query=%s",
 					expectedUser, i, expectedQuery.Query, actualQueries[i].Query)
 			}
 			if !actualQueries[i].Timestamp.Equal(expectedQuery.Timestamp) {
-				t.Errorf("User %s, query %d: expected timestamp=%v, got timestamp=%v", 
+				t.Errorf("User %s, query %d: expected timestamp=%v, got timestamp=%v",
 					expectedUser, i, expectedQuery.Timestamp, actualQueries[i].Timestamp)
 			}
 			if actualQueries[i].Kind != expectedQuery.Kind {
-				t.Errorf("User %s, query %d: expected kind=%s, got kind=%s", 
+				t.Errorf("User %s, query %d: expected kind=%s, got kind=%s",
 					expectedUser, i, expectedQuery.Kind, actualQueries[i].Kind)
 			}
 		}
@@ -273,12 +273,12 @@ func TestRemoveDuplicatesAndLimit(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := removeDuplicatesAndLimit(tt.input, tt.maxCount)
-			
+
 			if len(result) != len(tt.expected) {
 				t.Errorf("Expected %d results, got %d", len(tt.expected), len(result))
 				return
 			}
-			
+
 			for i, expected := range tt.expected {
 				if result[i].Query != expected.Query {
 					t.Errorf("Result %d: expected query=%s, got query=%s", i, expected.Query, result[i].Query)
@@ -288,5 +288,29 @@ func TestRemoveDuplicatesAndLimit(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+func TestLogParserPreservesEmailDomains(t *testing.T) {
+	dir := t.TempDir()
+	logs := `2025/06/17 12:00:00 Query from alex@gmail.com: "beach" (kind: )
+2025/06/17 12:01:00 Query from alex@example.org: "mountains" (kind: )
+2025/06/17 12:02:00 Query from family+photos@example.co.uk: "vacances" (kind: )
+`
+	if err := os.WriteFile(filepath.Join(dir, "aserve.log"), []byte(logs), 0600); err != nil {
+		t.Fatal(err)
+	}
+	parser := NewLogParser(dir)
+	users, err := parser.GroupQueriesByUser()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(users) != 3 {
+		t.Fatalf("expected three distinct full email identities, got %v", users)
+	}
+	for email, query := range map[string]string{"alex@gmail.com": "beach", "alex@example.org": "mountains", "family+photos@example.co.uk": "vacances"} {
+		queries, err := parser.GetQueriesForUser(email)
+		if err != nil || len(queries) != 1 || queries[0].Query != query {
+			t.Errorf("unexpected history for %s: %v, %v", email, queries, err)
+		}
 	}
 }
