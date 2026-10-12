@@ -269,6 +269,10 @@ export function AlbumsPage({
   );
   return (
     <div className="collection-page scroll">
+      <p className="hint album-search-hint">
+        Utilisez <b>titre:nom</b> ou <b>in:nom</b> dans la recherche pour
+        trouver les albums dont le nom contient ce texte.
+      </p>
       <div className="page-heading">
         <div>
           <p className="eyebrow">DES ANNÉES DE SOUVENIRS</p>
@@ -284,10 +288,6 @@ export function AlbumsPage({
         </button>
       </div>
       <div className="collection-filters">
-        <p className="hint">
-          Utilisez <b>titre:nom</b> ou <b>in:nom</b> dans la recherche pour
-          trouver les albums dont le nom contient ce texte.
-        </p>
         <select
           aria-label="Année des albums"
           value={year}
