@@ -175,9 +175,6 @@ export function ActivityPage({
           return (
             <article className="activity-card" key={`${title}-${index}`}>
               <div className="activity-copy">
-                <span className="activity-number">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
                 <h2>
                   <button onClick={() => onSearch(title)}>
                     {title}

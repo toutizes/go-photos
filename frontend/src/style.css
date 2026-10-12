@@ -851,12 +851,6 @@ h2 {
   gap: 12px;
   min-width: 0;
 }
-.activity-number {
-  font-size: 10px;
-  color: var(--muted);
-  letter-spacing: 0.1em;
-  font-variant-numeric: tabular-nums;
-}
 .activity-copy h2 {
   width: 100%;
   font-size: 21px;
@@ -1110,9 +1104,6 @@ h2 {
   }
   .activity-copy .chips {
     margin-top: 0;
-  }
-  .activity-number {
-    display: none;
   }
   .activity-copy h2 {
     font-size: 20px;
