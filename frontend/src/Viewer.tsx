@@ -5,7 +5,6 @@ import {
   X,
   Maximize,
   Download,
-  RotateCcw,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
@@ -379,13 +378,6 @@ function ViewerPhoto({
               }
             >
               <ZoomIn />
-            </button>
-            <button
-              className="icon-button"
-              aria-label="Réinitialiser le zoom"
-              onClick={() => setTransform(identity)}
-            >
-              <RotateCcw />
             </button>
           </>
         ) : (
