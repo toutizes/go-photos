@@ -58,7 +58,7 @@ export function App() {
   if (!account)
     return (
       <main className="login">
-        <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" />
+        <img src={`${import.meta.env.BASE_URL}logo-transparent.png`} alt="" />
         <p className="eyebrow">LES PHOTOS, AU FIL DU TEMPS</p>
         <h1>Bienvenue sur Toutizes</h1>
         <p>Des moments à retrouver et à partager.</p>
@@ -85,11 +85,15 @@ export function App() {
     <div key={account.email} className={`app ${route.full ? "is-full" : ""}`}>
       {!route.full && (
         <header className="app-header">
-          <a className="brand" href="#/activity">
-            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" />
-            <span>
-              Toutizes<small>au fil du temps</small>
-            </span>
+          <a
+            className="brand"
+            href="#/activity"
+            aria-label="Toutizes — Activité"
+          >
+            <img
+              src={`${import.meta.env.BASE_URL}logo-transparent.png`}
+              alt=""
+            />
           </a>
           <nav aria-label="Navigation principale">
             {tabs.map(({ page, label, Icon }) => (
@@ -270,7 +274,13 @@ function Photos({
           {route.id !== undefined && (
             <button onClick={close}>Revenir aux photos</button>
           )}
-          <h2>{loading ? "Chargement des photos…" : "Aucune photo trouvée"}</h2>
+          <h2>
+            {loading
+              ? "Chargement des photos…"
+              : route.q
+                ? `Aucune photo trouvée pour « ${route.q} »`
+                : "Aucune photo trouvée"}
+          </h2>
           {!loading && <p>Essayez un autre mot-clé ou une année.</p>}
         </section>
       ) : (
