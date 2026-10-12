@@ -7,6 +7,8 @@ import { todayQuery, type Photo, type Route } from './model';
 import { useRoute } from './useRoute';
 import { Grid } from './Grid';
 import { Viewer } from './Viewer';
+import { ActivityPage, AlbumsPage, AdminPage } from './Collections';
+import { Downloads } from './Downloads';
 export function App() {
   const [account,setAccount]=useState<Account|null|undefined>(undefined),[authError,setAuthError]=useState('');
   const {route,navigate,close}=useRoute();
@@ -22,7 +24,7 @@ export function App() {
     {!route.full&&<header className="app-header"><a className="brand" href="#/activity"><img src={`${import.meta.env.BASE_URL}logo.png`} alt=""/><span>Toutizes<small>au fil du temps</small></span></a><nav aria-label="Navigation principale">{tabs.map(({page,label,Icon})=><button key={page} className={route.page===page?'active':''} onClick={()=>navigate({page:page as Route['page'],q:page==='photos'?todayQuery():'',full:false})}><Icon size={18}/><span>{label}</span></button>)}</nav><form className="search-form" onSubmit={e=>{e.preventDefault();goSearch(draft);}}><Search size={18}/><input aria-label="Rechercher des photos" placeholder="Un lieu, un prénom, une année…" value={draft} onChange={e=>setDraft(e.target.value)}/><button type="submit" aria-label="Lancer la recherche">↵</button></form><button className="icon-button help" aria-label="Aide à la recherche" onClick={()=>setHelp(!help)}><HelpCircle size={20}/></button><button className="icon-button signout" aria-label="Se déconnecter" title={account.email??''} onClick={()=>{void logout().catch(()=>setAuthError('Déconnexion impossible. Réessayez.'));}}><LogOut size={19}/></button></header>}
     {help&&!route.full&&<section className="search-help"><strong>Retrouver une photo</strong><p>Séparez les mots-clés par des virgules : <b>famille, vacances</b>. Essayez une année (<b>2020</b>), une date (<b>2020-07-14</b>) ou un intervalle d’années (<b>2020--2022</b>). Les pastilles sous les photos lancent une nouvelle recherche.</p><button onClick={()=>setHelp(false)}>Fermer l’aide</button></section>}
     {authError&&<p role="alert">{authError}</p>}
-    <main className="content">{route.page==='photos'?<Photos route={{...route,q:route.q||todayQuery()}} navigate={navigate} close={close} onSearch={goSearch}/>:<section className="empty"><p className="eyebrow">VOTRE PHOTOTHÈQUE</p><h1>{route.page==='activity'?'Au fil des photos':route.page==='albums'?'Les albums':'Administration'}</h1><p>La nouvelle visionneuse est prête à explorer vos photos.</p><button className="primary" onClick={()=>goSearch('1979')}>Explorer les photos</button></section>}</main>
+    <main className="content">{route.page==='photos'?<Photos route={{...route,q:route.q||todayQuery()}} navigate={navigate} close={close} onSearch={goSearch}/>:route.page==='activity'?<ActivityPage onSearch={goSearch} onPhoto={(q,id)=>navigate({page:'photos',q,id,full:false})}/>:route.page==='albums'?<AlbumsPage onSearch={goSearch}/>:isAdmin(account)?<AdminPage onSearch={goSearch}/>:<section className="empty"><h1>Accès réservé au propriétaire</h1></section>}</main>
   </div>;
 }
 function Photos({route,navigate,close,onSearch}:{route:Route;navigate:(r:Route,replace?:boolean,level?:'photo'|'full')=>void;close:()=>void;onSearch:(q:string)=>void}) {
@@ -32,7 +34,7 @@ function Photos({route,navigate,close,onSearch}:{route:Route;navigate:(r:Route,r
   const photos=result.q===route.q?result.photos:[];
   const lastPhoto=useRef<number|undefined>(undefined); if(route.id!==undefined)lastPhoto.current=route.id;
   return <div className="photos-page">
-    {route.id===undefined&&<div className="page-heading"><div><p className="eyebrow">EXPLORER LA COLLECTION</p><h1>{route.q.startsWith('album:')?route.q.slice(6):route.q}</h1><p>{photos.length.toLocaleString('fr')} photo{photos.length!==1?'s':''}{loading?' · Actualisation…':''}</p></div><button className="icon-button" aria-label="Actualiser les photos" onClick={()=>setRefresh(n=>n+1)}><RefreshCw size={19}/></button></div>}
+    {route.id===undefined&&<div className="page-heading"><div><p className="eyebrow">EXPLORER LA COLLECTION</p><h1>{route.q.startsWith('album:')?route.q.slice(6):route.q}</h1><p>{photos.length.toLocaleString('fr')} photo{photos.length!==1?'s':''}{loading?' · Actualisation…':''}</p></div><div className="heading-actions"><Downloads query={route.q} count={photos.length}/><button className="icon-button" aria-label="Actualiser les photos" onClick={()=>setRefresh(n=>n+1)}><RefreshCw size={19}/></button></div></div>}
     {error&&<div className="error" role="alert">{error}<button onClick={()=>setRefresh(n=>n+1)}>Réessayer</button></div>}
     {!photos.length ? <section className="empty"><h2>{loading?'Chargement des photos…':'Aucune photo trouvée'}</h2>{!loading&&<p>Essayez un autre mot-clé ou une année.</p>}</section> : <><Grid key={route.q} activeId={lastPhoto.current} photos={photos} hidden={route.id!==undefined} open={p=>navigate({...route,id:p.Id,full:false},false,'photo')}/>{route.id!==undefined&&<Viewer photos={photos} id={route.id} full={route.full} onStep={id=>navigate({...route,id},true,route.full?'full':'photo')} onFull={()=>navigate({...route,full:true},false,'full')} onClose={close} onSearch={onSearch}/>}</>}
   </div>;
