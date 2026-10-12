@@ -1,16 +1,16 @@
 :root {
   font-family: "DM Sans Variable", system-ui, sans-serif;
-  color: #292e27;
-  background: #f5f3ef;
+  color: #243335;
+  background: #f3f7f7;
   font-synthesis: none;
-  --bg: #f5f3ef;
-  --panel: #fffefa;
-  --ink: #292e27;
-  --muted: #797d72;
-  --line: #dedfd5;
-  --accent: #485b3d;
-  --soft: #e9eddf;
-  --shadow: 0 8px 32px #2531200a;
+  --bg: #f3f7f7;
+  --panel: #fcfefe;
+  --ink: #243335;
+  --muted: #637779;
+  --line: #d5e2e3;
+  --accent: #176d75;
+  --soft: #dceff0;
+  --shadow: 0 8px 32px #12383d0a;
   color-scheme: light dark;
 }
 * {
@@ -54,7 +54,7 @@ button:disabled {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
-  outline: 3px solid #94aa78;
+  outline: 3px solid #32a6b3;
   outline-offset: 3px;
 }
 a {
@@ -98,7 +98,7 @@ h2 {
   border-color: var(--accent);
 }
 .primary:hover {
-  background: #617551;
+  background: #125a62;
 }
 .icon-button {
   border: 0;
@@ -381,7 +381,7 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #e8e7e2;
+  background: #e3ecec;
   touch-action: pan-y;
   user-select: none;
 }
@@ -456,13 +456,13 @@ h2 {
   border: 1px solid #fff3;
   border-radius: 50%;
   padding: 10px;
-  background: #181c1977;
+  background: #15212477;
   color: white;
   backdrop-filter: blur(12px);
   z-index: 2;
 }
 .step:hover {
-  background: #181c19bb;
+  background: #152124bb;
 }
 .step.previous {
   left: 14px;
@@ -478,7 +478,7 @@ h2 {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: #101210;
+  background: #101719;
   color: #fff;
 }
 .fullscreen .viewer-toolbar {
@@ -497,13 +497,13 @@ h2 {
 }
 .fullscreen .icon-button {
   color: #fff;
-  background: #15191566;
+  background: #14202466;
 }
 .fullscreen .counter span {
   color: #ddd;
 }
 .fullscreen .image-stage {
-  background: #101210;
+  background: #101719;
   touch-action: none;
 }
 .fullscreen .viewer-body {
@@ -760,25 +760,25 @@ h2 {
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #181b17;
-    --panel: #20251f;
-    --ink: #e9ede4;
-    --muted: #a0aa99;
-    --line: #343e30;
-    --accent: #b2c69a;
-    --soft: #303e28;
+    --bg: #131c1f;
+    --panel: #1a282c;
+    --ink: #e6f0f1;
+    --muted: #9cb1b5;
+    --line: #30464c;
+    --accent: #79ced5;
+    --soft: #234249;
     color: var(--ink);
     background: var(--bg);
   }
   .primary {
-    color: #182015;
-    background: #b2c69a;
+    color: #10282c;
+    background: #79ced5;
   }
   .primary:hover {
-    background: #ccdeb8;
+    background: #a0e2e6;
   }
   .image-stage {
-    background: #111510;
+    background: #10191c;
   }
   .error {
     color: #ffa596;
@@ -1161,7 +1161,7 @@ h2 {
   max-width: 150px;
 }
 .fullscreen .stereo-select {
-  background: #20251f;
+  background: #1a282c;
   color: white;
   border-color: #555;
 }
