@@ -458,16 +458,6 @@ h2 {
   font-size: 12px;
   color: var(--muted);
 }
-.metadata-footer {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding-top: 24px;
-}
-.metadata-footer > button {
-  font-size: 12px;
-}
 .step {
   position: absolute;
   top: 50%;
@@ -683,10 +673,6 @@ h2 {
   .metadata > .text-button + .text-button {
     margin-top: 8px;
   }
-  .metadata-footer {
-    padding-top: 14px;
-    gap: 12px;
-  }
   .step {
     padding: 7px;
   }
@@ -766,9 +752,6 @@ h2 {
   .metadata h2 {
     font-size: 16px;
     margin: 0;
-  }
-  .metadata-footer {
-    padding-top: 8px;
   }
   .viewer-image {
     padding: 0;

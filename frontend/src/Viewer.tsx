@@ -329,6 +329,18 @@ function ViewerPhoto({
           {index + 1} <span>/ {count}</span>
         </span>
         <div className="toolbar-spacer" />
+        {!full && (
+          <button
+            className="icon-button"
+            onClick={save}
+            disabled={busy}
+            aria-label={busy ? "Téléchargement…" : "Télécharger l’original"}
+            title="Télécharger l’original"
+            aria-busy={busy}
+          >
+            <Download size={20} />
+          </button>
+        )}
         {offset && (
           <select
             className="stereo-select"
@@ -386,6 +398,11 @@ function ViewerPhoto({
           </button>
         )}
       </header>
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
       <div className="viewer-body">
         <div
           className="image-stage"
@@ -597,13 +614,6 @@ function ViewerPhoto({
                 </button>
               </div>
             )}
-            <div className="metadata-footer">
-              <button onClick={save} disabled={busy}>
-                <Download size={17} />
-                {busy ? "Téléchargement…" : "Télécharger l’original"}
-              </button>
-              {error && <p role="alert">{error}</p>}
-            </div>
           </aside>
         )}
       </div>
