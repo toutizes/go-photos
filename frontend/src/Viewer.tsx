@@ -1,0 +1,56 @@
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { ChevronLeft, ChevronRight, X, Maximize, Download, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
+import { useImage } from './images';
+import { dateLabel, photoPath, type Photo } from './model';
+import { download } from './api';
+import { constrain, distance, identity, midpoint, pinch, type Point, type Transform } from './gestures';
+export function Viewer({photos,id,full,onStep,onFull,onClose,onSearch}: {photos:Photo[];id:number;full:boolean;onStep:(id:number)=>void;onFull:()=>void;onClose:()=>void;onSearch:(q:string)=>void}) {
+  const index=photos.findIndex(p=>p.Id===id), photo=photos[index];
+  if(!photo) return <section className="empty"><h2>Photo introuvable</h2><p>Cette photo ne fait plus partie des résultats.</p><button onClick={onClose}>Revenir aux photos</button></section>;
+  return <ViewerPhoto key={photo.Id} {...{photo,full,onFull,onClose,onSearch}} count={photos.length} index={index} previous={photos[index-1]} next={photos[index+1]} onStep={onStep}/>;
+}
+function ViewerPhoto({photo,full,index,count,previous,next,onStep,onFull,onClose,onSearch}: {photo:Photo;full:boolean;index:number;count:number;previous?:Photo;next?:Photo;onStep:(id:number)=>void;onFull:()=>void;onClose:()=>void;onSearch:(q:string)=>void}) {
+  const image=useImage(photoPath(photo));
+  useImage(previous ? photoPath(previous):undefined); useImage(next ? photoPath(next):undefined);
+  const stage=useRef<HTMLDivElement>(null);
+  const [transform,setTransform]=useState(identity);
+  const current=useRef(transform);current.current=transform;
+  const points=useRef(new Map<number,Point>()), start=useRef<Point|undefined>(undefined), moved=useRef(false), pinched=useRef(false), lastTap=useRef(0);
+  const [busy,setBusy]=useState(false), [error,setError]=useState('');
+  const controls=useRef<HTMLButtonElement>(null);
+  const navigate=(direction:number)=>{ const p=direction<0?previous:next; if(p)onStep(p.Id); };
+  const bounds=(t:Transform)=>{const r=stage.current!.getBoundingClientRect();return constrain(t,r.width,r.height,photo.W,photo.H);};
+  useEffect(()=>{setTransform(identity);points.current.clear();},[full]);
+  useEffect(()=>{const obs=new ResizeObserver(()=>setTransform(t=>bounds(t)));if(stage.current)obs.observe(stage.current);return()=>obs.disconnect();},[]);
+  useEffect(()=>{controls.current?.focus({preventScroll:true});},[full]);
+  useEffect(()=>{const handle=(e:KeyboardEvent)=>{if((e.target as HTMLElement).matches('input,textarea,select'))return; if(e.key==='Escape'){e.preventDefault();onClose();} if(e.key==='ArrowLeft'){e.preventDefault();navigate(-1);}if(e.key==='ArrowRight'){e.preventDefault();navigate(1);} };window.addEventListener('keydown',handle);return()=>window.removeEventListener('keydown',handle);});
+  function position(e:PointerEvent):Point {const r=stage.current!.getBoundingClientRect();return{x:e.clientX-r.left-r.width/2,y:e.clientY-r.top-r.height/2};}
+  function down(e:PointerEvent) {if(e.button!==0)return; e.currentTarget.setPointerCapture(e.pointerId);const p=position(e);points.current.set(e.pointerId,p);if(points.current.size===1){start.current=p;moved.current=false;pinched.current=false;}else pinched.current=true;}
+  function move(e:PointerEvent) {
+    const old=points.current.get(e.pointerId);if(!old)return;const p=position(e);
+    if(start.current && distance(start.current,p)>8)moved.current=true;
+    const before=[...points.current.values()];points.current.set(e.pointerId,p);const after=[...points.current.values()];
+    if(full && before.length===2){const ratio=distance(after[0],after[1])/Math.max(1,distance(before[0],before[1]));setTransform(t=>bounds(pinch(t,midpoint(before[0],before[1]),midpoint(after[0],after[1]),ratio)));}
+    else if(full && current.current.scale>1)setTransform(t=>bounds({...t,x:t.x+p.x-old.x,y:t.y+p.y-old.y}));
+  }
+  function up(e:PointerEvent) {
+    if(!points.current.has(e.pointerId))return;
+    const p=position(e);points.current.delete(e.pointerId);
+    if(points.current.size || pinched.current)return;
+    const origin=start.current;if(!origin)return;
+    if(current.current.scale<=1.01 && Math.abs(p.x-origin.x)>55 && Math.abs(p.x-origin.x)>Math.abs(p.y-origin.y)*1.4){navigate(p.x<origin.x?1:-1);return;}
+    if(!moved.current && e.pointerType==='touch'){const now=Date.now();if(now-lastTap.current<300){lastTap.current=0;if(full)setTransform(t=>t.scale>1?identity:bounds({...t,scale:2}));else onFull();}else lastTap.current=now;}
+  }
+  async function save(){setBusy(true);setError('');try{await download(photoPath(photo,'maxi'),photo.In);}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+  return <section className={`viewer ${full?'fullscreen':''}`} aria-label="Visionneuse de photos">
+    <header className="viewer-toolbar"><button ref={controls} className="icon-button" onClick={onClose} aria-label={full?'Quitter le plein écran':'Revenir à la grille'}><X/></button><span className="counter" aria-live="polite">{index+1} <span>/ {count}</span></span><div className="toolbar-spacer"/>{full ? <><button className="icon-button" aria-label="Réduire" onClick={()=>setTransform(t=>bounds({...t,scale:t.scale/1.5}))}><ZoomOut/></button><button className="icon-button" aria-label="Agrandir" onClick={()=>setTransform(t=>bounds({...t,scale:t.scale*1.5}))}><ZoomIn/></button><button className="icon-button" aria-label="Réinitialiser le zoom" onClick={()=>setTransform(identity)}><RotateCcw/></button></> : <button className="icon-button" onClick={onFull} aria-label="Afficher en plein écran"><Maximize/></button>}</header>
+    <div className="viewer-body">
+      <div className="image-stage" ref={stage} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={()=>{points.current.clear();pinched.current=true;}} onDoubleClick={e=>{if(e.nativeEvent instanceof MouseEvent && !full)onFull();}}>
+        {image.url ? <img className="viewer-image" src={image.url} alt={photo.In} draggable={false} style={{transform:`translate(${transform.x}px,${transform.y}px) scale(${transform.scale})`}}/> : image.error ? <button onClick={image.retry}>Réessayer le chargement</button>:<span className="loading">Chargement de la photo…</span>}
+        <button className="step previous" disabled={!previous} aria-label="Photo précédente" onPointerDown={e=>e.stopPropagation()} onDoubleClick={e=>e.stopPropagation()} onClick={()=>navigate(-1)}><ChevronLeft/></button>
+        <button className="step next" disabled={!next} aria-label="Photo suivante" onPointerDown={e=>e.stopPropagation()} onDoubleClick={e=>e.stopPropagation()} onClick={()=>navigate(1)}><ChevronRight/></button>
+      </div>
+      {!full && <aside className="metadata scroll"><p className="eyebrow">LE {dateLabel(photo.Its).toLocaleUpperCase('fr')}</p><h2>{photo.In}</h2><button className="album-link" onClick={()=>onSearch(`album:${photo.Ad}`)}>{photo.Ad}</button><div className="chips">{(photo.Kwd??[]).map(k=><button key={k} onClick={()=>onSearch(k)}>{k}</button>)}</div><button className="text-button" onClick={()=>onSearch(new Date(photo.Its*1000).getFullYear().toString())}>Voir les photos de {new Date(photo.Its*1000).getFullYear()}</button><div className="metadata-footer"><button onClick={save} disabled={busy}><Download size={17}/>{busy?'Téléchargement…':'Télécharger l’original'}</button><p className="hint">Double-touchez la photo pour le plein écran.</p>{error&&<p role="alert">{error}</p>}</div></aside>}
+    </div>
+  </section>;
+}
