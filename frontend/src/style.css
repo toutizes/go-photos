@@ -907,7 +907,7 @@ h2 {
   min-width: 0;
   width: 240px;
 }
-.collection-filters select {
+.album-year-filter {
   border: 1px solid var(--line);
   background: var(--panel);
   border-radius: 9px;

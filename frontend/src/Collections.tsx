@@ -253,9 +253,8 @@ export function AlbumsPage({
         <div>
           <h1>Les albums</h1>
         </div>
-      </div>
-      <div className="collection-filters">
         <select
+          className="album-year-filter"
           aria-label="Année des albums"
           value={year}
           onChange={(e) => setYear(e.target.value)}
