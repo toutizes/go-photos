@@ -3,8 +3,6 @@ import {
   Images,
   LayoutGrid,
   History,
-  Clock3,
-  Sparkles,
   Search,
   LogOut,
   Shield,
@@ -112,12 +110,6 @@ export function App() {
                 }
               >
                 <Icon size={18} />
-                {page === "activity" && (
-                  <>
-                    <Clock3 size={18} />
-                    <Sparkles size={18} />
-                  </>
-                )}
                 <span>{label}</span>
               </button>
             ))}
