@@ -253,10 +253,6 @@ export function AlbumsPage({
         <div>
           <h1>Les albums</h1>
         </div>
-        <p className="hint album-search-hint">
-          <b>{"titre:<texte>"}</b> trouver les albums dont le nom contient{" "}
-          {"<texte>"}
-        </p>
       </div>
       <div className="collection-filters">
         <select

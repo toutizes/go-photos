@@ -798,10 +798,6 @@ h2 {
 .collection-page > .page-heading {
   padding-bottom: 22px;
 }
-.page-heading p.album-search-hint {
-  margin: 0;
-  text-align: right;
-}
 .on-this-day {
   font-size: 12px;
   background: transparent;

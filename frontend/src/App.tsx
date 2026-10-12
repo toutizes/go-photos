@@ -169,6 +169,10 @@ export function App() {
             intervalle d’années (<b>2020--2022</b>). Les pastilles sous les
             photos lancent une nouvelle recherche.
           </p>
+          <p>
+            Utilisez « <b>{"titre:<texte>"}</b> » pour ne chercher que dans les
+            albums qui contiennent {"<texte>"} dans leur nom.
+          </p>
           <button onClick={() => setHelp(false)}>Fermer l’aide</button>
         </section>
       )}
