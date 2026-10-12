@@ -107,10 +107,42 @@ function ViewerPhoto({
   const date = new Date(photo.Its * 1000);
   const monthDay = `${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   const image = useImage(photoPath(photo));
-  useImage(previous ? photoPath(previous) : undefined);
-  useImage(next ? photoPath(next) : undefined);
+  const previousImage = useImage(previous ? photoPath(previous) : undefined);
+  const nextImage = useImage(next ? photoPath(next) : undefined);
   const stage = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState(identity);
+  const [slide, setSlide] = useState(0);
+  const [settling, setSettling] = useState(false);
+  const slideLocked = useRef(false);
+  const slideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  useEffect(() => () => clearTimeout(slideTimer.current), []);
+  function settleSlide(direction = 0) {
+    if (slideLocked.current) return;
+    const target = direction < 0 ? previous : direction > 0 ? next : undefined;
+    const reducedMotion = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (reducedMotion) {
+      setSlide(0);
+      if (target) onStep(target.Id);
+      return;
+    }
+    slideLocked.current = true;
+    setSettling(true);
+    setSlide(
+      target
+        ? -direction * (stage.current?.getBoundingClientRect().width || 0)
+        : 0,
+    );
+    slideTimer.current = setTimeout(() => {
+      slideLocked.current = false;
+      setSettling(false);
+      setSlide(0);
+      if (target) onStep(target.Id);
+    }, 220);
+  }
   const [offset, setOffset] = useState(initialOffset);
   const [natural, setNatural] = useState({
     width: Math.max(1, photo.W),
@@ -135,7 +167,7 @@ function ViewerPhoto({
   const controls = useRef<HTMLButtonElement>(null);
   const navigate = (direction: number) => {
     const p = direction < 0 ? previous : next;
-    if (p) onStep(p.Id);
+    if (p && !slideLocked.current) onStep(p.Id);
   };
   const bounds = (t: Transform) => {
     const r = stage.current!.getBoundingClientRect();
@@ -153,6 +185,10 @@ function ViewerPhoto({
   };
   useEffect(() => {
     setTransform(identity);
+    setSlide(0);
+    setSettling(false);
+    slideLocked.current = false;
+    clearTimeout(slideTimer.current);
     points.current.clear();
   }, [full]);
   useEffect(() => {
@@ -191,7 +227,7 @@ function ViewerPhoto({
   }
   function down(e: PointerEvent) {
     pointerType.current = e.pointerType;
-    if (e.button !== 0) return;
+    if (e.button !== 0 || slideLocked.current) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     const p = position(e);
     points.current.set(e.pointerId, p);
@@ -199,7 +235,10 @@ function ViewerPhoto({
       start.current = p;
       moved.current = false;
       pinched.current = false;
-    } else pinched.current = true;
+    } else {
+      pinched.current = true;
+      setSlide(0);
+    }
   }
   function move(e: PointerEvent) {
     const old = points.current.get(e.pointerId);
@@ -227,6 +266,14 @@ function ViewerPhoto({
       setTransform((t) =>
         bounds({ ...t, x: t.x + p.x - old.x, y: t.y + p.y - old.y }),
       );
+    else if (!pinched.current && start.current && before.length === 1) {
+      const dx = p.x - start.current.x;
+      const dy = p.y - start.current.y;
+      if (Math.abs(dx) > Math.abs(dy) * 1.4) {
+        const hasNeighbor = dx < 0 ? next : previous;
+        setSlide(hasNeighbor ? dx : dx * 0.2);
+      }
+    }
   }
   function up(e: PointerEvent) {
     if (!points.current.has(e.pointerId)) return;
@@ -240,9 +287,10 @@ function ViewerPhoto({
       Math.abs(p.x - origin.x) > 55 &&
       Math.abs(p.x - origin.x) > Math.abs(p.y - origin.y) * 1.4
     ) {
-      navigate(p.x < origin.x ? 1 : -1);
+      settleSlide(p.x < origin.x ? 1 : -1);
       return;
     }
+    if (slide !== 0) settleSlide();
     if (!moved.current && e.pointerType === "touch") {
       const now = Date.now();
       if (now - lastTap.current < 300) {
@@ -351,57 +399,101 @@ function ViewerPhoto({
           onPointerCancel={() => {
             points.current.clear();
             pinched.current = true;
+            settleSlide();
           }}
           onDoubleClick={(e) => {
             if (pointerType.current !== "touch" && !full) onFull();
           }}
         >
-          {image.url && stereoActive ? (
-            <div
-              className="stereo-transform"
-              style={{
-                transform: `translate(${transform.x}px,${transform.y}px) scale(${transform.scale})`,
-              }}
-            >
-              <StereoImage
-                photo={photo}
-                url={image.url}
-                mode={mode}
-                offset={offset!}
-                onOffset={(s) => {
-                  setOffset(s);
-                  saveOffset(s);
-                }}
-              />
+          <div
+            className={`photo-slider ${settling ? "is-settling" : ""}`}
+            style={{ transform: `translateX(${slide}px)` }}
+          >
+            <div className="photo-slide">
+              {image.url && stereoActive ? (
+                <div
+                  className="stereo-transform"
+                  style={{
+                    transform: `translate(${transform.x}px,${transform.y}px) scale(${transform.scale})`,
+                  }}
+                >
+                  <StereoImage
+                    photo={photo}
+                    url={image.url}
+                    mode={mode}
+                    offset={offset!}
+                    onOffset={(s) => {
+                      setOffset(s);
+                      saveOffset(s);
+                    }}
+                  />
+                </div>
+              ) : image.url ? (
+                <img
+                  className="viewer-image"
+                  onLoad={(e) => {
+                    const img = e.currentTarget;
+                    if (img.naturalWidth && img.naturalHeight)
+                      setNatural({
+                        width: img.naturalWidth,
+                        height: img.naturalHeight,
+                      });
+                  }}
+                  src={original.url ?? image.url}
+                  alt={photo.In}
+                  draggable={false}
+                  style={{
+                    transform: `translate(${transform.x}px,${transform.y}px) scale(${transform.scale})`,
+                  }}
+                />
+              ) : image.error ? (
+                <button
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={image.retry}
+                >
+                  Réessayer le chargement
+                </button>
+              ) : (
+                <span className="loading">Chargement de la photo…</span>
+              )}
             </div>
-          ) : image.url ? (
-            <img
-              className="viewer-image"
-              onLoad={(e) => {
-                const img = e.currentTarget;
-                if (img.naturalWidth && img.naturalHeight)
-                  setNatural({
-                    width: img.naturalWidth,
-                    height: img.naturalHeight,
-                  });
-              }}
-              src={original.url ?? image.url}
-              alt={photo.In}
-              draggable={false}
-              style={{
-                transform: `translate(${transform.x}px,${transform.y}px) scale(${transform.scale})`,
-              }}
-            />
-          ) : image.error ? (
-            <button
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={image.retry}
-            >
-              Réessayer le chargement
-            </button>
-          ) : (
-            <span className="loading">Chargement de la photo…</span>
-          )}
+            {slide !== 0 &&
+              [
+                { neighbor: previous, resource: previousImage, side: -1 },
+                { neighbor: next, resource: nextImage, side: 1 },
+              ].map(
+                ({ neighbor, resource, side }) =>
+                  neighbor && (
+                    <div
+                      key={side}
+                      className="photo-slide neighbor-slide"
+                      aria-hidden="true"
+                      style={{ transform: `translateX(${side * 100}%)` }}
+                    >
+                      {resource.url ? (
+                        stereoOf(neighbor) && mode !== "original" ? (
+                          <StereoImage
+                            photo={neighbor}
+                            url={resource.url}
+                            mode={mode}
+                            offset={stereoOf(neighbor)!}
+                            onOffset={() => {}}
+                          />
+                        ) : (
+                          <img
+                            className="viewer-image"
+                            src={resource.url}
+                            alt=""
+                            draggable={false}
+                          />
+                        )
+                      ) : (
+                        <span className="loading">Chargement de la photo…</span>
+                      )}
+                    </div>
+                  ),
+              )}
+          </div>
           <button
             className="step previous"
             disabled={!previous}

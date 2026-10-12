@@ -58,6 +58,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -73,6 +74,7 @@ function gesture(el: Element, type: string, x: number, y: number, id = 1) {
   fireEvent(el, e);
 }
 it("supports swiping at fit scale and panning without navigating when zoomed", () => {
+  vi.useFakeTimers();
   const onStep = vi.fn();
   const { container } = render(
     <Viewer
@@ -88,7 +90,16 @@ it("supports swiping at fit scale and panning without navigating when zoomed", (
   const stage = container.querySelector(".image-stage")!;
   gesture(stage, "pointerdown", 600, 200);
   gesture(stage, "pointermove", 400, 200);
+  expect(
+    container.querySelector(".photo-slider")?.getAttribute("style"),
+  ).toContain("translateX(-200px)");
+  expect(container.querySelectorAll(".neighbor-slide")).toHaveLength(2);
   gesture(stage, "pointerup", 400, 200);
+  expect(onStep).not.toHaveBeenCalled();
+  expect(
+    container.querySelector(".photo-slider")?.getAttribute("style"),
+  ).toContain("translateX(-800px)");
+  act(() => vi.advanceTimersByTime(220));
   expect(onStep).toHaveBeenCalledWith(3);
   onStep.mockClear();
   fireEvent.click(screen.getByRole("button", { name: "Agrandir" }));
@@ -164,4 +175,64 @@ it("does not create 70,000 image elements and restores a distant selected row", 
   expect(
     screen.getByRole("button", { name: "Ouvrir photo60000.jpg" }),
   ).toBeDefined();
+});
+
+it("snaps back short drags, canceled gestures and swipes past the first photo", () => {
+  vi.useFakeTimers();
+  const onStep = vi.fn();
+  const { container } = render(
+    <Viewer
+      photos={photos}
+      id={1}
+      full={false}
+      onStep={onStep}
+      onFull={() => {}}
+      onClose={() => {}}
+      onSearch={() => {}}
+    />,
+  );
+  const stage = container.querySelector(".image-stage")!;
+  for (const [end, event] of [
+    [380, "pointerup"],
+    [200, "pointercancel"],
+    [600, "pointerup"],
+  ] as const) {
+    gesture(stage, "pointerdown", 400, 200);
+    gesture(stage, "pointermove", end, 200);
+    gesture(stage, event, end, 200);
+    expect(
+      container.querySelector(".photo-slider")?.getAttribute("style"),
+    ).toContain("translateX(0px)");
+    act(() => vi.advanceTimersByTime(220));
+    expect(onStep).not.toHaveBeenCalled();
+  }
+});
+it("respects reduced motion and cancels pending navigation when closed", () => {
+  vi.useFakeTimers();
+  vi.stubGlobal("matchMedia", () => ({ matches: true }));
+  const onStep = vi.fn();
+  const { container, unmount } = render(
+    <Viewer
+      photos={photos}
+      id={2}
+      full
+      onStep={onStep}
+      onFull={() => {}}
+      onClose={() => {}}
+      onSearch={() => {}}
+    />,
+  );
+  const stage = container.querySelector(".image-stage")!;
+  gesture(stage, "pointerdown", 600, 200);
+  gesture(stage, "pointermove", 400, 200);
+  gesture(stage, "pointerup", 400, 200);
+  expect(onStep).toHaveBeenCalledWith(3);
+  onStep.mockClear();
+  vi.stubGlobal("matchMedia", () => ({ matches: false }));
+  gesture(stage, "pointerdown", 600, 200);
+  gesture(stage, "pointermove", 400, 200);
+  gesture(stage, "pointerup", 400, 200);
+  unmount();
+  act(() => vi.advanceTimersByTime(220));
+  expect(onStep).not.toHaveBeenCalled();
 });
