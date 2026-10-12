@@ -73,7 +73,7 @@ export function App() {
       </main>
     );
   const tabs = [
-    { page: "activity", label: "Activité", Icon: Activity },
+    { page: "activity", label: "Récemment", Icon: Activity },
     { page: "albums", label: "Albums", Icon: Images },
     { page: "photos", label: "Photos", Icon: LayoutGrid },
     ...(isAdmin(account)
@@ -87,7 +87,7 @@ export function App() {
           <a
             className="brand"
             href="#/activity"
-            aria-label="Toutizes — Activité"
+            aria-label="Toutizes — Récemment"
           >
             <img
               src={`${import.meta.env.BASE_URL}logo-transparent.png`}
