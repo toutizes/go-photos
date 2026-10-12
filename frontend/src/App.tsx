@@ -170,7 +170,7 @@ export function App() {
             photos lancent une nouvelle recherche.
           </p>
           <p>
-            Utilisez « <b>{"titre:<texte>"}</b> » pour ne chercher que dans les
+            Utilisez <b>{"titre:<texte>"}</b> pour ne chercher que dans les
             albums qui contiennent {"<texte>"} dans leur nom.
           </p>
           <button onClick={() => setHelp(false)}>Fermer l’aide</button>
