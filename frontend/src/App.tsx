@@ -81,7 +81,10 @@ export function App() {
       : []),
   ] as const;
   return (
-    <div key={account.email} className={`app ${route.full ? "is-full" : ""}`}>
+    <div
+      key={account.email}
+      className={`app ${route.full ? "is-full" : ""} ${route.page === "photos" && route.id !== undefined ? "has-viewer" : ""}`}
+    >
       {!route.full && (
         <header className="app-header">
           <a

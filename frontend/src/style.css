@@ -1254,3 +1254,71 @@ h2 {
   max-width: 100%;
   overflow-wrap: anywhere;
 }
+
+/* Give short landscape viewports more room for the collection itself. */
+@media (max-height: 550px) and (orientation: landscape) {
+  .has-viewer .app-header,
+  .has-viewer .search-help {
+    display: none;
+  }
+  .app-header {
+    padding-block: 4px;
+  }
+  .app-header nav button,
+  .app-header > .icon-button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  .page-heading,
+  .collection-page > .page-heading {
+    padding: 4px 24px 8px;
+    min-height: 48px;
+  }
+  .page-heading h1 {
+    font-size: 20px;
+  }
+  .download-menu > button > span {
+    display: none;
+  }
+  .download-menu > button,
+  .album-year-filter {
+    min-height: 40px;
+    padding: 8px 10px;
+  }
+  .photo-grid {
+    --photo-cell-min: 96;
+    margin: 0 24px 8px;
+  }
+  .album-grid {
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 10px;
+    padding: 0 24px;
+  }
+  .album-card {
+    contain-intrinsic-size: auto 90px;
+  }
+  .album-card > button {
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
+  }
+  .album-cover {
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
+    aspect-ratio: 1;
+  }
+  .album-description {
+    padding: 10px;
+    min-width: 0;
+    align-self: center;
+  }
+  .album-description h2 {
+    font-size: 15px;
+    overflow-wrap: anywhere;
+  }
+  .album-description p {
+    display: none;
+  }
+}

@@ -13,18 +13,25 @@ export function Grid({
   activeId?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ width: 1000, height: 700 });
+  const [size, setSize] = useState({ width: 1000, height: 700, minimum: 170 });
   const [top, setTop] = useState(0);
   useLayoutEffect(() => {
     const el = ref.current!;
     const observer = new ResizeObserver(([e]) => {
       if (e.contentRect.width)
-        setSize({ width: e.contentRect.width, height: e.contentRect.height });
+        setSize({
+          width: e.contentRect.width,
+          height: e.contentRect.height,
+          minimum:
+            parseFloat(
+              getComputedStyle(el).getPropertyValue("--photo-cell-min"),
+            ) || 170,
+        });
     });
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
-  const columns = Math.max(2, Math.floor(size.width / 170));
+  const columns = Math.max(2, Math.floor(size.width / size.minimum));
   const cell = (size.width - 8 * (columns - 1)) / columns;
   const step = cell + 8,
     rows = Math.ceil(photos.length / columns);
