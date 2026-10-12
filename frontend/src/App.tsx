@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import {
   Images,
   LayoutGrid,
-  Activity,
+  History,
+  Clock3,
+  Sparkles,
   Search,
   LogOut,
   Shield,
@@ -73,7 +75,7 @@ export function App() {
       </main>
     );
   const tabs = [
-    { page: "activity", label: "Récemment", Icon: Activity },
+    { page: "activity", label: "Récemment", Icon: History },
     { page: "albums", label: "Albums", Icon: Images },
     { page: "photos", label: "Photos", Icon: LayoutGrid },
     ...(isAdmin(account)
@@ -110,6 +112,12 @@ export function App() {
                 }
               >
                 <Icon size={18} />
+                {page === "activity" && (
+                  <>
+                    <Clock3 size={18} />
+                    <Sparkles size={18} />
+                  </>
+                )}
                 <span>{label}</span>
               </button>
             ))}
