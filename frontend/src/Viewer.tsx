@@ -295,10 +295,7 @@ function ViewerPhoto({
       const now = Date.now();
       if (now - lastTap.current < 300) {
         lastTap.current = 0;
-        if (full)
-          setTransform((t) =>
-            t.scale > 1 ? identity : bounds({ ...t, scale: 2 }),
-          );
+        if (full) onClose();
         else onFull();
       } else lastTap.current = now;
     }
@@ -401,8 +398,11 @@ function ViewerPhoto({
             pinched.current = true;
             settleSlide();
           }}
-          onDoubleClick={(e) => {
-            if (pointerType.current !== "touch" && !full) onFull();
+          onDoubleClick={() => {
+            if (pointerType.current !== "touch") {
+              if (full) onClose();
+              else onFull();
+            }
           }}
         >
           <div
@@ -602,9 +602,6 @@ function ViewerPhoto({
                 <Download size={17} />
                 {busy ? "Téléchargement…" : "Télécharger l’original"}
               </button>
-              <p className="hint">
-                Double-touchez la photo pour le plein écran.
-              </p>
               {error && <p role="alert">{error}</p>}
             </div>
           </aside>

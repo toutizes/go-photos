@@ -236,3 +236,45 @@ it("respects reduced motion and cancels pending navigation when closed", () => {
   act(() => vi.advanceTimersByTime(220));
   expect(onStep).not.toHaveBeenCalled();
 });
+it("double tap exits fullscreen even when zoomed, without also handling a synthetic double click", () => {
+  const onClose = vi.fn();
+  const onFull = vi.fn();
+  const { container } = render(
+    <Viewer
+      photos={photos}
+      id={2}
+      full
+      onStep={() => {}}
+      onFull={onFull}
+      onClose={onClose}
+      onSearch={() => {}}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Agrandir" }));
+  const stage = container.querySelector(".image-stage")!;
+  for (let i = 0; i < 2; i++) {
+    gesture(stage, "pointerdown", 400, 200);
+    gesture(stage, "pointerup", 400, 200);
+  }
+  fireEvent.doubleClick(stage);
+  expect(onClose).toHaveBeenCalledTimes(1);
+  expect(onFull).not.toHaveBeenCalled();
+});
+it("desktop double click toggles fullscreen in both directions", () => {
+  const onClose = vi.fn();
+  const onFull = vi.fn();
+  const props = {
+    photos,
+    id: 2,
+    onStep: () => {},
+    onFull,
+    onClose,
+    onSearch: () => {},
+  };
+  const { container, rerender } = render(<Viewer {...props} full={false} />);
+  fireEvent.doubleClick(container.querySelector(".image-stage")!);
+  expect(onFull).toHaveBeenCalledTimes(1);
+  rerender(<Viewer {...props} full />);
+  fireEvent.doubleClick(container.querySelector(".image-stage")!);
+  expect(onClose).toHaveBeenCalledTimes(1);
+});
