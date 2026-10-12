@@ -270,8 +270,8 @@ export function AlbumsPage({
   return (
     <div className="collection-page scroll">
       <p className="hint album-search-hint">
-        Utilisez <b>titre:nom</b> ou <b>in:nom</b> dans la recherche pour
-        trouver les albums dont le nom contient ce texte.
+        <b>{"titre:<texte>"}</b> trouver les albums dont le nom contient{" "}
+        {"<texte>"}
       </p>
       <div className="page-heading">
         <div>
