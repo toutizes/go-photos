@@ -27,11 +27,26 @@ push_html: install_html
 	rsync --delete --recursive $(SYN_TXT) $(SERVER):/mnt/photos/htdocs/synonyms.txt
 
 
-push-web-release: 
+push-flutter-release:
 	(cd floutizes; make build-web-release)
 	rsync --delete --recursive floutizes/build/web/* $(SERVER):/mnt/photos/htdocs/flutter/
 	rsync --delete --recursive $(SYN_TXT) $(SERVER):/mnt/photos/htdocs/synonyms.txt
 	rsync ~/Google\ Drive/My\ Drive/Floutizes/floutizes-firebase-adminsdk-fbsvc-584c308c82.json $(SERVER):/mnt/photos/
+
+# React frontend: same Go static directory, normal Firebase authentication.
+.PHONY: build-web-release install-web push-web-release push-flutter-release
+build-web-release:
+	pnpm --dir frontend build
+
+install-web: build-web-release
+	mkdir -p /tmp/aserve/db/htdocs/flutter
+	rsync --recursive frontend/dist/ /tmp/aserve/db/htdocs/flutter/
+
+# Keep previous hashed assets for already-open tabs; update the entry point last.
+push-web-release: build-web-release
+	rsync --recursive --exclude=index.html frontend/dist/ $(SERVER):/mnt/photos/htdocs/flutter/
+	rsync frontend/dist/index.html $(SERVER):/mnt/photos/htdocs/flutter/index.html
+	rsync $(SYN_TXT) $(SERVER):/mnt/photos/htdocs/synonyms.txt
 
 run: generate
 	go run backend/test/run.go --orig_root /Volumes/GoogleDrive/Mon\ Drive/Photos/1997

@@ -104,12 +104,18 @@ function ViewerPhoto({
   onClose: () => void;
   onSearch: (q: string) => void;
 }) {
+  const date = new Date(photo.Its * 1000);
+  const monthDay = `${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   const image = useImage(photoPath(photo));
   useImage(previous ? photoPath(previous) : undefined);
   useImage(next ? photoPath(next) : undefined);
   const stage = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState(identity);
   const [offset, setOffset] = useState(initialOffset);
+  const [natural, setNatural] = useState({
+    width: Math.max(1, photo.W),
+    height: Math.max(1, photo.H),
+  });
   const stereoActive = !!offset && mode !== "original";
   const original = useImage(
     full && transform.scale > 1.15 && !stereoActive
@@ -139,8 +145,10 @@ function ViewerPhoto({
       r.height,
       stereoActive && (mode === "animated" || mode === "align")
         ? photo.W / 2
-        : photo.W,
-      photo.H,
+        : stereoActive
+          ? photo.W
+          : natural.width,
+      stereoActive ? photo.H : natural.height,
     );
   };
   useEffect(() => {
@@ -151,7 +159,7 @@ function ViewerPhoto({
     const obs = new ResizeObserver(() => setTransform((t) => bounds(t)));
     if (stage.current) obs.observe(stage.current);
     return () => obs.disconnect();
-  }, []);
+  }, [mode, stereoActive, natural.width, natural.height]);
   useEffect(() => {
     controls.current?.focus({ preventScroll: true });
   }, [full]);
@@ -298,6 +306,7 @@ function ViewerPhoto({
             <button
               className="icon-button"
               aria-label="Réduire"
+              disabled={stereoActive && mode === "align"}
               onClick={() =>
                 setTransform((t) => bounds({ ...t, scale: t.scale / 1.5 }))
               }
@@ -307,6 +316,7 @@ function ViewerPhoto({
             <button
               className="icon-button"
               aria-label="Agrandir"
+              disabled={stereoActive && mode === "align"}
               onClick={() =>
                 setTransform((t) => bounds({ ...t, scale: t.scale * 1.5 }))
               }
@@ -367,6 +377,14 @@ function ViewerPhoto({
           ) : image.url ? (
             <img
               className="viewer-image"
+              onLoad={(e) => {
+                const img = e.currentTarget;
+                if (img.naturalWidth && img.naturalHeight)
+                  setNatural({
+                    width: img.naturalWidth,
+                    height: img.naturalHeight,
+                  });
+              }}
               src={original.url ?? image.url}
               alt={photo.In}
               draggable={false}
@@ -375,7 +393,12 @@ function ViewerPhoto({
               }}
             />
           ) : image.error ? (
-            <button onClick={image.retry}>Réessayer le chargement</button>
+            <button
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={image.retry}
+            >
+              Réessayer le chargement
+            </button>
           ) : (
             <span className="loading">Chargement de la photo…</span>
           )}
@@ -402,9 +425,12 @@ function ViewerPhoto({
         </div>
         {!full && (
           <aside className="metadata scroll">
-            <p className="eyebrow">
+            <button
+              className="eyebrow date-link"
+              onClick={() => onSearch(`${date.getFullYear()}-${monthDay}`)}
+            >
               LE {dateLabel(photo.Its).toLocaleUpperCase("fr")}
-            </p>
+            </button>
             <h2>{photo.In}</h2>
             <button
               className="album-link"
@@ -426,6 +452,9 @@ function ViewerPhoto({
               }
             >
               Voir les photos de {new Date(photo.Its * 1000).getFullYear()}
+            </button>
+            <button className="text-button" onClick={() => onSearch(monthDay)}>
+              Ce jour-là, au fil des années
             </button>
             {offset && mode === "align" && (
               <div className="alignment-controls">

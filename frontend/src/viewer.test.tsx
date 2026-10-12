@@ -91,9 +91,7 @@ it("supports swiping at fit scale and panning without navigating when zoomed", (
   gesture(stage, "pointerup", 400, 200);
   expect(onStep).toHaveBeenCalledWith(3);
   onStep.mockClear();
-  fireEvent.click(
-    screen.getByRole("button", { name: "Agrandir" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Agrandir" }));
   gesture(stage, "pointerdown", 600, 200);
   gesture(stage, "pointermove", 400, 200);
   gesture(stage, "pointerup", 400, 200);

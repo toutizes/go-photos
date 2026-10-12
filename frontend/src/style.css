@@ -1271,3 +1271,13 @@ h2 {
     font-size: 11px;
   }
 }
+.date-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+}
+.chips button {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}

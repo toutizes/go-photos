@@ -168,9 +168,9 @@ Responses to questions 1–12 (2026-10-12):
 - All Lightroom exports are JPEGs, with varying filename extensions/case such as `.jpg`, `.JPG` and `.jpeg`. New photos are typically added once or twice a month. Panoramas are very wide JPEGs and must remain viewable.
 - A fullscreen panorama mode that fills the available height and allows horizontal panning is a possible enhancement **after** the rewrite, not an initial requirement.
 
-Search-history implementation implications: `searchImages` currently returns immediately on a cache hit without calling `/db/q`, so the backend never sees that search. With the backend unchanged, logging requires another ordinary query request (and its normal query/result cost), even if cached results are shown immediately. A lightweight logging-only request would require a backend addition. Separately, `/db/q` already logs the full email for all domains, but `backend/model/log_parser.go` only parses Gmail addresses and keys history by the email prefix. Supporting non-Gmail accounts in Admin history requires a small backend parser change, with full email identities to avoid cross-domain collisions. Record this as a needed exception to the unchanged-backend scope for later implementation; no backend changes are being made now.
+Search-history implementation implications: `searchImages` currently returns immediately on a cache hit without calling `/db/q`, so the backend never sees that search. With the backend unchanged, logging requires another ordinary query request (and its normal query/result cost), even if cached results are shown immediately. A lightweight logging-only request would require a backend addition. Separately, `/db/q` already logs the full email for all domains, but `backend/model/log_parser.go` only parses Gmail addresses and keys history by the email prefix. Supporting non-Gmail accounts in Admin history requires a small backend parser change, with full email identities to avoid cross-domain collisions. This narrow backend exception was implemented in its own commit during the rewrite; authentication and photo API behavior remain unchanged.
 
-Specific phone/browser models, metadata placement, thumbnail rail and timed slideshow preferences remain unanswered, as do typical export dimensions, largest album/result sizes and re-export frequency (distinct from the confirmed frequency of new additions). No viewer implementation changes have been requested yet.
+Specific phone/browser models, metadata placement, thumbnail rail and timed slideshow preferences remain unanswered, as do typical export dimensions, largest album/result sizes and re-export frequency (distinct from the confirmed frequency of new additions). Matthieu subsequently authorized the full local implementation, with regular commits and no push; see implementation status below.
 
 ## Production deployment context supplied by Matthieu
 
@@ -287,3 +287,28 @@ Browser: Codex in-app browser, desktop 1280×720 and responsive viewport overrid
 Screenshots: `/tmp/go-photos-local/carousel-mobile.png`, `/tmp/go-photos-local/grid-mobile.png`, `/tmp/go-photos-local/activity-320.png`.
 
 Still unverified: actual touch pinch/pan/swipe ownership, real Safari/Chrome mobile behavior, stereo with representative sample images, long-session memory growth, large-library performance at 70k photos, authenticated expiry/sign-out, and download completion. The discovered UI defects were recorded rather than fixed; the temporary code changes serve local startup only.
+
+
+## React implementation status (2026-10-12)
+
+Matthieu authorized proceeding as far as possible on the full frontend, making regular local commits, without pushing or committing temporary auth bypasses. Work is on `codex/react-frontend`, using a linear sequence of feature commits rather than stacked branches.
+
+Implemented in `frontend/`: French React/TypeScript UI with the existing logo and system theme; responsive Activité with lazy previews; album name/year filtering; comma-separated search; a virtual square grid; metadata and fullscreen viewer levels; swipe, double-tap, pinch/pan, keyboard navigation, browser history and grid return positioning; adjacent-image preloading and original-resolution zoom; all existing stereo modes and temporary alignment; individual originals and capped query ZIP downloads; owner-only Admin history; Firebase login, token refresh and sign-out handling. Fonts are bundled locally. Errors and empty/deep-link states have recovery controls. Panorama height-fill and AI crops remain deferred.
+
+The regular app and production build require Google sign-in. Current local testing uses ignored `frontend/vite.local.ts` and `frontend/auth.local.ts` with the previously authorized localhost-only Go bypass. These files and the existing Go/Flutter bypass modifications are excluded from commits. The Flutter SDK lockfile changes remain uncommitted too.
+
+The sole committed backend change is `backend/model/log_parser.go` accepting all email domains and retaining complete email identities to prevent collisions. Search-history logging on frontend cache hits uses the existing `/db/q` endpoint; an explicit repeated submission also triggers that endpoint. No logging-only endpoint was added.
+
+Deployment preparation: `make push-web-release` now builds the React frontend and uploads assets before the entry point, keeping older hashed assets for open tabs. The old Flutter recipe is retained as `make push-flutter-release`; `make install-web` is the local React copy target. A cleanup worker at the legacy Flutter service-worker URL retires the old offline shell. Only a dry-run of the deployment recipe was performed; no upload, Git push or production restart occurred.
+
+Validation so far:
+
+- Production TypeScript/Vite build passes, approximately 111 kB gzip of JavaScript plus CSS and locally served font assets.
+- 28 frontend regressions pass, covering query encoding/order, auth rejection and refresh, cache-hit logging, account cache cleanup and cancellation, browser Back/Forward/close, swipe versus zoom/pinch, and a 70,000-photo virtual-grid fixture.
+- The focused Go history-parser tests pass, including distinct visitors with the same email prefix at different domains. The full Go model suite still cannot compile because two pre-existing `UpdateDirectory` calls in `update_test.go` have outdated signatures; those unrelated tests were not changed.
+- Real local data: Activité, album filters, 13-photo album, 94 stereo results and a 358-photo query exercised in the in-app browser. A phone-sized grid kept 14–16 mounted tiles several screens down; leaving fullscreen retained photo 22/358 and closing the viewer restored its grid row.
+- Landscape 844×390: the regular photo fills the available stage height and fullscreen uses the entire viewport without metadata. Portrait 390×844: Activity cards and four previews fit their cards. These are viewport checks, not physical-device gesture certification.
+- A normal-auth local server showed the Google sign-in gate. Google account sign-in, real token expiration and owner Admin data remain unverified without the current credential setup/account interaction.
+- ZIP download through the UI produced a 12,228,485-byte archive in Downloads with 13 JPEG entries, all passing ZIP integrity verification. The browser automation download event timed out, but the actual file was present and valid.
+
+Remaining release checks: real iPhone Safari/Android Chrome gestures and rotation, production Google login/Admin, actual 70k-library network and decoded-memory performance, and migration from a real deployed Flutter service-worker installation. See `frontend/README.md` for commands, design decisions and deployment/rollback details.

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PhotoImage } from "./images";
 import { photoPath, type Photo } from "./model";
 export function Grid({
@@ -40,9 +40,19 @@ export function Grid({
       el.scrollTop = Math.max(0, rowTop - (size.height - cell) / 2);
     setTop(el.scrollTop);
   }, [hidden, activeId, columns, step, size.height, photos]);
+  useEffect(() => {
+    if (hidden || activeId === undefined) return;
+    const frame = requestAnimationFrame(() =>
+      ref.current
+        ?.querySelector<HTMLButtonElement>(`[data-photo-id="${activeId}"]`)
+        ?.focus({ preventScroll: true }),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [hidden]);
   return (
     <div
       ref={ref}
+      tabIndex={0}
       className="photo-grid scroll"
       style={{ display: hidden ? "none" : undefined }}
       onScroll={(e) => setTop(e.currentTarget.scrollTop)}
@@ -54,6 +64,7 @@ export function Grid({
           return (
             <button
               key={p.Id}
+              data-photo-id={p.Id}
               className="photo-tile"
               style={{
                 width: cell,

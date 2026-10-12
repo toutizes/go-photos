@@ -5,12 +5,19 @@ export async function request(
   signal?: AbortSignal,
 ): Promise<Response> {
   for (let attempt = 0; attempt < 2; attempt++) {
-    const jwt = await token(attempt === 1);
+    const jwt = await token(attempt === 1).catch(() => {
+      throw new Error("Votre session a expiré. Reconnectez-vous.");
+    });
     if (!jwt) throw new Error("Connectez-vous pour accéder aux photos.");
     const response = await fetch(path, {
       headers: { Authorization: `Bearer ${jwt}` },
       signal,
       cache: "no-store",
+    }).catch((error) => {
+      if (signal?.aborted) throw error;
+      throw new Error(
+        "Connexion au serveur impossible. Vérifiez votre connexion puis réessayez.",
+      );
     });
     if (response.status === 401 && attempt === 0) continue;
     if (!response.ok)
@@ -26,7 +33,13 @@ export async function request(
   throw new Error("Votre session a expiré. Reconnectez-vous.");
 }
 export async function json<T>(path: string, signal?: AbortSignal): Promise<T> {
-  return (await request(path, signal)).json();
+  const response = await request(path, signal);
+  try {
+    return await response.json();
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    throw new Error("Réponse du serveur illisible. Réessayez.");
+  }
 }
 const searches = new Map<string, Photo[]>();
 export const cachedSearch = (q: string) => searches.get(q);

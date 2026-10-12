@@ -82,7 +82,7 @@ export function App() {
       : []),
   ] as const;
   return (
-    <div className={`app ${route.full ? "is-full" : ""}`}>
+    <div key={account.email} className={`app ${route.full ? "is-full" : ""}`}>
       {!route.full && (
         <header className="app-header">
           <a className="brand" href="#/activity">
@@ -267,6 +267,9 @@ function Photos({
       )}
       {!photos.length ? (
         <section className="empty">
+          {route.id !== undefined && (
+            <button onClick={close}>Revenir aux photos</button>
+          )}
           <h2>{loading ? "Chargement des photos…" : "Aucune photo trouvée"}</h2>
           {!loading && <p>Essayez un autre mot-clé ou une année.</p>}
         </section>
@@ -287,7 +290,7 @@ function Photos({
               id={route.id}
               full={route.full}
               onStep={(id) =>
-                navigate({ ...route, id }, true, route.full ? "full" : "photo")
+                navigate({ ...route, id }, true, history.state?.level)
               }
               onFull={() => navigate({ ...route, full: true }, false, "full")}
               onClose={close}

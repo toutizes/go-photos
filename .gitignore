@@ -5,3 +5,6 @@
 /bin/
 /bin_linux/
 
+
+# Local pnpm content-addressed store
+/.pnpm-store/
