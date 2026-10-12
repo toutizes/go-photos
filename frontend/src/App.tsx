@@ -6,7 +6,6 @@ import {
   Search,
   LogOut,
   Shield,
-  RefreshCw,
   HelpCircle,
 } from "lucide-react";
 import { watchAccount, login, logout, isAdmin, type Account } from "./auth";
@@ -259,13 +258,6 @@ function Photos({
           </div>
           <div className="heading-actions">
             <Downloads query={route.q} count={photos.length} />
-            <button
-              className="icon-button"
-              aria-label="Actualiser les photos"
-              onClick={() => setRefresh((n) => n + 1)}
-            >
-              <RefreshCw size={19} />
-            </button>
           </div>
         </div>
       )}

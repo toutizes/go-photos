@@ -1,11 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  ArrowUpRight,
-  RefreshCw,
-  CalendarDays,
-  Search,
-  FolderOpen,
-} from "lucide-react";
+import { ArrowUpRight, CalendarDays, Search, FolderOpen } from "lucide-react";
 import { json } from "./api";
 import { useImage } from "./images";
 import {
@@ -148,16 +142,7 @@ export function ActivityPage({
         <div>
           <h1>Récemment</h1>
         </div>
-        <button
-          className="icon-button"
-          aria-label="Actualiser l’activité"
-          onClick={refresh}
-        >
-          <RefreshCw size={19} />
-        </button>
-      </div>
-      <div className="activity-intro">
-        <button onClick={() => onSearch(todayQuery())}>
+        <button className="on-this-day" onClick={() => onSearch(todayQuery())}>
           <CalendarDays size={16} />
           Ce jour-là
           <ArrowUpRight size={16} />
@@ -264,21 +249,14 @@ export function AlbumsPage({
   );
   return (
     <div className="collection-page scroll">
-      <p className="hint album-search-hint">
-        <b>{"titre:<texte>"}</b> trouver les albums dont le nom contient{" "}
-        {"<texte>"}
-      </p>
       <div className="page-heading">
         <div>
           <h1>Les albums</h1>
         </div>
-        <button
-          className="icon-button"
-          aria-label="Actualiser les albums"
-          onClick={refresh}
-        >
-          <RefreshCw size={19} />
-        </button>
+        <p className="hint album-search-hint">
+          <b>{"titre:<texte>"}</b> trouver les albums dont le nom contient{" "}
+          {"<texte>"}
+        </p>
       </div>
       <div className="collection-filters">
         <select
@@ -330,10 +308,6 @@ export function AdminPage({ onSearch }: { onSearch: (q: string) => void }) {
           <h1>Les visites</h1>
           <p>Les dernières recherches de chaque visiteur.</p>
         </div>
-        <button onClick={refresh}>
-          <RefreshCw size={17} />
-          Actualiser
-        </button>
       </div>
       <div className="collection-filters">
         <label>
