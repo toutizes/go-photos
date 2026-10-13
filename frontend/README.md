@@ -13,7 +13,23 @@ pnpm --dir frontend dev
 
 Open `http://127.0.0.1:5173/app/`. Vite proxies `/db` to the Go server at `127.0.0.1:8080`, so there are no production CORS changes. The standard app requires Google/Firebase authentication. Its public Firebase configuration matches `floutizes/lib/firebase_options.dart`; server service-account credentials never belong in this frontend.
 
-Temporary local testing configuration, if present, lives in ignored `*.local.*` files. It is not used by `pnpm build`, `make build-web-release` or deployment targets. The historical temporary Go/Flutter auth changes are uncommitted and must stay that way.
+The temporary Go, Flutter and React authentication bypasses have been removed. All build and deployment targets use Google/Firebase authentication. Running the backend locally again requires a valid service-account credential file.
+
+## Side-by-side production trial
+
+From the repository root, run:
+
+```sh
+make release-react-app
+```
+
+This builds with normal Firebase authentication and uploads to `ce1` (override with `SERVER=...`). It uses the existing, unchanged Go static handler: assets go to `/mnt/photos/htdocs/flutter/react-test/` and the entry page to `/mnt/photos/htdocs/flutter/react-test.html`. Open the URL printed by the command, for example `https://toutizes.com/app/react-test.html?v=1234567890`.
+
+The version query is intentional: the existing Go handler caches named HTML files other than `index.html` for one year. Use the freshly printed URL after each release to fetch the updated entry page. Hash-based navigation preserves that version query. Hashed JS/CSS assets from previous builds are retained for open tabs.
+
+Flutter remains at `/app/`; its entry page, assets and service worker are not replaced. The staging build also disables Flutter service-worker retirement. The existing production backend already verifies Firebase tokens, so no backend deployment or credentials upload is needed. Google login on `toutizes.com` uses the same Firebase project and authorized domain as Flutter.
+
+`make build-web-test` builds without uploading. `make push-web-test` is an alias for the same build-and-upload flow as `release-react-app`. To remove the trial later, remove only the `react-test.html` file and `react-test/` directory from the server. **`make push-web-release` replaces Flutter at `/app/`; do not use it for this side-by-side trial.**
 
 ## Commands
 

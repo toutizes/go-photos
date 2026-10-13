@@ -48,6 +48,21 @@ push-web-release: build-web-release
 	rsync frontend/dist/index.html $(SERVER):/mnt/photos/htdocs/flutter/index.html
 	rsync $(SYN_TXT) $(SERVER):/mnt/photos/htdocs/synonyms.txt
 
+# Authenticated React trial alongside Flutter, using the existing Go /app/ route.
+# Use a named HTML entry for correct MIME; print a fresh query to bypass its cache.
+.PHONY: build-web-test push-web-test release-react-app
+build-web-test:
+	pnpm --dir frontend exec tsc -b
+	pnpm --dir frontend exec vite build --mode staging --outDir dist-test
+
+release-react-app: push-web-test
+
+push-web-test: build-web-test
+	ssh $(SERVER) 'mkdir -p /mnt/photos/htdocs/flutter/react-test'
+	rsync --recursive --exclude=index.html --exclude=flutter_service_worker.js frontend/dist-test/ $(SERVER):/mnt/photos/htdocs/flutter/react-test/
+	rsync frontend/dist-test/index.html $(SERVER):/mnt/photos/htdocs/flutter/react-test.html
+	@echo "React test URL: https://toutizes.com/app/react-test.html?v=$$(date +%s)"
+
 run: generate
 	go run backend/test/run.go --orig_root /Volumes/GoogleDrive/Mon\ Drive/Photos/1997
 

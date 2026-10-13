@@ -10,6 +10,7 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </ErrorBoundary>,
 );
-void retireFlutter().catch(() => {
-  /* Browsing remains usable when storage is unavailable. */
-});
+if (import.meta.env.MODE !== "staging")
+  void retireFlutter().catch(() => {
+    /* Browsing remains usable when storage is unavailable. */
+  });
