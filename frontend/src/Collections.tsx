@@ -318,8 +318,8 @@ export function AdminPage({ onSearch }: { onSearch: (q: string) => void }) {
       <Status loading={loading} error={error} retry={refresh} />
       <div className="admin-list">
         {users.map(([email, queries]) => (
-          <section className="admin-card" key={email}>
-            <h2>{email}</h2>
+          <details className="admin-card" key={email}>
+            <summary>{email}</summary>
             <table>
               <thead>
                 <tr>
@@ -345,7 +345,7 @@ export function AdminPage({ onSearch }: { onSearch: (q: string) => void }) {
                 ))}
               </tbody>
             </table>
-          </section>
+          </details>
         ))}
       </div>
       {!loading && !error && !users.length && (

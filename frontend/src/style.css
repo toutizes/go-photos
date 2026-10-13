@@ -1002,8 +1002,16 @@ h2 {
   background: var(--panel);
   overflow: auto;
 }
-.admin-card h2 {
+.admin-card summary {
   font-size: 19px;
+  font-weight: 700;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.admin-card summary::marker {
+  color: var(--accent);
+}
+.admin-card[open] summary {
   margin-bottom: 16px;
 }
 .admin-card table {
