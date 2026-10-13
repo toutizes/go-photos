@@ -20,16 +20,16 @@ The temporary Go, Flutter and React authentication bypasses have been removed. A
 From the repository root, run:
 
 ```sh
-make release-react-app
+make push-web-test
 ```
 
 This builds with normal Firebase authentication and uploads to `ce1` (override with `SERVER=...`). It uses the existing, unchanged Go static handler: assets go to `/mnt/photos/htdocs/flutter/react-test/` and the entry page to `/mnt/photos/htdocs/flutter/react-test.html`. Open the URL printed by the command, for example `https://toutizes.com/app/react-test.html?v=1234567890`.
 
 The version query is intentional: the existing Go handler caches named HTML files other than `index.html` for one year. Use the freshly printed URL after each release to fetch the updated entry page. Hash-based navigation preserves that version query. Hashed JS/CSS assets from previous builds are retained for open tabs.
 
-Flutter remains at `/app/`; its entry page, assets and service worker are not replaced. The staging build also disables Flutter service-worker retirement. The existing production backend already verifies Firebase tokens, so no backend deployment or credentials upload is needed. Google login on `toutizes.com` uses the same Firebase project and authorized domain as Flutter.
+The production React app remains at `/app/`; its entry page, assets and service worker are not replaced. The staging build also disables Flutter service-worker retirement. The existing production backend already verifies Firebase tokens, so no backend deployment or credentials upload is needed. Google login on `toutizes.com` uses the same Firebase project and authorized domain as Flutter.
 
-`make build-web-test` builds without uploading. `make push-web-test` is an alias for the same build-and-upload flow as `release-react-app`. To remove the trial later, remove only the `react-test.html` file and `react-test/` directory from the server. **`make push-web-release` replaces Flutter at `/app/`; do not use it for this side-by-side trial.**
+`make build-web-test` builds without uploading. `make push-web-test` builds and uploads the trial. To remove the trial later, remove only the `react-test.html` file and `react-test/` directory from the server. **`make release-react-app` (or `make push-web-release`) updates production at `/app/`; do not use it for a trial release.**
 
 ## Commands
 
@@ -38,14 +38,15 @@ pnpm --dir frontend test   # regression tests, including a 70,000-photo grid fix
 pnpm --dir frontend build  # TypeScript checking and production static build
 pnpm --dir frontend exec prettier --check src public vite.config.ts
 make install-web          # build and copy to the standard local Go static root
-make push-web-release     # build and deploy React to the existing production static directory
+make release-react-app    # build and deploy React to production at /app/
+make push-web-release     # equivalent production release command
 ```
 
-Deployment was prepared but has NOT been run. Production needs only Go and static assets; no Node process is required. The existing backend serves `<static_root>/flutter` at `/app/`, so the destination directory keeps its historical name. New assets have hashed filenames. Deployment copies assets first, then `index.html`, retaining previous assets for open tabs. Old assets can be pruned during later maintenance.
+React became the default production interface on October 13, 2026. Production needs only Go and static assets; no Node process is required. The existing backend serves `<static_root>/flutter` at `/app/`, so the destination directory keeps its historical name. New assets have hashed filenames. Deployment copies assets first, then `index.html`, retaining previous assets for open tabs. Old assets can be pruned during later maintenance.
 
-The included `flutter_service_worker.js` retires the old Flutter offline shell, removes only its named caches, unregisters itself and refreshes its app clients. The React app also unregisters an old Flutter worker if the new page has already loaded. There is no offline photo cache or new service worker registration. Check migration from an actual previous deployment before rollout; it has not been exercised against production.
+The included `flutter_service_worker.js` retires the old Flutter offline shell, removes only its named caches, unregisters itself and refreshes its app clients. The React app also unregisters an old Flutter worker if the new page has already loaded. There is no offline photo cache or new service worker registration. The cleanup worker was deployed and its served contents verified; automatic migration of an already-open Flutter client still needs a browser check.
 
-`make push-flutter-release` retains the previous Flutter deployment recipe. Rebuild Flutter with normal auth before rollback. Its historical recipe also copies the Firebase service-account file and requires its existing local path. For a rollback without that path, restore a saved authenticated Flutter static release to `/mnt/photos/htdocs/flutter/`. No production backups have been taken by this task.
+`make push-flutter-release` retains the previous Flutter deployment recipe. Rebuild Flutter with normal auth before rollback. Its historical recipe also copies the Firebase service-account file and requires its existing local path. For a rollback without that path, restore a saved authenticated Flutter static release to `/mnt/photos/htdocs/flutter/`. The pre-migration static files are backed up on `ce1` at `/mnt/photos/frontend-backups/flutter-before-react-20261013-1038`, outside the web root.
 
 ## Implemented behavior
 
