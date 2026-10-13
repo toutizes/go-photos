@@ -155,20 +155,11 @@ export function ActivityPage({
           return (
             <article className="activity-card" key={`${title}-${index}`}>
               <div className="activity-copy">
-                <h2>
-                  <button onClick={() => onSearch(title)}>
-                    {title}
-                    <ArrowUpRight size={19} />
+                {group.keywords.map((k) => (
+                  <button key={k.keyword} onClick={() => onSearch(k.keyword)}>
+                    <span>{k.keyword}</span>
                   </button>
-                </h2>
-                <div className="chips">
-                  {group.keywords.slice(1).map((k) => (
-                    <button key={k.keyword} onClick={() => onSearch(k.keyword)}>
-                      {k.keyword}
-                      <span className="chip-count">{k.count}</span>
-                    </button>
-                  ))}
-                </div>
+                ))}
               </div>
               <PreviewStrip
                 ids={group.recent_images.map((p) => p.id)}

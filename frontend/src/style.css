@@ -827,39 +827,34 @@ h2 {
   background: var(--panel);
   border-radius: 14px;
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(0, 1.8fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   padding: 20px;
   box-shadow: var(--shadow);
 }
 .activity-copy {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   align-items: flex-start;
-  gap: 12px;
+  align-content: flex-start;
+  gap: 8px;
   min-width: 0;
 }
-.activity-copy h2 {
-  width: 100%;
-  font-size: 21px;
-  letter-spacing: -0.04em;
-}
-.activity-copy h2 button {
+.activity-copy button {
   border: 0;
-  padding: 0;
-  background: none;
-  font: inherit;
-  justify-content: space-between;
+  border-radius: 8px;
+  padding: 9px 13px;
+  min-height: 40px;
+  background: var(--soft);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent);
   text-align: left;
-  width: 100%;
-  gap: 12px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
-.activity-copy h2 button svg {
-  flex-shrink: 0;
-  color: var(--muted);
-}
-.activity-copy .chips {
-  margin-top: auto;
+.activity-copy button:hover {
+  filter: brightness(1.08);
 }
 .chip-count {
   opacity: 0.6;
@@ -1086,9 +1081,6 @@ h2 {
   .activity-card {
     grid-template-columns: 1fr;
   }
-  .activity-copy {
-    min-height: 120px;
-  }
 }
 @media (max-width: 800px) {
   .activity-card {
@@ -1098,11 +1090,8 @@ h2 {
   .activity-copy {
     gap: 10px;
   }
-  .activity-copy .chips {
-    margin-top: 0;
-  }
-  .activity-copy h2 {
-    font-size: 20px;
+  .activity-copy button {
+    font-size: 16px;
   }
   .activity-list {
     padding: 0 18px;
@@ -1151,10 +1140,10 @@ h2 {
 }
 @media (max-height: 550px) and (orientation: landscape) {
   .activity-card {
-    grid-template-columns: minmax(180px, 1fr) minmax(0, 1.6fr);
+    grid-template-columns: minmax(0, 1fr);
   }
-  .activity-copy h2 {
-    font-size: 18px;
+  .activity-copy button {
+    font-size: 16px;
   }
   .activity-list {
     padding: 0 24px;
