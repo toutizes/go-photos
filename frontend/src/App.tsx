@@ -9,6 +9,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { watchAccount, login, logout, isAdmin, type Account } from "./auth";
+import { signInErrorMessage } from "./authErrors";
 import { cachedSearch, clearSearches, search } from "./api";
 import { clearImages } from "./images";
 import { todayQuery, type Photo, type Route } from "./model";
@@ -19,7 +20,8 @@ import { ActivityPage, AlbumsPage, AdminPage } from "./Collections";
 import { Downloads } from "./Downloads";
 export function App() {
   const [account, setAccount] = useState<Account | null | undefined>(undefined),
-    [authError, setAuthError] = useState("");
+    [authError, setAuthError] = useState(""),
+    [signingIn, setSigningIn] = useState(false);
   const { route, navigate, close } = useRoute();
   const [draft, setDraft] = useState(route.q),
     [help, setHelp] = useState(false),
@@ -39,13 +41,15 @@ export function App() {
     navigate({ page: "photos", q: q.trim() || todayQuery(), full: false });
   };
   async function signIn() {
+    if (signingIn) return;
+    setSigningIn(true);
     try {
       setAuthError("");
       await login();
-    } catch {
-      setAuthError(
-        "Connexion interrompue. Autorisez la fenêtre Google puis réessayez.",
-      );
+    } catch (error) {
+      setAuthError(signInErrorMessage(error));
+    } finally {
+      setSigningIn(false);
     }
   }
   if (account === undefined)
@@ -61,7 +65,12 @@ export function App() {
         <p className="eyebrow">LES PHOTOS, AU FIL DU TEMPS</p>
         <h1>Bienvenue sur Toutizes</h1>
         <p>Des moments à retrouver et à partager.</p>
-        <button className="primary" onClick={signIn}>
+        <button
+          className="primary"
+          onClick={signIn}
+          disabled={signingIn}
+          aria-busy={signingIn}
+        >
           Se connecter avec Google
         </button>
         <p className="hint">
