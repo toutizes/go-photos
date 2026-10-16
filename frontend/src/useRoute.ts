@@ -33,21 +33,16 @@ export function useRoute() {
   }
   function close() {
     if (
-      (route.full && history.state?.level === "full") ||
-      (!route.full && history.state?.level === "photo")
+      route.id !== undefined &&
+      (history.state?.level === "full" || history.state?.level === "photo")
     ) {
       closing.current = {
         ...route,
         full: false,
-        id: route.full ? route.id : undefined,
+        id: undefined,
       };
       history.back();
-    } else
-      navigate(
-        { ...route, full: false, id: route.full ? route.id : undefined },
-        true,
-        undefined,
-      );
+    } else navigate({ ...route, full: false, id: undefined }, true, undefined);
   }
   return { route, navigate, close };
 }

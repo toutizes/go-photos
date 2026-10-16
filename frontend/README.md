@@ -54,9 +54,10 @@ The included `flutter_service_worker.js` retires the old Flutter offline shell, 
 - Albums are sorted newest first and filterable by name or year.
 - Comma-separated search and keyword/date/album links use the existing Lightroom parser.
 - The square photo grid renders visible rows plus a small margin, not the whole result. Album results sort oldest first; other results sort newest first.
-- A click/tap opens image + metadata; double-tapping from the grid also reaches that level. Double-tapping the image, or using the explicit button, opens fullscreen. Fullscreen uses the browser viewport, including dynamic mobile height; it does not depend on browser Fullscreen API availability.
-- Fullscreen hides metadata, supports swipe navigation, pinch/pan (1–5×), reset and zoom buttons. A zoomed pan cannot accidentally navigate. Original-resolution images load when zooming; nearby photos preload at midi resolution.
-- Arrow keys navigate, Escape/X closes one level. X retains the currently displayed photo; browser Back/Forward follows the URL. Closing to the grid restores the current photo's row.
+- A click/tap opens the zoomable full-screen viewer directly. Fullscreen uses the browser viewport, including dynamic mobile height.
+- Date, filename and keyword pills overlay the bottom of the image. Keywords initially show at most two rows. Pull the pills or grab handle upward to expand them; pull the handle down to collapse, or click it to toggle. Large lists scroll within the expanded panel. A single tap/click on the image slides the overlay in or out, respecting reduced-motion preferences. Only the image zooms.
+- Swipe navigation and pinch/pan (1–5×) are supported. A zoomed pan cannot accidentally navigate. Original-resolution images load when zooming; nearby photos preload at midi resolution.
+- Arrow keys navigate; Escape/X returns directly to the grid and restores the current photo's row. Browser Back/Forward follows the URL. Legacy full-screen links open the same viewer.
 - Stereo supports original, parallel, crossed-eye, 300 ms alternating-eye and alignment views. Alignment can be dragged or adjusted with sliders; it is temporary. Existing server offsets are preserved.
 - Download the current original or a ZIP of a query in screen/original resolution. ZIPs are explicitly limited to 100 photos. Which 100 are selected is determined by the existing backend.
 - Admin is visible only to the existing owner account and uses the server-protected search history endpoint. All Google account email domains remain accepted.

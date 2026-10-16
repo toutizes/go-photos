@@ -3,7 +3,6 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  Maximize,
   Download,
   ZoomIn,
   ZoomOut,
@@ -30,17 +29,13 @@ import {
 export function Viewer({
   photos,
   id,
-  full,
   onStep,
-  onFull,
   onClose,
   onSearch,
 }: {
   photos: Photo[];
   id: number;
-  full: boolean;
   onStep: (id: number) => void;
-  onFull: () => void;
   onClose: () => void;
   onSearch: (q: string) => void;
 }) {
@@ -59,7 +54,7 @@ export function Viewer({
   return (
     <ViewerPhoto
       key={photo.Id}
-      {...{ photo, full, onFull, onClose, onSearch }}
+      {...{ photo, onClose, onSearch }}
       mode={mode}
       setMode={setMode}
       initialOffset={offsets.current.get(photo.Id) ?? stereoOf(photo)}
@@ -74,13 +69,11 @@ export function Viewer({
 }
 function ViewerPhoto({
   photo,
-  full,
   index,
   count,
   previous,
   next,
   onStep,
-  onFull,
   onClose,
   onSearch,
   mode,
@@ -93,13 +86,11 @@ function ViewerPhoto({
   setMode: (m: StereoMode) => void;
   initialOffset?: Stereo;
   saveOffset: (s: Stereo) => void;
-  full: boolean;
   index: number;
   count: number;
   previous?: Photo;
   next?: Photo;
   onStep: (id: number) => void;
-  onFull: () => void;
   onClose: () => void;
   onSearch: (q: string) => void;
 }) {
@@ -149,24 +140,61 @@ function ViewerPhoto({
   });
   const stereoActive = !!offset && mode !== "original";
   const original = useImage(
-    full && transform.scale > 1.15 && !stereoActive
+    transform.scale > 1.15 && !stereoActive
       ? photoPath(photo, "maxi")
       : undefined,
   );
-  const pointerType = useRef("mouse");
+  const [metadataVisible, setMetadataVisible] = useState(true);
+  const keywords = useRef<HTMLDivElement>(null);
+  const [keywordsExpanded, setKeywordsExpanded] = useState(false);
+  const [keywordHeight, setKeywordHeight] = useState<number | null>(null);
+  const keywordDrag = useRef<{ y: number; height: number } | null>(null);
+  const keywordDragged = useRef(false);
+  function keywordLimit() {
+    return Math.max(
+      70,
+      Math.min(keywords.current?.scrollHeight ?? 70, window.innerHeight * 0.55),
+    );
+  }
+  function startKeywords(e: PointerEvent) {
+    if (e.button !== 0 || e.isPrimary === false) return;
+    keywordDragged.current = false;
+    keywordDrag.current = {
+      y: e.clientY,
+      height: keywords.current?.getBoundingClientRect().height ?? 70,
+    };
+  }
+  function moveKeywords(e: PointerEvent) {
+    const start = keywordDrag.current;
+    if (!start) return;
+    const delta = start.y - e.clientY;
+    if (Math.abs(delta) < 6 && !keywordDragged.current) return;
+    keywordDragged.current = true;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setKeywordHeight(
+      Math.max(70, Math.min(keywordLimit(), start.height + delta)),
+    );
+  }
+  function finishKeywords(e: PointerEvent) {
+    const start = keywordDrag.current;
+    if (!start) return;
+    if (keywordDragged.current) setKeywordsExpanded(start.y - e.clientY > 0);
+    keywordDrag.current = null;
+    setKeywordHeight(null);
+  }
+
   const current = useRef(transform);
   current.current = transform;
   const points = useRef(new Map<number, Point>()),
     start = useRef<Point | undefined>(undefined),
     moved = useRef(false),
-    pinched = useRef(false),
-    lastTap = useRef(0);
+    pinched = useRef(false);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const controls = useRef<HTMLButtonElement>(null);
   const navigate = (direction: number) => {
     const p = direction < 0 ? previous : next;
-    if (p && !slideLocked.current) onStep(p.Id);
+    if (p) settleSlide(direction);
   };
   const bounds = (t: Transform) => {
     const r = stage.current!.getBoundingClientRect();
@@ -183,21 +211,13 @@ function ViewerPhoto({
     );
   };
   useEffect(() => {
-    setTransform(identity);
-    setSlide(0);
-    setSettling(false);
-    slideLocked.current = false;
-    clearTimeout(slideTimer.current);
-    points.current.clear();
-  }, [full]);
-  useEffect(() => {
     const obs = new ResizeObserver(() => setTransform((t) => bounds(t)));
     if (stage.current) obs.observe(stage.current);
     return () => obs.disconnect();
   }, [mode, stereoActive, natural.width, natural.height]);
   useEffect(() => {
     controls.current?.focus({ preventScroll: true });
-  }, [full]);
+  }, []);
   useEffect(() => {
     const handle = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).matches("input,textarea,select")) return;
@@ -225,7 +245,6 @@ function ViewerPhoto({
     };
   }
   function down(e: PointerEvent) {
-    pointerType.current = e.pointerType;
     if (e.button !== 0 || slideLocked.current) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     const p = position(e);
@@ -247,7 +266,7 @@ function ViewerPhoto({
     const before = [...points.current.values()];
     points.current.set(e.pointerId, p);
     const after = [...points.current.values()];
-    if (full && before.length === 2) {
+    if (before.length === 2) {
       const ratio =
         distance(after[0], after[1]) /
         Math.max(1, distance(before[0], before[1]));
@@ -261,7 +280,7 @@ function ViewerPhoto({
           ),
         ),
       );
-    } else if (full && current.current.scale > 1)
+    } else if (current.current.scale > 1)
       setTransform((t) =>
         bounds({ ...t, x: t.x + p.x - old.x, y: t.y + p.y - old.y }),
       );
@@ -290,15 +309,9 @@ function ViewerPhoto({
       return;
     }
     if (slide !== 0) settleSlide();
-    if (!moved.current && e.pointerType === "touch") {
-      const now = Date.now();
-      if (now - lastTap.current < 300) {
-        lastTap.current = 0;
-        if (full) onClose();
-        else onFull();
-      } else lastTap.current = now;
-    }
+    if (!moved.current) setMetadataVisible((visible) => !visible);
   }
+
   async function save() {
     setBusy(true);
     setError("");
@@ -311,16 +324,13 @@ function ViewerPhoto({
     }
   }
   return (
-    <section
-      className={`viewer ${full ? "fullscreen" : ""}`}
-      aria-label="Visionneuse de photos"
-    >
+    <section className="viewer fullscreen" aria-label="Visionneuse de photos">
       <header className="viewer-toolbar">
         <button
           ref={controls}
           className="icon-button"
           onClick={onClose}
-          aria-label={full ? "Quitter le plein écran" : "Revenir à la grille"}
+          aria-label="Revenir à la grille"
         >
           <X />
         </button>
@@ -328,18 +338,16 @@ function ViewerPhoto({
           {index + 1} <span>/ {count}</span>
         </span>
         <div className="toolbar-spacer" />
-        {!full && (
-          <button
-            className="icon-button"
-            onClick={save}
-            disabled={busy}
-            aria-label={busy ? "Téléchargement…" : "Télécharger l’original"}
-            title="Télécharger l’original"
-            aria-busy={busy}
-          >
-            <Download size={20} />
-          </button>
-        )}
+        <button
+          className="icon-button"
+          onClick={save}
+          disabled={busy}
+          aria-label={busy ? "Téléchargement…" : "Télécharger l’original"}
+          title="Télécharger l’original"
+          aria-busy={busy}
+        >
+          <Download size={20} />
+        </button>
         {offset && (
           <select
             className="stereo-select"
@@ -357,38 +365,26 @@ function ViewerPhoto({
             ))}
           </select>
         )}
-        {full ? (
-          <>
-            <button
-              className="icon-button"
-              aria-label="Réduire"
-              disabled={stereoActive && mode === "align"}
-              onClick={() =>
-                setTransform((t) => bounds({ ...t, scale: t.scale / 1.5 }))
-              }
-            >
-              <ZoomOut />
-            </button>
-            <button
-              className="icon-button"
-              aria-label="Agrandir"
-              disabled={stereoActive && mode === "align"}
-              onClick={() =>
-                setTransform((t) => bounds({ ...t, scale: t.scale * 1.5 }))
-              }
-            >
-              <ZoomIn />
-            </button>
-          </>
-        ) : (
-          <button
-            className="icon-button"
-            onClick={onFull}
-            aria-label="Afficher en plein écran"
-          >
-            <Maximize />
-          </button>
-        )}
+        <button
+          className="icon-button"
+          aria-label="Réduire"
+          disabled={stereoActive && mode === "align"}
+          onClick={() =>
+            setTransform((t) => bounds({ ...t, scale: t.scale / 1.5 }))
+          }
+        >
+          <ZoomOut />
+        </button>
+        <button
+          className="icon-button"
+          aria-label="Agrandir"
+          disabled={stereoActive && mode === "align"}
+          onClick={() =>
+            setTransform((t) => bounds({ ...t, scale: t.scale * 1.5 }))
+          }
+        >
+          <ZoomIn />
+        </button>
       </header>
       {error && (
         <p className="error" role="alert">
@@ -406,12 +402,6 @@ function ViewerPhoto({
             points.current.clear();
             pinched.current = true;
             settleSlide();
-          }}
-          onDoubleClick={() => {
-            if (pointerType.current !== "touch") {
-              if (full) onClose();
-              else onFull();
-            }
           }}
         >
           <div
@@ -524,90 +514,127 @@ function ViewerPhoto({
             <ChevronRight />
           </button>
         </div>
-        {!full && (
-          <aside className="metadata scroll">
+        <aside
+          className={`photo-metadata ${metadataVisible ? "" : "is-hidden"} ${keywordsExpanded ? "keywords-expanded" : ""}`}
+          aria-hidden={!metadataVisible}
+          inert={!metadataVisible}
+          aria-label="Informations de la photo"
+        >
+          <button
+            className="keyword-handle"
+            aria-label={
+              keywordsExpanded
+                ? "Réduire les mots-clés"
+                : "Développer les mots-clés"
+            }
+            aria-expanded={keywordsExpanded}
+            onPointerDown={startKeywords}
+            onPointerMove={moveKeywords}
+            onPointerUp={finishKeywords}
+            onPointerCancel={() => {
+              keywordDrag.current = null;
+              setKeywordHeight(null);
+            }}
+            onClick={() => {
+              if (!keywordDragged.current)
+                setKeywordsExpanded((expanded) => !expanded);
+              keywordDragged.current = false;
+            }}
+          >
+            <span />
+          </button>
+          <div className="photo-caption">
             <button
               className="eyebrow date-link"
               onClick={() => onSearch(`${date.getFullYear()}-${monthDay}`)}
             >
               LE {dateLabel(photo.Its).toLocaleUpperCase("fr")}
             </button>
-            <h2>{photo.In}</h2>
-            <button
-              className="album-link"
-              onClick={() => onSearch(`album:${photo.Ad}`)}
-            >
-              {photo.Ad}
-            </button>
-            <div className="chips">
-              {(photo.Kwd ?? []).map((k) => (
-                <button key={k} onClick={() => onSearch(k)}>
-                  {k}
-                </button>
-              ))}
-            </div>
-            <button
-              className="text-button"
-              onClick={() =>
-                onSearch(new Date(photo.Its * 1000).getFullYear().toString())
+            <span className="photo-filename" title={photo.In}>
+              {photo.In}
+            </span>
+          </div>
+          <div
+            className="chips photo-keywords"
+            ref={keywords}
+            style={{
+              maxHeight: keywordHeight ?? (keywordsExpanded ? "55dvh" : 70),
+              transition: keywordHeight === null ? undefined : "none",
+            }}
+            onPointerDown={keywordsExpanded ? undefined : startKeywords}
+            onPointerMove={moveKeywords}
+            onPointerUp={finishKeywords}
+            onPointerCancel={() => {
+              keywordDrag.current = null;
+              setKeywordHeight(null);
+            }}
+            onClickCapture={(e) => {
+              if (keywordDragged.current) {
+                e.preventDefault();
+                e.stopPropagation();
+                keywordDragged.current = false;
               }
-            >
-              Voir les photos de {new Date(photo.Its * 1000).getFullYear()}
-            </button>
-            <button className="text-button" onClick={() => onSearch(monthDay)}>
-              Ce jour-là, au fil des années
-            </button>
-            {offset && mode === "align" && (
-              <div className="alignment-controls">
-                <p className="hint">
-                  Glissez la vue gauche pour aligner les images. Ajustements
-                  temporaires.
-                </p>
-                <label>
-                  Horizontal
-                  <input
-                    type="range"
-                    aria-label="Alignement horizontal"
-                    min={-Math.floor(photo.W / 4)}
-                    max={Math.floor(photo.W / 4)}
-                    step={1}
-                    value={offset.Dx}
-                    onChange={(e) => {
-                      const s = { ...offset, Dx: Number(e.target.value) };
-                      setOffset(s);
-                      saveOffset(s);
-                    }}
-                  />
-                </label>
-                <label>
-                  Vertical
-                  <input
-                    type="range"
-                    aria-label="Alignement vertical"
-                    min={-Math.floor(photo.H / 4)}
-                    max={Math.floor(photo.H / 4)}
-                    step={1}
-                    value={offset.Dy}
-                    onChange={(e) => {
-                      const s = { ...offset, Dy: Number(e.target.value) };
-                      setOffset(s);
-                      saveOffset(s);
-                    }}
-                  />
-                </label>
-                <button
-                  onClick={() => {
-                    const s = stereoOf(photo)!;
+            }}
+            tabIndex={0}
+            role="region"
+            aria-label="Mots-clés"
+          >
+            {(photo.Kwd ?? []).map((k) => (
+              <button key={k} onClick={() => onSearch(k)}>
+                {k}
+              </button>
+            ))}
+          </div>
+          {offset && mode === "align" && (
+            <div className="alignment-controls">
+              <p className="hint">
+                Glissez la vue gauche pour aligner les images. Ajustements
+                temporaires.
+              </p>
+              <label>
+                Horizontal
+                <input
+                  type="range"
+                  aria-label="Alignement horizontal"
+                  min={-Math.floor(photo.W / 4)}
+                  max={Math.floor(photo.W / 4)}
+                  step={1}
+                  value={offset.Dx}
+                  onChange={(e) => {
+                    const s = { ...offset, Dx: Number(e.target.value) };
                     setOffset(s);
                     saveOffset(s);
                   }}
-                >
-                  Réinitialiser l’alignement
-                </button>
-              </div>
-            )}
-          </aside>
-        )}
+                />
+              </label>
+              <label>
+                Vertical
+                <input
+                  type="range"
+                  aria-label="Alignement vertical"
+                  min={-Math.floor(photo.H / 4)}
+                  max={Math.floor(photo.H / 4)}
+                  step={1}
+                  value={offset.Dy}
+                  onChange={(e) => {
+                    const s = { ...offset, Dy: Number(e.target.value) };
+                    setOffset(s);
+                    saveOffset(s);
+                  }}
+                />
+              </label>
+              <button
+                onClick={() => {
+                  const s = stereoOf(photo)!;
+                  setOffset(s);
+                  saveOffset(s);
+                }}
+              >
+                Réinitialiser l’alignement
+              </button>
+            </div>
+          )}
+        </aside>
       </div>
     </section>
   );

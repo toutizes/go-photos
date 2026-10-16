@@ -62,13 +62,20 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
-function gesture(el: Element, type: string, x: number, y: number, id = 1) {
+function gesture(
+  el: Element,
+  type: string,
+  x: number,
+  y: number,
+  id = 1,
+  pointerType = "touch",
+) {
   const e = new Event(type, { bubbles: true });
   Object.assign(e, {
     clientX: x,
     clientY: y,
     pointerId: id,
-    pointerType: "touch",
+    pointerType,
     button: 0,
   });
   fireEvent(el, e);
@@ -80,9 +87,7 @@ it("supports swiping at fit scale and panning without navigating when zoomed", (
     <Viewer
       photos={photos}
       id={2}
-      full
       onStep={onStep}
-      onFull={() => {}}
       onClose={() => {}}
       onSearch={() => {}}
     />,
@@ -110,7 +115,7 @@ it("supports swiping at fit scale and panning without navigating when zoomed", (
   expect(
     container.querySelector(".viewer-image")?.getAttribute("style"),
   ).toContain("scale(1.5)");
-  expect(screen.queryByText("famille")).toBeNull();
+  expect(screen.getByRole("button", { name: "famille" })).toBeDefined();
 });
 it("distinguishes a pinch from swipe navigation", () => {
   const onStep = vi.fn();
@@ -118,9 +123,7 @@ it("distinguishes a pinch from swipe navigation", () => {
     <Viewer
       photos={photos}
       id={2}
-      full
       onStep={onStep}
-      onFull={() => {}}
       onClose={() => {}}
       onSearch={() => {}}
     />,
@@ -136,27 +139,35 @@ it("distinguishes a pinch from swipe navigation", () => {
   ).toContain("scale(1.5)");
   expect(onStep).not.toHaveBeenCalled();
 });
-it("double tap opens fullscreen from metadata", () => {
-  const onFull = vi.fn();
-  const { container } = render(
-    <Viewer
-      photos={photos}
-      id={2}
-      full={false}
-      onStep={() => {}}
-      onFull={onFull}
-      onClose={() => {}}
-      onSearch={() => {}}
-    />,
-  );
-  const stage = container.querySelector(".image-stage")!;
-  for (let i = 0; i < 2; i++) {
-    gesture(stage, "pointerdown", 400, 200);
-    gesture(stage, "pointerup", 400, 200);
-  }
-  expect(onFull).toHaveBeenCalledTimes(1);
-  expect(screen.getByRole("button", { name: "famille" })).toBeDefined();
-});
+it.each(["touch", "mouse"])(
+  "%s taps toggle metadata without closing, including when zoomed",
+  (pointerType) => {
+    const onClose = vi.fn();
+    const { container } = render(
+      <Viewer
+        photos={photos}
+        id={2}
+        onStep={() => {}}
+        onClose={onClose}
+        onSearch={() => {}}
+      />,
+    );
+    const stage = container.querySelector(".image-stage")!;
+    expect(container.querySelector(".fullscreen")).not.toBeNull();
+    expect(screen.getByText("photo2.jpg")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Agrandir" }));
+    gesture(stage, "pointerdown", 400, 200, 1, pointerType);
+    gesture(stage, "pointerup", 400, 200, 1, pointerType);
+    expect(screen.queryByRole("button", { name: "famille" })).toBeNull();
+    gesture(stage, "pointerdown", 400, 200, 1, pointerType);
+    gesture(stage, "pointerup", 400, 200, 1, pointerType);
+    expect(screen.getByRole("button", { name: "famille" })).toBeDefined();
+    expect(
+      container.querySelector(".photo-metadata")?.closest(".photo-slider"),
+    ).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+  },
+);
 it("does not create 70,000 image elements and restores a distant selected row", () => {
   const many = Array.from({ length: 70000 }, (_, i) => ({
     ...photos[0],
@@ -184,9 +195,7 @@ it("snaps back short drags, canceled gestures and swipes past the first photo", 
     <Viewer
       photos={photos}
       id={1}
-      full={false}
       onStep={onStep}
-      onFull={() => {}}
       onClose={() => {}}
       onSearch={() => {}}
     />,
@@ -215,9 +224,7 @@ it("respects reduced motion and cancels pending navigation when closed", () => {
     <Viewer
       photos={photos}
       id={2}
-      full
       onStep={onStep}
-      onFull={() => {}}
       onClose={() => {}}
       onSearch={() => {}}
     />,
@@ -236,45 +243,86 @@ it("respects reduced motion and cancels pending navigation when closed", () => {
   act(() => vi.advanceTimersByTime(220));
   expect(onStep).not.toHaveBeenCalled();
 });
-it("double tap exits fullscreen even when zoomed, without also handling a synthetic double click", () => {
-  const onClose = vi.fn();
-  const onFull = vi.fn();
-  const { container } = render(
+it("keeps keyword searches and close available in the unified viewer", () => {
+  const onSearch = vi.fn(),
+    onClose = vi.fn();
+  render(
     <Viewer
       photos={photos}
       id={2}
-      full
       onStep={() => {}}
-      onFull={onFull}
       onClose={onClose}
-      onSearch={() => {}}
+      onSearch={onSearch}
     />,
   );
-  fireEvent.click(screen.getByRole("button", { name: "Agrandir" }));
-  const stage = container.querySelector(".image-stage")!;
-  for (let i = 0; i < 2; i++) {
-    gesture(stage, "pointerdown", 400, 200);
-    gesture(stage, "pointerup", 400, 200);
-  }
-  fireEvent.doubleClick(stage);
-  expect(onClose).toHaveBeenCalledTimes(1);
-  expect(onFull).not.toHaveBeenCalled();
-});
-it("desktop double click toggles fullscreen in both directions", () => {
-  const onClose = vi.fn();
-  const onFull = vi.fn();
-  const props = {
-    photos,
-    id: 2,
-    onStep: () => {},
-    onFull,
-    onClose,
-    onSearch: () => {},
-  };
-  const { container, rerender } = render(<Viewer {...props} full={false} />);
-  fireEvent.doubleClick(container.querySelector(".image-stage")!);
-  expect(onFull).toHaveBeenCalledTimes(1);
-  rerender(<Viewer {...props} full />);
-  fireEvent.doubleClick(container.querySelector(".image-stage")!);
+  fireEvent.click(screen.getByRole("button", { name: "famille" }));
+  expect(onSearch).toHaveBeenCalledWith("famille");
+  fireEvent.click(screen.getByRole("button", { name: "Revenir à la grille" }));
   expect(onClose).toHaveBeenCalledTimes(1);
 });
+
+it("pulls keywords open without searching and collapses them with the handle", () => {
+  const onSearch = vi.fn();
+  render(
+    <Viewer
+      photos={photos}
+      id={2}
+      onStep={() => {}}
+      onClose={() => {}}
+      onSearch={onSearch}
+    />,
+  );
+  const pill = screen.getByRole("button", { name: "famille" });
+  gesture(pill, "pointerdown", 400, 350);
+  gesture(pill, "pointermove", 400, 200);
+  gesture(pill, "pointerup", 400, 200);
+  fireEvent.click(pill);
+  expect(onSearch).not.toHaveBeenCalled();
+  const handle = screen.getByRole("button", { name: "Réduire les mots-clés" });
+  expect(handle.getAttribute("aria-expanded")).toBe("true");
+  gesture(handle, "pointerdown", 400, 200);
+  gesture(handle, "pointermove", 400, 350);
+  gesture(handle, "pointerup", 400, 350);
+  fireEvent.click(handle);
+  expect(
+    screen
+      .getByRole("button", { name: "Développer les mots-clés" })
+      .getAttribute("aria-expanded"),
+  ).toBe("false");
+});
+
+it.each([
+  ["Photo suivante", -800, 3],
+  ["Photo précédente", 800, 1],
+] as const)(
+  "animates %s while zoomed and ignores repeated clicks during the slide",
+  (name, translation, id) => {
+    vi.useFakeTimers();
+    const onStep = vi.fn();
+    const { container } = render(
+      <Viewer
+        photos={photos}
+        id={2}
+        onStep={onStep}
+        onClose={() => {}}
+        onSearch={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Agrandir" }));
+    const arrow = screen.getByRole("button", { name });
+    fireEvent.click(arrow);
+    expect(
+      container.querySelector(".photo-slider")?.getAttribute("style"),
+    ).toContain(`translateX(${translation}px)`);
+    expect(
+      container
+        .querySelector(".photo-slider")
+        ?.classList.contains("is-settling"),
+    ).toBe(true);
+    expect(container.querySelectorAll(".neighbor-slide")).toHaveLength(2);
+    expect(onStep).not.toHaveBeenCalled();
+    fireEvent.click(arrow);
+    act(() => vi.advanceTimersByTime(220));
+    expect(onStep).toHaveBeenCalledExactlyOnceWith(id);
+  },
+);

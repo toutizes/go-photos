@@ -92,9 +92,9 @@ export function App() {
   return (
     <div
       key={account.email}
-      className={`app ${route.full ? "is-full" : ""} ${route.page === "photos" && route.id !== undefined ? "has-viewer" : ""}`}
+      className={`app ${route.page === "photos" && route.id !== undefined ? "is-full" : ""} ${route.page === "photos" && route.id !== undefined ? "has-viewer" : ""}`}
     >
-      {!route.full && (
+      {!(route.page === "photos" && route.id !== undefined) && (
         <header className="app-header">
           <a
             className="brand"
@@ -172,7 +172,7 @@ export function App() {
           </button>
         </header>
       )}
-      {help && !route.full && (
+      {help && !(route.page === "photos" && route.id !== undefined) && (
         <section className="search-help">
           <strong>Chercher des photos</strong>
           <p>
@@ -312,11 +312,9 @@ function Photos({
             <Viewer
               photos={photos}
               id={route.id}
-              full={route.full}
               onStep={(id) =>
                 navigate({ ...route, id }, true, history.state?.level)
               }
-              onFull={() => navigate({ ...route, full: true }, false, "full")}
               onClose={close}
               onSearch={onSearch}
             />
