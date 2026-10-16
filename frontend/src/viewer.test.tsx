@@ -159,9 +159,29 @@ it.each(["touch", "mouse"])(
     gesture(stage, "pointerdown", 400, 200, 1, pointerType);
     gesture(stage, "pointerup", 400, 200, 1, pointerType);
     expect(screen.queryByRole("button", { name: "famille" })).toBeNull();
+    expect(screen.getAllByRole("button")).toHaveLength(1);
+    expect(
+      screen.getByRole("button", { name: "Revenir à la grille" }),
+    ).toBeDefined();
+    expect(container.querySelector(".counter")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Photo suivante" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Photo précédente" }),
+    ).toBeNull();
     gesture(stage, "pointerdown", 400, 200, 1, pointerType);
     gesture(stage, "pointerup", 400, 200, 1, pointerType);
     expect(screen.getByRole("button", { name: "famille" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Agrandir" })).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Télécharger l’original" }),
+    ).toBeDefined();
+    expect(container.querySelector(".counter")).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Photo suivante" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Photo précédente" }),
+    ).toBeDefined();
     expect(
       container.querySelector(".photo-metadata")?.closest(".photo-slider"),
     ).toBeNull();
@@ -326,3 +346,90 @@ it.each([
     expect(onStep).toHaveBeenCalledExactlyOnceWith(id);
   },
 );
+
+it.each([
+  [-1, 3],
+  [1, 1],
+])(
+  "navigates only after pulling past the zoomed edge (%s)",
+  (direction, target) => {
+    vi.useFakeTimers();
+    const onStep = vi.fn();
+    const { container } = render(
+      <Viewer
+        photos={photos}
+        id={2}
+        onStep={onStep}
+        onClose={() => {}}
+        onSearch={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Agrandir" }));
+    const stage = container.querySelector(".image-stage")!;
+    // At 1.5x, the 800px-wide fitted image has 200px of pan in either direction.
+    gesture(stage, "pointerdown", 400, 200);
+    gesture(stage, "pointermove", 400 + direction * 200, 200);
+    gesture(stage, "pointerup", 400 + direction * 200, 200);
+    expect(onStep).not.toHaveBeenCalled();
+    gesture(stage, "pointerdown", 400, 200);
+    gesture(stage, "pointermove", 400 + direction * 80, 200);
+    expect(
+      container.querySelector(".photo-slider")?.getAttribute("style"),
+    ).toContain(`translateX(${direction * 80}px)`);
+    gesture(stage, "pointerup", 400 + direction * 80, 200);
+    expect(onStep).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(220));
+    expect(onStep).toHaveBeenCalledExactlyOnceWith(target);
+  },
+);
+
+it("allows reversing an edge pull back into a zoomed pan", () => {
+  const onStep = vi.fn();
+  const { container } = render(
+    <Viewer
+      photos={photos}
+      id={2}
+      onStep={onStep}
+      onClose={() => {}}
+      onSearch={() => {}}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Agrandir" }));
+  const stage = container.querySelector(".image-stage")!;
+  gesture(stage, "pointerdown", 400, 200);
+  gesture(stage, "pointermove", 100, 200);
+  gesture(stage, "pointermove", 300, 200);
+  gesture(stage, "pointerup", 300, 200);
+  expect(
+    container.querySelector(".photo-slider")?.getAttribute("style"),
+  ).toContain("translateX(0px)");
+  expect(
+    container.querySelector(".viewer-image")?.getAttribute("style"),
+  ).toContain("translate(-100px,0px)");
+  expect(onStep).not.toHaveBeenCalled();
+});
+
+it("preserves hidden and visible controls across photo changes", () => {
+  const props = {
+    photos,
+    onStep: vi.fn(),
+    onClose: vi.fn(),
+    onSearch: vi.fn(),
+  };
+  const { container, rerender } = render(<Viewer {...props} id={1} />);
+  const tap = () => {
+    const stage = container.querySelector(".image-stage")!;
+    gesture(stage, "pointerdown", 400, 200);
+    gesture(stage, "pointerup", 400, 200);
+  };
+  tap();
+  rerender(<Viewer {...props} id={2} />);
+  expect(screen.getAllByRole("button")).toHaveLength(1);
+  expect(
+    screen.getByRole("button", { name: "Revenir à la grille" }),
+  ).toBeDefined();
+  tap();
+  rerender(<Viewer {...props} id={3} />);
+  expect(screen.getByRole("button", { name: "Agrandir" })).toBeDefined();
+  expect(screen.getByRole("button", { name: "famille" })).toBeDefined();
+});

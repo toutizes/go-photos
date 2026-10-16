@@ -39,6 +39,7 @@ export function Viewer({
   onClose: () => void;
   onSearch: (q: string) => void;
 }) {
+  const [controlsVisible, setControlsVisible] = useState(true);
   const [mode, setMode] = useState<StereoMode>("parallel");
   const offsets = useRef(new Map<number, Stereo>());
   const index = photos.findIndex((p) => p.Id === id),
@@ -57,6 +58,8 @@ export function Viewer({
       {...{ photo, onClose, onSearch }}
       mode={mode}
       setMode={setMode}
+      controlsVisible={controlsVisible}
+      onToggleControls={() => setControlsVisible((visible) => !visible)}
       initialOffset={offsets.current.get(photo.Id) ?? stereoOf(photo)}
       saveOffset={(s) => offsets.current.set(photo.Id, s)}
       count={photos.length}
@@ -80,8 +83,12 @@ function ViewerPhoto({
   setMode,
   initialOffset,
   saveOffset,
+  controlsVisible,
+  onToggleControls,
 }: {
   photo: Photo;
+  controlsVisible: boolean;
+  onToggleControls: () => void;
   mode: StereoMode;
   setMode: (m: StereoMode) => void;
   initialOffset?: Stereo;
@@ -102,6 +109,7 @@ function ViewerPhoto({
   const stage = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState(identity);
   const [slide, setSlide] = useState(0);
+  const edgePull = useRef(0);
   const [settling, setSettling] = useState(false);
   const slideLocked = useRef(false);
   const slideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
@@ -144,7 +152,6 @@ function ViewerPhoto({
       ? photoPath(photo, "maxi")
       : undefined,
   );
-  const [metadataVisible, setMetadataVisible] = useState(true);
   const keywords = useRef<HTMLDivElement>(null);
   const [keywordsExpanded, setKeywordsExpanded] = useState(false);
   const [keywordHeight, setKeywordHeight] = useState<number | null>(null);
@@ -250,11 +257,13 @@ function ViewerPhoto({
     const p = position(e);
     points.current.set(e.pointerId, p);
     if (points.current.size === 1) {
+      edgePull.current = 0;
       start.current = p;
       moved.current = false;
       pinched.current = false;
     } else {
       pinched.current = true;
+      edgePull.current = 0;
       setSlide(0);
     }
   }
@@ -280,11 +289,24 @@ function ViewerPhoto({
           ),
         ),
       );
-    } else if (current.current.scale > 1)
-      setTransform((t) =>
-        bounds({ ...t, x: t.x + p.x - old.x, y: t.y + p.y - old.y }),
-      );
-    else if (!pinched.current && start.current && before.length === 1) {
+    } else if (current.current.scale > 1) {
+      const t = current.current;
+      const proposed = {
+        ...t,
+        x: t.x + p.x - old.x + edgePull.current,
+        y: t.y + p.y - old.y,
+      };
+      const bounded = bounds(proposed);
+      current.current = bounded;
+      setTransform(bounded);
+      const horizontal =
+        start.current &&
+        Math.abs(p.x - start.current.x) > Math.abs(p.y - start.current.y) * 1.4;
+      edgePull.current =
+        !pinched.current && horizontal ? proposed.x - bounded.x : 0;
+      const hasNeighbor = edgePull.current < 0 ? next : previous;
+      setSlide(hasNeighbor ? edgePull.current : edgePull.current * 0.2);
+    } else if (!pinched.current && start.current && before.length === 1) {
       const dx = p.x - start.current.x;
       const dy = p.y - start.current.y;
       if (Math.abs(dx) > Math.abs(dy) * 1.4) {
@@ -301,15 +323,18 @@ function ViewerPhoto({
     const origin = start.current;
     if (!origin) return;
     if (
-      current.current.scale <= 1.01 &&
-      Math.abs(p.x - origin.x) > 55 &&
+      (current.current.scale <= 1.01
+        ? Math.abs(p.x - origin.x) > 55
+        : Math.abs(edgePull.current) > 55) &&
       Math.abs(p.x - origin.x) > Math.abs(p.y - origin.y) * 1.4
     ) {
-      settleSlide(p.x < origin.x ? 1 : -1);
+      const drag =
+        current.current.scale <= 1.01 ? p.x - origin.x : edgePull.current;
+      settleSlide(drag < 0 ? 1 : -1);
       return;
     }
     if (slide !== 0) settleSlide();
-    if (!moved.current) setMetadataVisible((visible) => !visible);
+    if (!moved.current) onToggleControls();
   }
 
   async function save() {
@@ -325,7 +350,9 @@ function ViewerPhoto({
   }
   return (
     <section className="viewer fullscreen" aria-label="Visionneuse de photos">
-      <header className="viewer-toolbar">
+      <header
+        className={`viewer-toolbar ${controlsVisible ? "" : "controls-hidden"}`}
+      >
         <button
           ref={controls}
           className="icon-button"
@@ -334,59 +361,63 @@ function ViewerPhoto({
         >
           <X />
         </button>
-        <span className="counter" aria-live="polite">
-          {index + 1} <span>/ {count}</span>
-        </span>
-        <div className="toolbar-spacer" />
-        <button
-          className="icon-button"
-          onClick={save}
-          disabled={busy}
-          aria-label={busy ? "Téléchargement…" : "Télécharger l’original"}
-          title="Télécharger l’original"
-          aria-busy={busy}
-        >
-          <Download size={20} />
-        </button>
-        {offset && (
-          <select
-            className="stereo-select"
-            aria-label="Mode stéréo"
-            value={mode}
-            onChange={(e) => {
-              setMode(e.target.value as StereoMode);
-              setTransform(identity);
-            }}
-          >
-            {stereoModes.map((m) => (
-              <option value={m.value} key={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </select>
+        {controlsVisible && (
+          <>
+            <span className="counter" aria-live="polite">
+              {index + 1} <span>/ {count}</span>
+            </span>
+            <div className="toolbar-spacer" />
+            <button
+              className="icon-button"
+              onClick={save}
+              disabled={busy}
+              aria-label={busy ? "Téléchargement…" : "Télécharger l’original"}
+              title="Télécharger l’original"
+              aria-busy={busy}
+            >
+              <Download size={20} />
+            </button>
+            {offset && (
+              <select
+                className="stereo-select"
+                aria-label="Mode stéréo"
+                value={mode}
+                onChange={(e) => {
+                  setMode(e.target.value as StereoMode);
+                  setTransform(identity);
+                }}
+              >
+                {stereoModes.map((m) => (
+                  <option value={m.value} key={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            )}
+            <button
+              className="icon-button"
+              aria-label="Réduire"
+              disabled={stereoActive && mode === "align"}
+              onClick={() =>
+                setTransform((t) => bounds({ ...t, scale: t.scale / 1.5 }))
+              }
+            >
+              <ZoomOut />
+            </button>
+            <button
+              className="icon-button"
+              aria-label="Agrandir"
+              disabled={stereoActive && mode === "align"}
+              onClick={() =>
+                setTransform((t) => bounds({ ...t, scale: t.scale * 1.5 }))
+              }
+            >
+              <ZoomIn />
+            </button>
+          </>
         )}
-        <button
-          className="icon-button"
-          aria-label="Réduire"
-          disabled={stereoActive && mode === "align"}
-          onClick={() =>
-            setTransform((t) => bounds({ ...t, scale: t.scale / 1.5 }))
-          }
-        >
-          <ZoomOut />
-        </button>
-        <button
-          className="icon-button"
-          aria-label="Agrandir"
-          disabled={stereoActive && mode === "align"}
-          onClick={() =>
-            setTransform((t) => bounds({ ...t, scale: t.scale * 1.5 }))
-          }
-        >
-          <ZoomIn />
-        </button>
       </header>
-      {error && (
+      {error && controlsVisible && (
         <p className="error" role="alert">
           {error}
         </p>
@@ -400,6 +431,7 @@ function ViewerPhoto({
           onPointerUp={up}
           onPointerCancel={() => {
             points.current.clear();
+            edgePull.current = 0;
             pinched.current = true;
             settleSlide();
           }}
@@ -494,7 +526,9 @@ function ViewerPhoto({
               )}
           </div>
           <button
-            className="step previous"
+            className={`step previous ${controlsVisible ? "" : "is-hidden"}`}
+            aria-hidden={!controlsVisible}
+            tabIndex={controlsVisible ? 0 : -1}
             disabled={!previous}
             aria-label="Photo précédente"
             onPointerDown={(e) => e.stopPropagation()}
@@ -504,7 +538,9 @@ function ViewerPhoto({
             <ChevronLeft />
           </button>
           <button
-            className="step next"
+            className={`step next ${controlsVisible ? "" : "is-hidden"}`}
+            aria-hidden={!controlsVisible}
+            tabIndex={controlsVisible ? 0 : -1}
             disabled={!next}
             aria-label="Photo suivante"
             onPointerDown={(e) => e.stopPropagation()}
@@ -515,9 +551,9 @@ function ViewerPhoto({
           </button>
         </div>
         <aside
-          className={`photo-metadata ${metadataVisible ? "" : "is-hidden"} ${keywordsExpanded ? "keywords-expanded" : ""}`}
-          aria-hidden={!metadataVisible}
-          inert={!metadataVisible}
+          className={`photo-metadata ${controlsVisible ? "" : "is-hidden"} ${keywordsExpanded ? "keywords-expanded" : ""}`}
+          aria-hidden={!controlsVisible}
+          inert={!controlsVisible}
           aria-label="Informations de la photo"
         >
           <button
@@ -548,7 +584,7 @@ function ViewerPhoto({
               className="eyebrow date-link"
               onClick={() => onSearch(`${date.getFullYear()}-${monthDay}`)}
             >
-              LE {dateLabel(photo.Its).toLocaleUpperCase("fr")}
+              {dateLabel(photo.Its).toLocaleUpperCase("fr")}
             </button>
             <span className="photo-filename" title={photo.In}>
               {photo.In}

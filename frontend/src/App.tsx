@@ -265,18 +265,19 @@ function Photos({
   const photos = result.q === route.q ? result.photos : [];
   const lastPhoto = useRef<number | undefined>(undefined);
   if (route.id !== undefined) lastPhoto.current = route.id;
+  const heading = (
+    <div className="page-heading">
+      <div>
+        <h1>Les photos</h1>
+      </div>
+      <div className="heading-actions">
+        <Downloads query={route.q} count={photos.length} />
+      </div>
+    </div>
+  );
   return (
     <div className="photos-page">
-      {route.id === undefined && (
-        <div className="page-heading">
-          <div>
-            <h1>Les photos</h1>
-          </div>
-          <div className="heading-actions">
-            <Downloads query={route.q} count={photos.length} />
-          </div>
-        </div>
-      )}
+      {!photos.length && route.id === undefined && heading}
       {error && (
         <div className="error" role="alert">
           {error}
@@ -300,6 +301,7 @@ function Photos({
       ) : (
         <>
           <Grid
+            header={heading}
             key={route.q}
             activeId={lastPhoto.current}
             photos={photos}

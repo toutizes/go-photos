@@ -1454,3 +1454,22 @@ h2 {
     transition: none;
   }
 }
+
+.photo-grid .page-heading {
+  padding-inline: 8px;
+}
+@media (max-width: 600px) {
+  .photo-grid .page-heading {
+    padding-inline: 6px;
+  }
+}
+
+.step.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.fullscreen .viewer-toolbar.controls-hidden {
+  background: none;
+}
