@@ -51,3 +51,26 @@ it("does not expose a pending response after a session is cleared", async () => 
   expect(result.current.url).toBeUndefined();
   expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:test");
 });
+
+it("renders a preloaded photo immediately on mount and when switching paths", async () => {
+  vi.mocked(request).mockResolvedValue({
+    blob: async () => new Blob(["jpg"], { type: "image/jpeg" }),
+  } as Response);
+  const preload = renderHook(() => useImage("/db/midi/next"));
+  await waitFor(() => expect(preload.result.current.url).toBe("blob:test"));
+  const rendered: (string | undefined)[] = [];
+  const selected = renderHook(
+    ({ path }) => {
+      const image = useImage(path);
+      rendered.push(image.url);
+      return image;
+    },
+    { initialProps: { path: "/db/midi/next" } },
+  );
+  expect(rendered[0]).toBe("blob:test");
+  selected.rerender({ path: "/db/midi/not-loaded" });
+  expect(selected.result.current.url).toBeUndefined();
+  rendered.length = 0;
+  selected.rerender({ path: "/db/midi/next" });
+  expect(rendered[0]).toBe("blob:test");
+});

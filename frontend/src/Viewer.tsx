@@ -198,7 +198,7 @@ function ViewerPhoto({
     pinched = useRef(false);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  const controls = useRef<HTMLButtonElement>(null);
+  const viewerFocus = useRef<HTMLElement>(null);
   const navigate = (direction: number) => {
     const p = direction < 0 ? previous : next;
     if (p) settleSlide(direction);
@@ -223,7 +223,7 @@ function ViewerPhoto({
     return () => obs.disconnect();
   }, [mode, stereoActive, natural.width, natural.height]);
   useEffect(() => {
-    controls.current?.focus({ preventScroll: true });
+    viewerFocus.current?.focus({ preventScroll: true });
   }, []);
   useEffect(() => {
     const handle = (e: KeyboardEvent) => {
@@ -349,12 +349,16 @@ function ViewerPhoto({
     }
   }
   return (
-    <section className="viewer fullscreen" aria-label="Visionneuse de photos">
+    <section
+      ref={viewerFocus}
+      tabIndex={-1}
+      className="viewer fullscreen"
+      aria-label="Visionneuse de photos"
+    >
       <header
         className={`viewer-toolbar ${controlsVisible ? "" : "controls-hidden"}`}
       >
         <button
-          ref={controls}
           className="icon-button"
           onClick={onClose}
           aria-label="Revenir à la grille"

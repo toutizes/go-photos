@@ -1473,3 +1473,8 @@ h2 {
 .fullscreen .viewer-toolbar.controls-hidden {
   background: none;
 }
+
+/* Focus the viewer on entry without highlighting its close button. */
+.viewer:focus {
+  outline: none;
+}

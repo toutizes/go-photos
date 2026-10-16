@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { request } from "./api";
 // Referenced URLs cannot be evicted. Unused entries are kept under a byte budget.
 interface Entry {
@@ -83,7 +83,7 @@ export function useImage(path?: string) {
     error?: string;
   }>({});
   const [retry, setRetry] = useState(0);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!path) return;
     let active = true;
     const held = acquire(path);
@@ -100,8 +100,12 @@ export function useImage(path?: string) {
       held.release();
     };
   }, [path, retry]);
+  // The carousel already holds the adjacent image. Reuse it on the first
+  // render instead of flashing a placeholder while the resolved promise runs.
+  const cachedUrl = path ? entries.get(path)?.url : undefined;
   return {
     ...(state.path === path ? state : {}),
+    ...(cachedUrl ? { url: cachedUrl } : {}),
     retry: () => {
       setState({});
       setRetry((n) => n + 1);
