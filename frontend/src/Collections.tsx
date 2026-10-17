@@ -111,7 +111,7 @@ function PreviewStrip({
       className="preview-strip"
       ref={ref}
       style={{
-        gridTemplateColumns: `repeat(${Math.max(1, ids.length)},minmax(0,1fr))`,
+        gridTemplateColumns: `repeat(${Math.max(3, ids.length)},minmax(0,1fr))`,
       }}
     >
       {ids.map((id, i) => (
