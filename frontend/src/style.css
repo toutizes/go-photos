@@ -390,7 +390,6 @@ h2 {
   height: 100%;
   object-fit: contain;
   will-change: transform;
-  pointer-events: none;
 }
 .photo-slider,
 .photo-slide {
