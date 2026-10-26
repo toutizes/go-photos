@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type PointerEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+} from "react";
 import type { Photo, Stereo } from "./model";
 export type StereoMode =
   "original" | "parallel" | "crossed" | "animated" | "align";
@@ -28,11 +34,16 @@ export function StereoImage({
   const drag = useRef<
     { x: number; y: number; dx: number; dy: number } | undefined
   >(undefined);
-  useEffect(() => {
+  useLayoutEffect(() => {
+    const el = ref.current!;
+    const rect = el.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      setSize({ w: rect.width, h: rect.height });
+    }
     const observer = new ResizeObserver(([e]) =>
       setSize({ w: e.contentRect.width, h: e.contentRect.height }),
     );
-    observer.observe(ref.current!);
+    observer.observe(el);
     return () => observer.disconnect();
   }, []);
   useEffect(() => {

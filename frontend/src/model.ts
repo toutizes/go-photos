@@ -1,8 +1,6 @@
 export interface Stereo {
   Dx: number;
   Dy: number;
-  AnaDx?: number;
-  AnaDy?: number;
 }
 export interface Photo {
   Id: number;
@@ -21,8 +19,6 @@ export interface Album {
   Dts: number;
   Nimgs: number;
   Cov: number;
-  CovName: string;
-  PreviewIds: number[] | null;
 }
 export interface ActivityGroup {
   keywords: { keyword: string; count: number }[];
@@ -36,8 +32,7 @@ export interface QueryEntry {
 }
 export const photoPath = (p: Photo, size: "mini" | "midi" | "maxi" = "midi") =>
   `/db/${size}/${p.Ad.split("/").map(encodeURIComponent).join("/")}/${encodeURIComponent(p.In)}?v=${p.Fts}`;
-export const montagePath = (ids: number[]) =>
-  `/db/montage/360x360-${ids.join("-")}`;
+export const thumbPath = (id: number) => `/db/thumb/${id}`;
 export const stereoOf = (p: Photo): Stereo | undefined =>
   p.Stereo ??
   ((p.Kwd ?? []).some((k) => /^stereo:|^(stereo|stéreo|stéréo)$/.test(k))

@@ -61,6 +61,7 @@ export function Viewer({
       controlsVisible={controlsVisible}
       onToggleControls={() => setControlsVisible((visible) => !visible)}
       initialOffset={offsets.current.get(photo.Id) ?? stereoOf(photo)}
+      offsetFor={(p) => offsets.current.get(p.Id) ?? stereoOf(p)}
       saveOffset={(s) => offsets.current.set(photo.Id, s)}
       count={photos.length}
       index={index}
@@ -82,6 +83,7 @@ function ViewerPhoto({
   mode,
   setMode,
   initialOffset,
+  offsetFor,
   saveOffset,
   controlsVisible,
   onToggleControls,
@@ -92,6 +94,7 @@ function ViewerPhoto({
   mode: StereoMode;
   setMode: (m: StereoMode) => void;
   initialOffset?: Stereo;
+  offsetFor: (p: Photo) => Stereo | undefined;
   saveOffset: (s: Stereo) => void;
   index: number;
   count: number;
@@ -506,14 +509,16 @@ function ViewerPhoto({
                       style={{ transform: `translateX(${side * 100}%)` }}
                     >
                       {resource.url ? (
-                        stereoOf(neighbor) && mode !== "original" ? (
-                          <StereoImage
-                            photo={neighbor}
-                            url={resource.url}
-                            mode={mode}
-                            offset={stereoOf(neighbor)!}
-                            onOffset={() => {}}
-                          />
+                        offsetFor(neighbor) && mode !== "original" ? (
+                          <div className="stereo-transform">
+                            <StereoImage
+                              photo={neighbor}
+                              url={resource.url}
+                              mode={mode}
+                              offset={offsetFor(neighbor)!}
+                              onOffset={() => {}}
+                            />
+                          </div>
                         ) : (
                           <img
                             className="viewer-image"

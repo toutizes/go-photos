@@ -24,28 +24,38 @@ export function Grid({
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
   useLayoutEffect(() => {
-    if (!headerRef.current) return;
-    const observer = new ResizeObserver(([entry]) =>
-      setHeaderHeight(entry.contentRect.height),
-    );
-    observer.observe(headerRef.current);
+    const el = headerRef.current;
+    if (!el) return;
+    if (el.offsetHeight) setHeaderHeight(el.offsetHeight);
+    const observer = new ResizeObserver(([entry]) => {
+      const next = entry.contentRect.height;
+      setHeaderHeight((prev) => (prev === next ? prev : next));
+    });
+    observer.observe(el);
     return () => observer.disconnect();
-  }, [header]);
+  }, [Boolean(header)]);
   const [size, setSize] = useState({ width: 1000, height: 700, minimum: 170 });
   const [top, setTop] = useState(0);
   useLayoutEffect(() => {
     const el = ref.current!;
-    const observer = new ResizeObserver(([e]) => {
-      if (e.contentRect.width)
-        setSize({
-          width: e.contentRect.width,
-          height: e.contentRect.height,
-          minimum:
-            parseFloat(
-              getComputedStyle(el).getPropertyValue("--photo-cell-min"),
-            ) || 170,
-        });
-    });
+    const readMinimum = () =>
+      parseFloat(getComputedStyle(el).getPropertyValue("--photo-cell-min")) ||
+      170;
+    const updateSize = (width: number, height: number) => {
+      if (!width) return;
+      const minimum = readMinimum();
+      setSize((prev) =>
+        prev.width === width &&
+        prev.height === height &&
+        prev.minimum === minimum
+          ? prev
+          : { width, height, minimum },
+      );
+    };
+    updateSize(el.clientWidth, el.clientHeight);
+    const observer = new ResizeObserver(([e]) =>
+      updateSize(e.contentRect.width, e.contentRect.height),
+    );
     observer.observe(el);
     return () => observer.disconnect();
   }, []);

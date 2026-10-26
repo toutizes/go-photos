@@ -4,7 +4,7 @@ import { json } from "./api";
 import { useImage } from "./images";
 import {
   dateLabel,
-  montagePath,
+  thumbPath,
   todayQuery,
   type ActivityGroup,
   type Album,
@@ -79,8 +79,7 @@ function PreviewTile({
   visible: boolean;
   open: (id: number) => void;
 }) {
-  // Single-ID montages avoid the backend's first-thumbnail-size assumption for strips.
-  const image = useImage(visible ? montagePath([id]) : undefined);
+  const image = useImage(visible ? thumbPath(id) : undefined);
   return (
     <button
       onClick={() => open(id)}
@@ -188,7 +187,7 @@ function AlbumCard({
 }) {
   const { ref, visible } = useNearScreen();
   const cover = useImage(
-    visible && album.Cov ? montagePath([album.Cov]) : undefined,
+    visible && album.Cov ? thumbPath(album.Cov) : undefined,
   );
   return (
     <div ref={ref} className="album-card">

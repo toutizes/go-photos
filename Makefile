@@ -1,14 +1,14 @@
 SERVER=ce1
 LR_ACTIONS="$(HOME)/Library/Application Support/Adobe/Lightroom/Export Actions"
-SYN_TXT=backend/model/synonyms.txt
+SYN_TXT=backend/catalog/synonyms.txt
 
 # Toutizes.
 # serve_small needs to have run install_html.
 # http://localhost:8080
-serve_small: generate install_flutter
+serve_small: generate install-web
 	cp ~/Google\ Drive/My\ Drive/Installations/Floutizes/floutizes-firebase-adminsdk-fbsvc-584c308c82.json /tmp/aserve/db/
 	mkdir -p /tmp/aserve/log
-	go run backend/test/aserve.go --bin_root=/opt/homebrew/bin/ --use_https=false --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/aserve/db-full --static_root=/tmp/aserve/db/htdocs --firebase_creds=/tmp/aserve/db/floutizes-firebase-adminsdk-fbsvc-584c308c82.json --log_dir=/tmp/aserve/log --use_lr_parser # &> /tmp/aserve/log/aserve.log
+	go run ./backend/cmd/aserve --bin_root=/opt/homebrew/bin/ --use_https=false --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/aserve/db-full --static_root=/tmp/aserve/db/htdocs --firebase_creds=/tmp/aserve/db/floutizes-firebase-adminsdk-fbsvc-584c308c82.json --log_dir=/tmp/aserve/log --use_lr_parser # &> /tmp/aserve/log/aserve.log
 
 install_html:
 	cmd/install-ttpic.sh
@@ -19,7 +19,7 @@ install_flutter:
 	rsync --delete --recursive $(SYN_TXT) /tmp/aserve/db/htdocs/synonyms.txt
 
 push_serve: generate 
-	GOOS=linux GOARCH=amd64 go build -o bin_linux/aserve backend/test/aserve.go
+	GOOS=linux GOARCH=amd64 go build -o bin_linux/aserve ./backend/cmd/aserve
 	rsync "bin_linux/aserve" $(SERVER):/mnt/photos/bin/
 
 push_html: install_html
@@ -41,6 +41,7 @@ build-web-release:
 install-web: build-web-release
 	mkdir -p /tmp/aserve/db/htdocs/flutter
 	rsync --recursive frontend/dist/ /tmp/aserve/db/htdocs/flutter/
+	rsync --delete --recursive $(SYN_TXT) /tmp/aserve/db/htdocs/synonyms.txt
 
 # Keep previous hashed assets for already-open tabs; update the entry point last.
 push-web-release: build-web-release
@@ -67,14 +68,14 @@ run: generate
 	go run backend/test/run.go --orig_root /Volumes/GoogleDrive/Mon\ Drive/Photos/1997
 
 minify: 
-	go run backend/util/minify.go --bin_root=/opt/homebrew/bin/ --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/aserve/db-full
+	go run ./backend/cmd/minify --bin_root=/opt/homebrew/bin/ --orig_root="/Users/matthieu/projects/test-photos" --root=/tmp/aserve/db-full
 
 push_minify:
-	GOOS=linux GOARCH=amd64 go build -o bin_linux/minify backend/util/minify.go
+	GOOS=linux GOARCH=amd64 go build -o bin_linux/minify ./backend/cmd/minify
 	rsync "bin_linux/minify" $(SERVER):/mnt/photos/bin/
 
 list_kwds: generate
-	go run backend/test/list_kwds.go /Users/matthieu/projects/test-photos/2003/2003-05-07/Image02.jpg
+	go run ./backend/cmd/list_kwds /Users/matthieu/projects/test-photos/2003/2003-05-07/Image02.jpg
 
 # go run backend/test/list_kwds.go ~/projects/test-photos/2003/2003-05-07/Image06.jpg 
 # go run backend/test/list_kwds.go ~/projects/test-photos/1979/Devin-io-0168.jpg 
